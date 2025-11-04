@@ -30,6 +30,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
   const [isMobileDevice, setIsMobileDevice] = useState(false)
   const [showMobilePlayer, setShowMobilePlayer] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   const backdropUrl = getTMDBImageUrl(movie.backdrop_path || "", "original")
@@ -43,6 +44,100 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
       setIsPlaying(true)
     }
   }, [autoPlay])
+
+  // Intercept iframe fullscreen and make container fullscreen instead
+  useEffect(() => {
+    if (!iframeRef.current || !containerRef.current) return
+
+    const iframe = iframeRef.current
+    const container = containerRef.current
+
+    // Function to enter fullscreen on container
+    const enterFullscreen = async () => {
+      try {
+        // Use the most modern API first
+        if (container.requestFullscreen) {
+          await container.requestFullscreen()
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen((Element as any).ALLOW_KEYBOARD_INPUT)
+        } else if ((container as any).mozRequestFullScreen) {
+          await (container as any).mozRequestFullScreen()
+        } else if ((container as any).msRequestFullscreen) {
+          await (container as any).msRequestFullscreen()
+        }
+      } catch (error) {
+        console.error('Failed to enter fullscreen:', error)
+      }
+    }
+
+    // Listen for fullscreen changes
+    const handleFullscreenChange = async () => {
+      const fullscreenElement = 
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+
+      // If iframe is in fullscreen, exit it and make container fullscreen instead
+      if (fullscreenElement === iframe) {
+        // Exit iframe fullscreen immediately
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {})
+        } else if ((document as any).webkitExitFullscreen) {
+          ;(document as any).webkitExitFullscreen()
+        } else if ((document as any).mozCancelFullScreen) {
+          ;(document as any).mozCancelFullScreen()
+        } else if ((document as any).msExitFullscreen) {
+          ;(document as any).msExitFullscreen()
+        }
+
+        // Immediately make container fullscreen
+        setTimeout(() => {
+          enterFullscreen()
+        }, 50)
+      }
+    }
+
+    // Also listen for clicks on iframe that might trigger fullscreen
+    const handleIframeClick = () => {
+      setTimeout(() => {
+        const fullscreenElement = 
+          document.fullscreenElement ||
+          (document as any).webkitFullscreenElement ||
+          (document as any).mozFullScreenElement ||
+          (document as any).msFullscreenElement
+
+        if (fullscreenElement === iframe) {
+          handleFullscreenChange()
+        }
+      }, 100)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+    
+    // Monitor for iframe fullscreen attempts
+    const observer = new MutationObserver(() => {
+      handleIframeClick()
+    })
+    
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+      childList: true,
+      subtree: true
+    })
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+      observer.disconnect()
+    }
+  }, [])
 
   const handlePlay = () => {
     if (isMobileDevice) {
@@ -201,7 +296,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
         </div>
       ) : (
         // Video Player
-        <div className="fixed inset-0 w-full h-full bg-black movie-player-enter">
+        <div ref={containerRef} className="fixed inset-0 w-full h-full bg-black movie-player-enter">
           {/* Go Back Button - Always visible */}
           <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>
