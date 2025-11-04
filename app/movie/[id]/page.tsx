@@ -2,9 +2,7 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { MoviePlayerWrapper } from "@/components/movie-player-wrapper"
 import { MovieDetails } from "@/components/movie-details"
-import { MovieCarousel } from "@/components/movie-carousel"
 import { StructuredData } from "@/components/seo/structured-data"
 import { getMovieByIdServer, getMoviesServer } from "@/lib/database"
 import { generateMovieMetadata } from "@/lib/seo"
@@ -59,19 +57,12 @@ export default async function MoviePage({ params }: MoviePageProps) {
     const nextMovie = relatedMovies[0] || null
 
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#090a0a]">
         <StructuredData type="movie" data={movie} />
         <Navigation />
 
-        <main className="pt-16">
-          <MoviePlayerWrapper movie={movie} nextMovie={nextMovie} />
-          <MovieDetails movie={movie} />
-
-          {relatedMovies.length > 0 && (
-            <div className="py-12">
-              <MovieCarousel title="More Like This" movies={relatedMovies} />
-            </div>
-          )}
+        <main>
+          <MovieDetails movie={movie} relatedMovies={relatedMovies} />
         </main>
 
         <Footer />
