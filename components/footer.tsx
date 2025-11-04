@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Github, Instagram } from "lucide-react"
 
 const sections = [
@@ -53,7 +54,14 @@ export function Footer() {
       <div className="max-w-6xl mx-auto grid gap-10 md:grid-cols-[1.2fr,2fr] items-start">
         {/* Brand + blurb */}
         <div>
-          <Link href="/" className="inline-flex items-baseline">
+          <Link href="/" className="inline-flex items-center space-x-3">
+            <Image
+              src="/image.png"
+              alt="Agasobanuye Movies Logo"
+              width={48}
+              height={48}
+              className="object-contain"
+            />
             <h2 className="text-2xl font-semibold text-white">AGASOBANUYE MOVIES</h2>
           </Link>
           <p className="text-gray-400 mt-1 text-sm leading-6 max-w-md">
