@@ -123,3 +123,25 @@ export function getTMDBImageUrl(path: string, size = "w500") {
   if (!path) return "/placeholder.svg?height=750&width=500"
   return `https://image.tmdb.org/t/p/${size}${path}`
 }
+
+export async function searchTMDBSearchMulti(query: string, page = 1) {
+  if (!TMDB_TOKEN) {
+    throw new Error("TMDB token not configured")
+  }
+
+  const response = await fetch(
+    `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(query)}&language=en-US&page=${page}`,
+    {
+      headers: {
+        'Authorization': TMDB_TOKEN,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error("Failed to search TMDB")
+  }
+
+  return response.json()
+}

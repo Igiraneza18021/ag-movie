@@ -111,6 +111,24 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [lastScrollY])
 
+  // Keyboard shortcut for search (Ctrl+G / Cmd+G)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (pathname.startsWith("/anime")) {
+        return
+      }
+
+      // Open search with Ctrl+G / Cmd+G
+      if ((e.ctrlKey || e.metaKey) && e.key === "g") {
+        e.preventDefault()
+        setIsSearchOpen(true)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [pathname])
+
   // Outside clicks (for the More menu only)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
