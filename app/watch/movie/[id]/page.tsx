@@ -55,7 +55,7 @@ export default function WatchMoviePage({ params }: WatchMoviePageProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black z-50">
+    <div className="fixed inset-0 bg-black z-50 w-full h-full overflow-hidden">
       <MoviePlayer movie={movie} autoPlay={true} />
     </div>
   )

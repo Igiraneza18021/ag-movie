@@ -9,7 +9,7 @@ import { MobileVideoPlayer } from "@/components/mobile-video-player"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import { isMobile } from "@/lib/mobile-utils"
 import type { Movie } from "@/lib/types"
-import { Play, X, Volume2, VolumeX, Maximize, Minimize, ChevronRight, Settings, RotateCcw, ArrowLeft } from "lucide-react"
+import { Play, X, Volume2, VolumeX, ChevronRight, Settings, RotateCcw, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface MoviePlayerProps {
@@ -21,7 +21,6 @@ interface MoviePlayerProps {
 
 export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }: MoviePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(autoPlay)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showNextMovie, setShowNextMovie] = useState(false)
@@ -202,7 +201,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
         </div>
       ) : (
         // Video Player
-        <div className={`relative ${isFullscreen ? "fixed inset-0 z-50" : "h-screen"} bg-black movie-player-enter`}>
+        <div className="fixed inset-0 w-full h-full bg-black movie-player-enter">
           {/* Go Back Button - Always visible */}
           <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>
@@ -211,14 +210,11 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
             </Button>
           </div>
 
-          {/* Player Controls - Hidden when autoPlay */}
+          {/* Player Controls */}
           {!autoPlay && (
             <div className="absolute top-4 right-4 z-10 flex gap-2">
               <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-              </Button>
-              <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
-                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
               </Button>
               <Button variant="secondary" size="sm" onClick={handleClose}>
                 <X className="h-4 w-4" />

@@ -112,7 +112,7 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
   }
 
   return (
-    <div className="fixed inset-0 bg-black z-50">
+    <div className="fixed inset-0 bg-black z-50 w-full h-full overflow-hidden">
       <EpisodePlayer episode={selectedEpisode} tvShow={tvShow} nextEpisode={nextEpisode} autoPlay={true} />
     </div>
   )

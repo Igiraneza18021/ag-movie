@@ -8,7 +8,7 @@ import { LoadingSpinner } from "@/components/ui/loading"
 import { MobileVideoPlayer } from "@/components/mobile-video-player"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Episode, TVShow } from "@/lib/types"
-import { Play, X, Volume2, VolumeX, Maximize, Minimize, ArrowLeft, Calendar, Clock, Download, ExternalLink, ChevronRight, Settings, RotateCcw } from "lucide-react"
+import { Play, X, Volume2, VolumeX, ArrowLeft, Calendar, Clock, Download, ExternalLink, ChevronRight, Settings, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
@@ -22,7 +22,6 @@ interface EpisodePlayerProps {
 
 export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, autoPlay = false }: EpisodePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(autoPlay)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showNextEpisode, setShowNextEpisode] = useState(false)
@@ -299,7 +298,7 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, aut
         </div>
       ) : (
         // Video Player
-        <div className={`relative ${isFullscreen ? "fixed inset-0 z-50" : "h-screen"} bg-black`}>
+        <div className="fixed inset-0 w-full h-full bg-black">
           {/* Go Back Button - Always visible */}
           <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>
@@ -308,14 +307,11 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, aut
             </Button>
           </div>
 
-          {/* Player Controls - Hidden when autoPlay */}
+          {/* Player Controls */}
           {!autoPlay && (
             <div className="absolute top-4 right-4 z-10 flex gap-2">
               <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-              </Button>
-              <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
-                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
               </Button>
               <Button variant="secondary" size="sm" onClick={handleClose}>
                 <X className="h-4 w-4" />
@@ -323,18 +319,12 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, aut
             </div>
           )}
 
-          {/* TV Show Info Overlay - Always visible */}
-          <div className="absolute top-4 left-20 z-10">
-            <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded-lg p-3 animate-slide-in-left">
-              <img
-                src={getTMDBImageUrl(tvShow.poster_path || "", "w154") || "/placeholder.svg"}
-                alt={tvShow.name}
-                className="w-10 h-12 object-cover rounded-md hover-scale"
-              />
-              <div className="text-white">
-                <h3 className="font-semibold text-sm truncate max-w-24">{tvShow.name}</h3>
-                <p className="text-xs text-gray-300">S{episode.season_number}E{episode.episode_number}</p>
-              </div>
+          {/* Episode Details - Top Center */}
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="text-white text-center">
+              <span className="text-sm font-semibold">
+                S{episode.season_number}E{episode.episode_number} - {episode.name || `Episode ${episode.episode_number}`}
+              </span>
             </div>
           </div>
 

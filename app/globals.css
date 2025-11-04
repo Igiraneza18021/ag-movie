@@ -41,6 +41,28 @@
   --sidebar-ring: oklch(0.65 0.2 270);
 }
 
+/* Ensure fullscreen fills entire viewport */
+iframe:fullscreen,
+iframe:-webkit-full-screen,
+iframe:-moz-full-screen,
+iframe:-ms-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 999999 !important;
+}
+
+/* Ensure video player containers fill viewport in fullscreen */
+:fullscreen video,
+:-webkit-full-screen video,
+:-moz-full-screen video,
+:-ms-fullscreen video {
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
 .dark {
   --background: oklch(0.08 0 0);
   --foreground: oklch(0.98 0 0);
