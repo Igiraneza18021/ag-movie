@@ -3,8 +3,6 @@ import { Metadata } from "next"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { TVShowDetails } from "@/components/tv-show-details"
-import { EpisodeList } from "@/components/episode-list"
-import { TVShowCarousel } from "@/components/tv-show-carousel"
 import { StructuredData } from "@/components/seo/structured-data"
 import {
   getTVShowByIdServer,
@@ -54,19 +52,12 @@ export default async function TVShowPage({ params }: TVShowPageProps) {
     .slice(0, 20)
 
   return (
-    <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#090a0a]">
       <StructuredData type="tvshow" data={tvShow} />
       <Navigation />
 
-      <main className="pt-16">
-        <TVShowDetails tvShow={tvShow} />
-        <EpisodeList tvShow={tvShow} seasons={seasons} episodes={episodes} />
-
-        {relatedShows.length > 0 && (
-          <div className="py-12">
-            <TVShowCarousel title="More Like This" tvShows={relatedShows} />
-          </div>
-        )}
+        <main>
+          <TVShowDetails tvShow={tvShow} seasons={seasons} episodes={episodes} relatedShows={relatedShows} />
       </main>
 
       <Footer />

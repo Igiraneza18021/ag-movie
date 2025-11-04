@@ -11,7 +11,7 @@ import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
   "Help Center",
-  "Get help with AG Movies. Find answers to common questions, learn how to use our platform, and get support for streaming movies and TV shows.",
+  "Get help with Agasobanuye Movies. Find answers to common questions, learn how to use our platform, and get support for streaming movies and TV shows.",
   "/help"
 )
 
@@ -22,7 +22,7 @@ export default function HelpCenterPage() {
       icon: <Play className="h-5 w-5" />,
       questions: [
         {
-          question: "How do I start watching movies on AG Movies?",
+          question: "How do I start watching movies on Agasobanuye Movies?",
           answer: "Simply browse our collection of movies and TV shows, click on any title you're interested in, and hit the play button. No registration required for basic viewing."
         },
         {
@@ -30,8 +30,8 @@ export default function HelpCenterPage() {
           answer: "While you can browse and watch content without an account, creating an account allows you to save your watchlist, get personalized recommendations, and access additional features."
         },
         {
-          question: "Is AG Movies free to use?",
-          answer: "Yes! AG Movies is completely free to use. We believe entertainment should be accessible to everyone."
+          question: "Is Agasobanuye Movies free to use?",
+          answer: "Yes! Agasobanuye Movies is completely free to use. We believe entertainment should be accessible to everyone."
         }
       ]
     },
@@ -112,7 +112,7 @@ export default function HelpCenterPage() {
               Help Center
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Find answers to your questions and get the most out of AG Movies
+              Find answers to your questions and get the most out of Agasobanuye Movies
             </p>
             
             {/* Search Bar */}

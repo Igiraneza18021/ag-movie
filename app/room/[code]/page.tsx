@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: RoomPageProps): Promise<Metad
   const { code } = await params
   
   return {
-    title: `Room ${code} - AG Movies Watch Party`,
+    title: `Room ${code} - Agasobanuye Movies Watch Party`,
     description: 'Join a synchronized movie watching experience with friends.',
   }
 }

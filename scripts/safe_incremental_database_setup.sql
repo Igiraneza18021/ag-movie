@@ -1,4 +1,4 @@
--- Safe Incremental Database Setup for AG Movies
+-- Safe Incremental Database Setup for Agasobanuye Movies
 -- This script safely creates only missing tables and columns
 -- Run this script in your Supabase SQL Editor - it's safe to run multiple times
 

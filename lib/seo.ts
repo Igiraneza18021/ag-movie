@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import type { Movie, TVShow } from '@/lib/types'
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ag.micorp.pro'
-const siteName = 'AG Movies'
+const siteName = 'Agasobanuye Movies'
 
 export function generateMovieMetadata(movie: Movie): Metadata {
   const title = `${movie.title} - Watch Online | ${siteName}`
@@ -19,9 +19,15 @@ export function generateMovieMetadata(movie: Movie): Metadata {
     description,
     keywords: [
       movie.title,
+      'Agasobanuye Movies',
+      'agasobanuye',
       'watch online',
       'streaming',
       'HD movie',
+      'movie streaming',
+      'watch movies online',
+      `${movie.title} watch online`,
+      `${movie.title} streaming`,
       ...(movie.genres?.map(genre => genre.name) || [])
     ],
     openGraph: {
@@ -70,10 +76,16 @@ export function generateTVShowMetadata(tvShow: TVShow): Metadata {
     description,
     keywords: [
       tvShow.name,
+      'Agasobanuye Movies',
+      'agasobanuye',
       'watch online',
       'streaming',
       'TV series',
       'HD TV show',
+      'TV show streaming',
+      'watch TV shows online',
+      `${tvShow.name} watch online`,
+      `${tvShow.name} streaming`,
       ...(tvShow.genres?.map(genre => genre.name) || [])
     ],
     openGraph: {

@@ -10,7 +10,7 @@ import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
   "About Us",
-  "Learn about AG Movies - your ultimate destination for streaming movies and TV shows. Discover our mission, values, and commitment to entertainment.",
+  "Learn about Agasobanuye Movies - your ultimate destination for streaming movies and TV shows. Discover our mission, values, and commitment to entertainment.",
   "/about"
 )
 
@@ -54,7 +54,7 @@ export default function AboutPage() {
         <div className="bg-gradient-to-b from-primary/10 to-transparent py-16">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-              About AG Movies
+              About Agasobanuye Movies
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Your ultimate destination for streaming movies and TV shows. We're passionate about bringing entertainment to your fingertips.
@@ -71,7 +71,7 @@ export default function AboutPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  AG Movies was born from a simple idea: entertainment should be accessible, seamless, and enjoyable for everyone. 
+                  Agasobanuye Movies was born from a simple idea: entertainment should be accessible, seamless, and enjoyable for everyone. 
                   Founded by a passionate team of developers and entertainment enthusiasts, we set out to create a streaming platform 
                   that puts the user experience first.
                 </p>
@@ -81,7 +81,7 @@ export default function AboutPage() {
                   sparks conversations, and creates lasting memories.
                 </p>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Today, AG Movies continues to evolve, incorporating cutting-edge technology and user feedback to deliver an 
+                  Today, Agasobanuye Movies continues to evolve, incorporating cutting-edge technology and user feedback to deliver an 
                   unparalleled streaming experience. Our commitment to quality, innovation, and user satisfaction drives everything we do.
                 </p>
               </CardContent>
@@ -168,7 +168,7 @@ export default function AboutPage() {
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-foreground mb-6">Meet Our Team</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Behind AG Movies is a dedicated team of developers, designers, and entertainment enthusiasts 
+              Behind Agasobanuye Movies is a dedicated team of developers, designers, and entertainment enthusiasts 
               who work tirelessly to bring you the best streaming experience.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

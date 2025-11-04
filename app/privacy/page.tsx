@@ -7,7 +7,7 @@ import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
   "Privacy Policy",
-  "Learn how AG Movies protects your privacy and handles your personal information. Our commitment to data security and user privacy.",
+  "Learn how Agasobanuye Movies protects your privacy and handles your personal information. Our commitment to data security and user privacy.",
   "/privacy"
 )
 
@@ -114,7 +114,7 @@ export default function PrivacyPolicyPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  At AG Movies, we are committed to protecting your privacy and ensuring the security of your personal information. 
+                  At Agasobanuye Movies, we are committed to protecting your privacy and ensuring the security of your personal information. 
                   This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our 
                   streaming platform and related services.
                 </p>

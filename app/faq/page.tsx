@@ -11,7 +11,7 @@ import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
   "FAQ - Frequently Asked Questions",
-  "Find answers to common questions about AG Movies. Get help with streaming, downloads, account management, and more.",
+  "Find answers to common questions about Agasobanuye Movies. Get help with streaming, downloads, account management, and more.",
   "/faq"
 )
 
@@ -22,7 +22,7 @@ export default function FAQPage() {
       icon: <Play className="h-5 w-5" />,
       questions: [
         {
-          question: "How do I start watching movies on AG Movies?",
+          question: "How do I start watching movies on Agasobanuye Movies?",
           answer: "Simply browse our collection of movies and TV shows, click on any title you're interested in, and hit the play button. No registration required for basic viewing."
         },
         {
@@ -30,12 +30,12 @@ export default function FAQPage() {
           answer: "While you can browse and watch content without an account, creating an account allows you to save your watchlist, get personalized recommendations, and access additional features."
         },
         {
-          question: "Is AG Movies free to use?",
-          answer: "Yes! AG Movies is completely free to use. We believe entertainment should be accessible to everyone."
+          question: "Is Agasobanuye Movies free to use?",
+          answer: "Yes! Agasobanuye Movies is completely free to use. We believe entertainment should be accessible to everyone."
         },
         {
-          question: "What devices can I use to watch AG Movies?",
-          answer: "You can watch AG Movies on any device with a web browser, including computers, tablets, and smartphones. We're working on dedicated mobile apps."
+          question: "What devices can I use to watch Agasobanuye Movies?",
+          answer: "You can watch Agasobanuye Movies on any device with a web browser, including computers, tablets, and smartphones. We're working on dedicated mobile apps."
         }
       ]
     },
@@ -96,8 +96,8 @@ export default function FAQPage() {
           answer: "We support all modern browsers including Chrome, Firefox, Safari, and Edge. Make sure your browser is updated to the latest version."
         },
         {
-          question: "Can I use AG Movies on mobile?",
-          answer: "Yes, AG Movies works on mobile devices through your web browser. We're working on dedicated mobile apps for iOS and Android."
+          question: "Can I use Agasobanuye Movies on mobile?",
+          answer: "Yes, Agasobanuye Movies works on mobile devices through your web browser. We're working on dedicated mobile apps for iOS and Android."
         },
         {
           question: "Why can't I find a specific movie or TV show?",
@@ -168,7 +168,7 @@ export default function FAQPage() {
               Frequently Asked Questions
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Find quick answers to the most common questions about AG Movies
+              Find quick answers to the most common questions about Agasobanuye Movies
             </p>
             
             {/* Search Bar */}

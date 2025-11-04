@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -152,9 +153,18 @@ export default function WelcomePage() {
 
         {/* Hero Content */}
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-          <h1 className="text-6xl md:text-8xl font-bold text-foreground mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            AG MOVIES
-          </h1>
+          <div className="flex flex-col items-center mb-6">
+            <Image
+              src="/image.png"
+              alt="Agasobanuye Movies Logo"
+              width={200}
+              height={200}
+              className="object-contain mb-6"
+            />
+            <h1 className="text-6xl md:text-8xl font-bold text-foreground bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              AGASOBANUYE MOVIES
+            </h1>
+          </div>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Your ultimate destination for streaming movies and TV shows. 
             Discover, watch, and download your favorite content.

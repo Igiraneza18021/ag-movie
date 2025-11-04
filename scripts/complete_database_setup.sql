@@ -1,4 +1,4 @@
--- Complete Database Setup for AG Movies
+-- Complete Database Setup for Agasobanuye Movies
 -- Run this script in your Supabase SQL Editor
 
 -- ==============================================

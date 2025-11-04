@@ -1,120 +1,135 @@
+"use client"
+
 import Link from "next/link"
+import Image from "next/image"
+import { Github, Instagram } from "lucide-react"
+
+const sections = [
+  {
+    title: "Explore",
+    links: [
+      { label: "Home", href: "/" },
+      { label: "Movies", href: "/movies" },
+      { label: "TV Shows", href: "/tv-shows" },
+      { label: "Categories", href: "/categories" },
+      { label: "Coming Soon", href: "/coming-soon" },
+      { label: "Browse All", href: "/list" },
+    ],
+  },
+  {
+    title: "My List",
+    links: [
+      { label: "Watchlist", href: "/watchlist" },
+      { label: "Request Content", href: "/request-movie" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+    ],
+  },
+  {
+    title: "About",
+    links: [
+      { label: "About Us", href: "/about" },
+      { label: "Contact", href: "/contact" },
+      { label: "Our Team", href: "/team" },
+      { label: "FAQ", href: "/faq" },
+    ],
+  },
+]
+
+const socials = [
+  { icon: Github, href: "https://github.com/chaste-djaziri", label: "GitHub" },
+  { icon: Instagram, href: "https://instagram.com/_nepoflix", label: "Instagram" },
+]
 
 export function Footer() {
+  const year = new Date().getFullYear()
+
   return (
-    <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 py-8 sm:py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 sm:gap-8">
-          <div className="col-span-2 sm:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm sm:text-lg">AG</span>
-              </div>
-              <span className="text-lg sm:text-xl font-bold text-foreground">MOVIES</span>
-            </div>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              Your ultimate destination for streaming movies and TV shows.
-            </p>
-          </div>
+    <footer className="bg-[#090a0a] border-t border-white/10 py-12 px-4 sm:px-6 mt-16 relative">
+      <div className="max-w-6xl mx-auto grid gap-10 md:grid-cols-[1.2fr,2fr] items-start">
+        {/* Brand + blurb */}
+        <div>
+          <Link href="/" className="inline-flex items-center space-x-3">
+            <Image
+              src="/image.png"
+              alt="Agasobanuye Movies Logo"
+              width={48}
+              height={48}
+              className="object-contain"
+            />
+            <h2 className="text-2xl font-semibold text-white">AGASOBANUYE MOVIES</h2>
+          </Link>
+          <p className="text-gray-400 mt-1 text-sm leading-6 max-w-md">
+            Stream the latest movies, TV shows with high quality video. Your ultimate entertainment destination.
+          </p>
 
-          <div>
-            <h3 className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Browse</h3>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href="/movies" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Movies
-                </Link>
-              </li>
-              <li>
-                <Link href="/tv-shows" className="text-muted-foreground hover:text-foreground transition-colors">
-                  TV Shows
-                </Link>
-              </li>
-              <li>
-                <Link href="/categories" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link href="/coming-soon" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Coming Soon
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Account</h3>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href="/watchlist" className="text-muted-foreground hover:text-foreground transition-colors">
-                  My Watchlist
-                </Link>
-              </li>
-              <li>
-                <Link href="/profile" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Profile
-                </Link>
-              </li>
-              <li>
-                <Link href="/settings" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Settings
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Support</h3>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href="/help" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Contact Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
-            <ul className="space-y-2 text-xs sm:text-sm">
-              <li>
-                <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/team" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Our Team
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
+          {/* Socials */}
+          <div className="flex items-center gap-5 mt-4">
+            {socials.map((s) => {
+              const Icon = s.icon
+              return (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.label}
+                  className="text-gray-400 hover:text-white transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30"
+                >
+                  <Icon className="h-6 w-6" />
+                  <span className="sr-only">{s.label}</span>
+                </a>
+              )
+            })}
           </div>
         </div>
 
-        <div className="border-t border-border mt-6 sm:mt-8 pt-6 sm:pt-8 text-center">
-          <p className="text-muted-foreground text-xs sm:text-sm">© 2025 AG MOVIES by Mirror Corporation (micorp.pro). All rights reserved.</p>
+        {/* Link columns */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
+          {sections.map((section) => (
+            <nav key={section.title} aria-labelledby={`footer-${section.title}`}>
+              <h3 id={`footer-${section.title}`} className="text-white font-medium mb-3">
+                {section.title}
+              </h3>
+              <ul className="space-y-2">
+                {section.links.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
+      </div>
+
+      {/* Back to top */}
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="w-8 h-8 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center text-white text-sm transition-colors duration-200"
+          aria-label="Back to top"
+        >
+          ↑
+        </button>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-white/10 flex flex-col items-center gap-1 text-xs text-gray-400">
+        <span className="text-gray-500">© {year} Agasobanuye Movies. All rights reserved.</span>
+        <span className="text-gray-400 text-center">
+          Agasobanuye Movies does not store any files on our server. All content is provided by non-affiliated third parties.
+        </span>
       </div>
     </footer>
   )

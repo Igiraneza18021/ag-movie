@@ -9,17 +9,18 @@ import { MobileVideoPlayer } from "@/components/mobile-video-player"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import { isMobile } from "@/lib/mobile-utils"
 import type { Movie } from "@/lib/types"
-import { Play, X, Volume2, VolumeX, Maximize, Minimize, ChevronRight, Settings, RotateCcw } from "lucide-react"
+import { Play, X, Volume2, VolumeX, ChevronRight, Settings, RotateCcw, ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface MoviePlayerProps {
   movie: Movie
   nextMovie?: Movie
   onNextMovie?: () => void
+  autoPlay?: boolean
 }
 
-export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
+export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }: MoviePlayerProps) {
+  const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showNextMovie, setShowNextMovie] = useState(false)
@@ -29,6 +30,8 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
   const [isMobileDevice, setIsMobileDevice] = useState(false)
   const [showMobilePlayer, setShowMobilePlayer] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   const backdropUrl = getTMDBImageUrl(movie.backdrop_path || "", "original")
   const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : ""
@@ -37,6 +40,103 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
   useEffect(() => {
     setMounted(true)
     setIsMobileDevice(isMobile())
+    if (autoPlay) {
+      setIsPlaying(true)
+    }
+  }, [autoPlay])
+
+  // Intercept iframe fullscreen and make container fullscreen instead
+  useEffect(() => {
+    if (!iframeRef.current || !containerRef.current) return
+
+    const iframe = iframeRef.current
+    const container = containerRef.current
+
+    // Function to enter fullscreen on container
+    const enterFullscreen = async () => {
+      try {
+        // Use the most modern API first
+        if (container.requestFullscreen) {
+          await container.requestFullscreen()
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen((Element as any).ALLOW_KEYBOARD_INPUT)
+        } else if ((container as any).mozRequestFullScreen) {
+          await (container as any).mozRequestFullScreen()
+        } else if ((container as any).msRequestFullscreen) {
+          await (container as any).msRequestFullscreen()
+        }
+      } catch (error) {
+        console.error('Failed to enter fullscreen:', error)
+      }
+    }
+
+    // Listen for fullscreen changes
+    const handleFullscreenChange = async () => {
+      const fullscreenElement = 
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+
+      // If iframe is in fullscreen, exit it and make container fullscreen instead
+      if (fullscreenElement === iframe) {
+        // Exit iframe fullscreen immediately
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {})
+        } else if ((document as any).webkitExitFullscreen) {
+          ;(document as any).webkitExitFullscreen()
+        } else if ((document as any).mozCancelFullScreen) {
+          ;(document as any).mozCancelFullScreen()
+        } else if ((document as any).msExitFullscreen) {
+          ;(document as any).msExitFullscreen()
+        }
+
+        // Immediately make container fullscreen
+        setTimeout(() => {
+          enterFullscreen()
+        }, 50)
+      }
+    }
+
+    // Also listen for clicks on iframe that might trigger fullscreen
+    const handleIframeClick = () => {
+      setTimeout(() => {
+        const fullscreenElement = 
+          document.fullscreenElement ||
+          (document as any).webkitFullscreenElement ||
+          (document as any).mozFullScreenElement ||
+          (document as any).msFullscreenElement
+
+        if (fullscreenElement === iframe) {
+          handleFullscreenChange()
+        }
+      }, 100)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+    
+    // Monitor for iframe fullscreen attempts
+    const observer = new MutationObserver(() => {
+      handleIframeClick()
+    })
+    
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+      childList: true,
+      subtree: true
+    })
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+      observer.disconnect()
+    }
   }, [])
 
   const handlePlay = () => {
@@ -51,6 +151,10 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
     setIsPlaying(false)
     setVideoEnded(false)
     setShowNextMovie(false)
+    if (autoPlay) {
+      // If auto-played, go back to details page
+      window.history.back()
+    }
   }
 
   // Auto-next functionality - DISABLED
@@ -192,19 +296,26 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
         </div>
       ) : (
         // Video Player
-        <div className={`relative ${isFullscreen ? "fixed inset-0 z-50" : "h-screen"} bg-black movie-player-enter`}>
-          {/* Player Controls */}
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
-              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-            </Button>
+        <div ref={containerRef} className="fixed inset-0 w-full h-full bg-black movie-player-enter">
+          {/* Go Back Button - Always visible */}
+          <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>
-              <X className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
             </Button>
           </div>
+
+          {/* Player Controls */}
+          {!autoPlay && (
+            <div className="absolute top-4 right-4 z-10 flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
 
           {/* Auto-next Settings - REMOVED */}
           {/* No auto-next functionality */}
@@ -213,11 +324,11 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
           {/* No automatic next movie popup */}
 
           {/* Video Player */}
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="absolute inset-0 w-full h-full">
             <iframe
               ref={iframeRef}
               src={movie.embed_url}
-              className="w-full h-full"
+              className="absolute inset-0 w-full h-full"
               frameBorder="0"
               allowFullScreen
               allow="autoplay; encrypted-media; fullscreen; picture-in-picture"

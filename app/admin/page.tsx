@@ -11,7 +11,7 @@ export default function AdminPage() {
   return (
     <PasswordProtection>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground mb-2">AG MOVIES Admin</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-2">AGASOBANUYE MOVIES Admin</h1>
         <p className="text-muted-foreground">Manage your streaming content</p>
       </div>
 

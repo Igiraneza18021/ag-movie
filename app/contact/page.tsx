@@ -13,7 +13,7 @@ import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
   "Contact Us",
-  "Get in touch with the AG Movies team. We're here to help with any questions, feedback, or support you need for your streaming experience.",
+  "Get in touch with the Agasobanuye Movies team. We're here to help with any questions, feedback, or support you need for your streaming experience.",
   "/contact"
 )
 
