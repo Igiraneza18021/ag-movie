@@ -77,12 +77,12 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border nav-slide-down">
+      <nav className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2 hover-scale">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center animate-gradient">
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg">AG</span>
               </div>
               <span className="text-xl font-bold text-foreground">MOVIES</span>
@@ -90,11 +90,11 @@ export function Navigation() {
 
             {/* Desktop Navigation */}
             <div className="flex items-center space-x-8">
-              {navItems.map((item, index) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`text-muted-foreground hover:text-foreground transition-colors hover-scale animate-stagger-${index + 1}`}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -109,7 +109,7 @@ export function Navigation() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsSearchOpen(true)}
-                className="text-muted-foreground hover:text-foreground hover-scale"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <Search className="h-5 w-5" />
               </Button>
