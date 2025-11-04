@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Agasobanuye Movies - Stream Movies & TV Shows',
+    name: 'Agasobanuye Movies - Stream Movies & TV Shows Online',
     short_name: 'Agasobanuye Movies',
-    description: 'Your ultimate destination for streaming movies and TV shows',
+    description: 'Agasobanuye Movies - Your premier destination for streaming the latest movies and TV shows online in HD quality.',
     start_url: '/',
     display: 'standalone',
     background_color: '#000000',
@@ -23,7 +23,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any maskable',
       },
     ],
-    categories: ['entertainment', 'video', 'movies', 'tv'],
+    categories: ['entertainment', 'video', 'movies', 'tv', 'streaming', 'agasobanuye'],
     lang: 'en',
     orientation: 'portrait',
   }
