@@ -10,14 +10,14 @@ import "@/lib/disable-debug"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "AG MOVIES - Stream Movies & TV Shows",
+  title: "Agasobanuye Movies - Stream Movies & TV Shows",
   description: "Your ultimate destination for streaming movies and TV shows. Watch the latest movies and TV series online in HD quality.",
   keywords: ["movies", "tv shows", "streaming", "watch online", "HD movies", "free movies", "entertainment"],
-  authors: [{ name: "AG Movies" }],
-  creator: "AG Movies",
-  publisher: "AG Movies",
+  authors: [{ name: "Agasobanuye Movies" }],
+  creator: "Agasobanuye Movies",
+  publisher: "Agasobanuye Movies",
   generator: "Next.js",
-  applicationName: "AG Movies",
+  applicationName: "Agasobanuye Movies",
   referrer: "origin-when-cross-origin",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   icons: {
@@ -49,21 +49,21 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://ag.micorp.pro",
-    siteName: "AG Movies",
-    title: "AG MOVIES - Stream Movies & TV Shows",
+    siteName: "Agasobanuye Movies",
+    title: "Agasobanuye Movies - Stream Movies & TV Shows",
     description: "Your ultimate destination for streaming movies and TV shows. Watch the latest movies and TV series online in HD quality.",
     images: [
       {
         url: "/placeholder.jpg",
         width: 1200,
         height: 630,
-        alt: "AG Movies - Stream Movies & TV Shows",
+        alt: "Agasobanuye Movies - Stream Movies & TV Shows",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AG MOVIES - Stream Movies & TV Shows",
+    title: "Agasobanuye Movies - Stream Movies & TV Shows",
     description: "Your ultimate destination for streaming movies and TV shows. Watch the latest movies and TV series online in HD quality.",
     images: ["/placeholder.jpg"],
     creator: "@agmovies",

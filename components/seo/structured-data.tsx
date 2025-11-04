@@ -30,7 +30,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
       "sameAs": movie.tmdb_id ? `https://www.themoviedb.org/movie/${movie.tmdb_id}` : undefined,
       "publisher": {
         "@type": "Organization",
-        "name": "AG Movies",
+        "name": "Agasobanuye Movies",
         "url": baseUrl
       }
     }
@@ -69,7 +69,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
       "sameAs": tvShow.tmdb_id ? `https://www.themoviedb.org/tv/${tvShow.tmdb_id}` : undefined,
       "publisher": {
         "@type": "Organization",
-        "name": "AG Movies",
+        "name": "Agasobanuye Movies",
         "url": baseUrl
       }
     }

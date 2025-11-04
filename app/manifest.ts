@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'AG Movies - Stream Movies & TV Shows',
-    short_name: 'AG Movies',
+    name: 'Agasobanuye Movies - Stream Movies & TV Shows',
+    short_name: 'Agasobanuye Movies',
     description: 'Your ultimate destination for streaming movies and TV shows',
     start_url: '/',
     display: 'standalone',

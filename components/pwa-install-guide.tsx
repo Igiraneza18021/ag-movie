@@ -76,10 +76,10 @@ export function PWAInstallGuide() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Download className="h-5 w-5" />
-              Install AG Movies
+              Install Agasobanuye Movies
             </DialogTitle>
             <DialogDescription>
-              Install AG Movies on your device for a better experience
+              Install Agasobanuye Movies on your device for a better experience
             </DialogDescription>
           </DialogHeader>
 
@@ -167,7 +167,7 @@ export function PWAInstallGuide() {
                   <div className="space-y-2">
                     <div className="flex items-start gap-3">
                       <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                      <p className="text-sm">Or use the menu (three dots) → "Install AG Movies"</p>
+                      <p className="text-sm">Or use the menu (three dots) → "Install Agasobanuye Movies"</p>
                     </div>
                     <div className="flex items-start gap-3">
                       <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>

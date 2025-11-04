@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import type { Movie, TVShow } from '@/lib/types'
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ag.micorp.pro'
-const siteName = 'AG Movies'
+const siteName = 'Agasobanuye Movies'
 
 export function generateMovieMetadata(movie: Movie): Metadata {
   const title = `${movie.title} - Watch Online | ${siteName}`

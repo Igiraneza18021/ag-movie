@@ -1,6 +1,6 @@
 # Welcome to MiCorp Pro!
 
-Welcome to **AG Movies**, a sleek and modern web application designed with **TypeScript** and **CSS** to provide a seamless and efficient user experience.
+Welcome to **Agasobanuye Movies**, a sleek and modern web application designed with **TypeScript** and **CSS** to provide a seamless and efficient user experience.
 
 ##  Features
 - **Written in TypeScript** for enhanced code quality and scalability.

@@ -10,7 +10,7 @@ import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
   "Home",
-  "Watch the latest movies and TV shows online in HD quality. Stream trending movies, popular TV series, and discover new content on AG Movies.",
+  "Watch the latest movies and TV shows online in HD quality. Stream trending movies, popular TV series, and discover new content on Agasobanuye Movies.",
   "/"
 )
 

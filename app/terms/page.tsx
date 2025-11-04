@@ -6,7 +6,7 @@ import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
   "Terms of Service",
-  "Read the terms and conditions for using AG Movies. Understand your rights and responsibilities when using our streaming platform.",
+  "Read the terms and conditions for using Agasobanuye Movies. Understand your rights and responsibilities when using our streaming platform.",
   "/terms"
 )
 
@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
     {
       title: "Acceptance of Terms",
       content: [
-        "By accessing and using AG Movies, you accept and agree to be bound by the terms and provision of this agreement.",
+        "By accessing and using Agasobanuye Movies, you accept and agree to be bound by the terms and provision of this agreement.",
         "If you do not agree to abide by the above, please do not use this service.",
         "These terms apply to all visitors, users, and others who access or use the service."
       ]
@@ -25,7 +25,7 @@ export default function TermsOfServicePage() {
     {
       title: "Use License",
       content: [
-        "Permission is granted to temporarily access AG Movies for personal, non-commercial transitory viewing only.",
+        "Permission is granted to temporarily access Agasobanuye Movies for personal, non-commercial transitory viewing only.",
         "This is the grant of a license, not a transfer of title, and under this license you may not:",
         "• Modify or copy the materials",
         "• Use the materials for any commercial purpose or for any public display",
@@ -57,7 +57,7 @@ export default function TermsOfServicePage() {
     {
       title: "Content and Intellectual Property",
       content: [
-        "The content on AG Movies, including but not limited to text, graphics, logos, images, and software, is the property of AG Movies or its content suppliers.",
+        "The content on Agasobanuye Movies, including but not limited to text, graphics, logos, images, and software, is the property of Agasobanuye Movies or its content suppliers.",
         "All content is protected by copyright, trademark, and other intellectual property laws.",
         "You may not reproduce, distribute, modify, or create derivative works from any content without explicit permission.",
         "Third-party content is used under appropriate licenses and agreements."
@@ -66,16 +66,16 @@ export default function TermsOfServicePage() {
     {
       title: "Disclaimer",
       content: [
-        "The information on AG Movies is provided on an 'as is' basis.",
-        "To the fullest extent permitted by law, AG Movies excludes all representations, warranties, conditions and terms.",
-        "AG Movies does not warrant that the website will be constantly available or available at all.",
+        "The information on Agasobanuye Movies is provided on an 'as is' basis.",
+        "To the fullest extent permitted by law, Agasobanuye Movies excludes all representations, warranties, conditions and terms.",
+        "Agasobanuye Movies does not warrant that the website will be constantly available or available at all.",
         "Nothing in this disclaimer will limit or exclude our liability for death or personal injury."
       ]
     },
     {
       title: "Limitations",
       content: [
-        "In no event shall AG Movies or its suppliers be liable for any damages arising out of the use or inability to use the materials on AG Movies.",
+        "In no event shall Agasobanuye Movies or its suppliers be liable for any damages arising out of the use or inability to use the materials on Agasobanuye Movies.",
         "This includes, without limitation, damages for loss of data or profit, or due to business interruption.",
         "Because some jurisdictions do not allow limitations on implied warranties, these limitations may not apply to you."
       ]
@@ -83,24 +83,24 @@ export default function TermsOfServicePage() {
     {
       title: "Accuracy of Materials",
       content: [
-        "The materials appearing on AG Movies could include technical, typographical, or photographic errors.",
-        "AG Movies does not warrant that any of the materials on its website are accurate, complete, or current.",
-        "AG Movies may make changes to the materials contained on its website at any time without notice.",
-        "However, AG Movies does not make any commitment to update the materials."
+        "The materials appearing on Agasobanuye Movies could include technical, typographical, or photographic errors.",
+        "Agasobanuye Movies does not warrant that any of the materials on its website are accurate, complete, or current.",
+        "Agasobanuye Movies may make changes to the materials contained on its website at any time without notice.",
+        "However, Agasobanuye Movies does not make any commitment to update the materials."
       ]
     },
     {
       title: "Links",
       content: [
-        "AG Movies has not reviewed all of the sites linked to our website and is not responsible for the contents of any such linked site.",
-        "The inclusion of any link does not imply endorsement by AG Movies of the site.",
+        "Agasobanuye Movies has not reviewed all of the sites linked to our website and is not responsible for the contents of any such linked site.",
+        "The inclusion of any link does not imply endorsement by Agasobanuye Movies of the site.",
         "Use of any such linked website is at the user's own risk."
       ]
     },
     {
       title: "Modifications",
       content: [
-        "AG Movies may revise these terms of service for its website at any time without notice.",
+        "Agasobanuye Movies may revise these terms of service for its website at any time without notice.",
         "By using this website, you are agreeing to be bound by the then current version of these terms of service.",
         "We will notify users of any material changes to these terms."
       ]
@@ -127,7 +127,7 @@ export default function TermsOfServicePage() {
               Terms of Service
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Please read these terms carefully before using AG Movies. By using our service, you agree to these terms.
+              Please read these terms carefully before using Agasobanuye Movies. By using our service, you agree to these terms.
             </p>
             <p className="text-sm text-muted-foreground mt-4">
               Last updated: {lastUpdated}
@@ -145,8 +145,8 @@ export default function TermsOfServicePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  Welcome to AG Movies. These Terms of Service ("Terms") govern your use of our streaming platform 
-                  and services. By accessing or using AG Movies, you agree to be bound by these Terms.
+                  Welcome to Agasobanuye Movies. These Terms of Service ("Terms") govern your use of our streaming platform 
+                  and services. By accessing or using Agasobanuye Movies, you agree to be bound by these Terms.
                 </p>
                 <br />
                 <p className="text-muted-foreground leading-relaxed">

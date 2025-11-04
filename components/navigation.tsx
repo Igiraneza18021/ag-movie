@@ -81,11 +81,8 @@ export function Navigation() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">AG</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">MOVIES</span>
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold text-foreground">AGASOBANUYE MOVIES</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -122,11 +119,8 @@ export function Navigation() {
       <nav className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="flex items-center justify-between h-14 px-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">AG</span>
-            </div>
-            <span className="text-lg font-bold text-foreground">MOVIES</span>
+          <Link href="/" className="flex items-center">
+            <span className="text-lg font-bold text-foreground">AGASOBANUYE MOVIES</span>
           </Link>
 
           {/* Mobile Actions */}

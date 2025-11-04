@@ -10,8 +10,8 @@ import Link from "next/link"
 import { generatePageMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = generatePageMetadata(
-  "AG Movies Team",
-  "Meet the talented team behind AG Movies. Learn about our founders, developers, and the passionate people who make streaming movies and TV shows possible.",
+  "Agasobanuye Movies Team",
+  "Meet the talented team behind Agasobanuye Movies. Learn about our founders, developers, and the passionate people who make streaming movies and TV shows possible.",
   "/team"
 )
 
@@ -20,7 +20,7 @@ export default function TeamPage() {
     {
       name: "Igiraneza Patrick",
       role: "Founder & Lead Developer",
-      bio: "Visionary leader and technical architect behind AG Movies. Patrick brings years of experience in full-stack development and a passion for creating exceptional streaming experiences.",
+      bio: "Visionary leader and technical architect behind Agasobanuye Movies. Patrick brings years of experience in full-stack development and a passion for creating exceptional streaming experiences.",
       website: "https://igiranezapatrick.micorp.pro",
       avatar: "/placeholder-user.jpg",
       skills: ["Full-Stack Development", "System Architecture", "Product Strategy", "Team Leadership"],
@@ -50,7 +50,7 @@ export default function TeamPage() {
         <div className="bg-gradient-to-b from-primary/10 to-transparent py-16">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-              Meet the AG Movies Team
+              Meet the Agasobanuye Movies Team
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               We're a passionate team of developers, designers, and innovators dedicated to bringing you the best streaming experience possible.
@@ -116,7 +116,7 @@ export default function TeamPage() {
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-3xl font-bold text-foreground mb-6">Our Mission</h2>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-                At AG Movies, we believe that entertainment should be accessible, seamless, and enjoyable for everyone. 
+                At Agasobanuye Movies, we believe that entertainment should be accessible, seamless, and enjoyable for everyone. 
                 Our team is committed to creating innovative streaming solutions that bring people together through the power of movies and TV shows.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
