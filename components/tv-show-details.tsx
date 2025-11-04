@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { SpotlightSection } from "@/components/details/spotlight-section"
 import { BackdropGallery } from "@/components/details/backdrop-gallery"
 import { CategorySection } from "@/components/details/category-section"
-import { getTMDBImageUrl } from "@/lib/tmdb"
+import { getTMDBImageUrl, getTMDBSeasonEpisodes } from "@/lib/tmdb"
 import type { TVShow, Episode, Season } from "@/lib/types"
 import Link from "next/link"
 import { Play, Download } from "lucide-react"
@@ -31,30 +31,73 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
   const searchParams = useSearchParams()
   const showDownloads = searchParams.get("dl") === "1"
 
-  // Load episodes if not provided
+  // Load episodes and merge with TMDB data
   useEffect(() => {
     const loadEpisodes = async () => {
-      if (episodes.length > 0) return
       setEpisodesLoading(true)
       const supabase = createClient()
       try {
-        const { data, error } = await supabase
+        // Load episodes from database
+        const { data: dbEpisodes, error } = await supabase
           .from("episodes")
           .select("*")
           .eq("tv_show_id", tvShow.id)
           .order("season_number", { ascending: true })
           .order("episode_number", { ascending: true })
-
+        
         if (error) throw error
-        setAllEpisodes(data || [])
+
+        // Fetch TMDB episode data for available episodes
+        const tmdbEpisodesMap = new Map<string, any>()
+        
+        if (dbEpisodes && dbEpisodes.length > 0) {
+          // Get unique season numbers
+          const seasonNumbers = Array.from(new Set(dbEpisodes.map(ep => ep.season_number)))
+          
+          // Fetch TMDB data for each season
+          for (const seasonNum of seasonNumbers) {
+            try {
+              const tmdbEpisodes = await getTMDBSeasonEpisodes(tvShow.tmdb_id, seasonNum)
+              tmdbEpisodes.forEach((tmdbEp: any) => {
+                const key = `${seasonNum}-${tmdbEp.episode_number}`
+                tmdbEpisodesMap.set(key, tmdbEp)
+              })
+            } catch (err) {
+              console.error(`Failed to fetch TMDB episodes for season ${seasonNum}:`, err)
+            }
+          }
+
+          // Merge database episodes with TMDB data
+          const mergedEpisodes = dbEpisodes.map((dbEp: Episode) => {
+            const key = `${dbEp.season_number}-${dbEp.episode_number}`
+            const tmdbEp = tmdbEpisodesMap.get(key)
+            
+            return {
+              ...dbEp,
+              // Use TMDB data if available, otherwise fall back to database
+              name: tmdbEp?.name || dbEp.name,
+              overview: tmdbEp?.overview || dbEp.overview,
+              still_path: tmdbEp?.still_path || dbEp.still_path,
+              air_date: tmdbEp?.air_date || dbEp.air_date,
+              runtime: tmdbEp?.runtime || dbEp.runtime,
+              vote_average: tmdbEp?.vote_average || dbEp.vote_average,
+              vote_count: tmdbEp?.vote_count || dbEp.vote_count,
+            }
+          })
+
+          setAllEpisodes(mergedEpisodes)
+        } else {
+          setAllEpisodes([])
+        }
       } catch (error) {
         console.error("Failed to load episodes:", error)
+        setAllEpisodes(episodes || [])
       } finally {
         setEpisodesLoading(false)
       }
     }
     loadEpisodes()
-  }, [tvShow.id, episodes])
+  }, [tvShow.id, tvShow.tmdb_id, episodes])
 
   // Get unique seasons from episodes
   const uniqueSeasons = Array.from(new Set(allEpisodes.map((ep) => ep.season_number))).sort((a, b) => a - b)
@@ -120,7 +163,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
         onWatchClick={handleWatchClick}
         onTrailerClick={handleTrailerClick}
         showDownloads={showDownloads}
-      />
+        />
 
       {/* Tab Navigation */}
       {!showDownloads && (
@@ -161,10 +204,10 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
               >
                 More Like This
               </button>
-            )}
-          </div>
-        </div>
-      )}
+                )}
+              </div>
+                </div>
+              )}
 
       {/* Content */}
       <div className="px-8 pb-8 pt-6">
@@ -184,7 +227,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
             ) : (
               <p className="text-gray-400">No download links available.</p>
             )}
-          </div>
+                </div>
         ) : (
           <>
             {/* Overview Tab */}
@@ -204,7 +247,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-1 h-8 bg-blue-500 rounded-full"></div>
                   <h2 className="text-3xl font-bold text-white">Episodes</h2>
-                </div>
+              </div>
 
                 {/* Episodes Controls */}
                 <div className="bg-[#242424] rounded-xl p-4 mb-6">
@@ -224,7 +267,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                             </option>
                           ))}
                       </select>
-                    </div>
+            </div>
 
                     {/* Search Bar */}
                     <div className="flex-1 relative">
@@ -237,7 +280,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                           />
                         </svg>
-                      </div>
+          </div>
                       <input
                         type="text"
                         placeholder="Search episode..."
@@ -245,7 +288,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                         onChange={(e) => setEpisodeSearchQuery(e.target.value)}
                         className="w-full bg-[#3A3A3A] text-white px-12 py-3 rounded-lg border-0 focus:border-blue-500 focus:outline-none hover:bg-[#404040] transition-colors placeholder-gray-400"
                       />
-                    </div>
+      </div>
 
                     {/* Sort Button */}
                     <button
@@ -287,10 +330,10 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                           <div className="flex gap-3">
                             {/* Episode Thumbnail */}
                             <div className="relative flex-shrink-0">
-                              <div className="w-24 h-16 bg-gray-600 rounded-lg overflow-hidden">
+                              <div className="w-32 h-20 bg-gray-600 rounded-lg overflow-hidden">
                                 {episode.still_path ? (
                                   <img
-                                    src={getTMDBImageUrl(episode.still_path)}
+                                    src={getTMDBImageUrl(episode.still_path, "w300")}
                                     alt={episode.name}
                                     className="w-full h-full object-cover"
                                   />
@@ -320,7 +363,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                               <p className="text-gray-300 text-sm line-clamp-2 leading-relaxed">
                                 {episode.overview || "No description available."}
                               </p>
-                            </div>
+                          </div>
                           </div>
                         </div>
                       ))}
@@ -354,9 +397,9 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                       {episodesLoading && (
                         <div className="flex items-center justify-center py-8">
                           <div className="w-8 h-8 border-2 border-white border-solid border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                      )}
-                    </div>
+              </div>
+            )}
+          </div>
                   </div>
                 </div>
               </>
@@ -389,7 +432,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
             )}
           </>
         )}
-      </div>
+                  </div>
 
       {/* Trailer Modal */}
       {showTrailerModal && tvShow.trailer_url && (
@@ -405,7 +448,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>
+                  </div>
             <div className="p-4 md:p-6">
               <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
                 <iframe
@@ -415,8 +458,8 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
                   allowFullScreen
                   title="Trailer"
                 />
-              </div>
-            </div>
+                  </div>
+                </div>
           </div>
         </div>
       )}

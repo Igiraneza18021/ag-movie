@@ -17,10 +17,11 @@ interface EpisodePlayerProps {
   tvShow: TVShow
   nextEpisode?: Episode
   onNextEpisode?: () => void
+  autoPlay?: boolean
 }
 
-export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode }: EpisodePlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
+export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, autoPlay = false }: EpisodePlayerProps) {
+  const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -38,7 +39,10 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode }: E
     setMounted(true)
     setIsMobileDevice(typeof window !== 'undefined' && window.innerWidth < 768)
     fetchEpisodes()
-  }, [])
+    if (autoPlay) {
+      setIsPlaying(true)
+    }
+  }, [autoPlay])
 
   const fetchEpisodes = async () => {
     try {
@@ -83,6 +87,10 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode }: E
     setIsPlaying(false)
     setVideoEnded(false)
     setShowNextEpisode(false)
+    if (autoPlay) {
+      // If auto-played, go back to details page
+      window.history.back()
+    }
   }
 
   // Auto-next functionality - DISABLED
@@ -292,21 +300,31 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode }: E
       ) : (
         // Video Player
         <div className={`relative ${isFullscreen ? "fixed inset-0 z-50" : "h-screen"} bg-black`}>
-          {/* Player Controls */}
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
-              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-            </Button>
+          {/* Go Back Button - Always visible */}
+          <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>
-              <X className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
             </Button>
           </div>
 
-          {/* TV Show Info Overlay */}
-          <div className="absolute top-4 left-4 z-10">
+          {/* Player Controls - Hidden when autoPlay */}
+          {!autoPlay && (
+            <div className="absolute top-4 right-4 z-10 flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* TV Show Info Overlay - Always visible */}
+          <div className="absolute top-4 left-20 z-10">
             <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded-lg p-3 animate-slide-in-left">
               <img
                 src={getTMDBImageUrl(tvShow.poster_path || "", "w154") || "/placeholder.svg"}
@@ -327,10 +345,10 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode }: E
           {/* No automatic next episode popup */}
 
           {/* Video Player */}
-          <div className="w-full h-full flex items-center justify-center relative">
+          <div className="absolute inset-0 w-full h-full">
             <iframe
               src={episode.embed_url}
-              className="w-full h-full"
+              className="absolute inset-0 w-full h-full"
               frameBorder="0"
               allowFullScreen
               allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
@@ -349,14 +367,14 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode }: E
               }}
             />
             
-            {/* Episode Thumbnails in Right Corner */}
+            {/* Episode Thumbnails in Right Corner - Always visible */}
             {episodes.length > 1 && (
               <div className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10">
                 <div className="flex flex-col gap-1 bg-black/80 backdrop-blur-sm rounded-lg p-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
                   {episodes.slice(0, 10).map((ep) => (
                     <Link
                       key={ep.id}
-                      href={`/tv/${tvShow.id}/episode/${ep.id}`}
+                      href={`/watch/tv/${tvShow.id}?season=${ep.season_number}&episode=${ep.episode_number}`}
                       className={`flex-shrink-0 w-8 h-10 rounded-sm overflow-hidden border transition-all duration-200 hover:scale-110 ${
                         ep.id === episode.id 
                           ? 'border-primary shadow-md shadow-primary/50' 

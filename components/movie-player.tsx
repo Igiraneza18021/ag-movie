@@ -9,16 +9,18 @@ import { MobileVideoPlayer } from "@/components/mobile-video-player"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import { isMobile } from "@/lib/mobile-utils"
 import type { Movie } from "@/lib/types"
-import { Play, X, Volume2, VolumeX, Maximize, Minimize, ChevronRight, Settings, RotateCcw } from "lucide-react"
+import { Play, X, Volume2, VolumeX, Maximize, Minimize, ChevronRight, Settings, RotateCcw, ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface MoviePlayerProps {
   movie: Movie
   nextMovie?: Movie
   onNextMovie?: () => void
+  autoPlay?: boolean
 }
 
-export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
+export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }: MoviePlayerProps) {
+  const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -29,6 +31,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
   const [isMobileDevice, setIsMobileDevice] = useState(false)
   const [showMobilePlayer, setShowMobilePlayer] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const router = useRouter()
 
   const backdropUrl = getTMDBImageUrl(movie.backdrop_path || "", "original")
   const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : ""
@@ -37,7 +40,10 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
   useEffect(() => {
     setMounted(true)
     setIsMobileDevice(isMobile())
-  }, [])
+    if (autoPlay) {
+      setIsPlaying(true)
+    }
+  }, [autoPlay])
 
   const handlePlay = () => {
     if (isMobileDevice) {
@@ -51,6 +57,10 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
     setIsPlaying(false)
     setVideoEnded(false)
     setShowNextMovie(false)
+    if (autoPlay) {
+      // If auto-played, go back to details page
+      window.history.back()
+    }
   }
 
   // Auto-next functionality - DISABLED
@@ -193,18 +203,28 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
       ) : (
         // Video Player
         <div className={`relative ${isFullscreen ? "fixed inset-0 z-50" : "h-screen"} bg-black movie-player-enter`}>
-          {/* Player Controls */}
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
-              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-            </Button>
+          {/* Go Back Button - Always visible */}
+          <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>
-              <X className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
             </Button>
           </div>
+
+          {/* Player Controls - Hidden when autoPlay */}
+          {!autoPlay && (
+            <div className="absolute top-4 right-4 z-10 flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setIsMuted(!isMuted)}>
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
 
           {/* Auto-next Settings - REMOVED */}
           {/* No auto-next functionality */}
@@ -213,11 +233,11 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie }: MoviePlayerProps)
           {/* No automatic next movie popup */}
 
           {/* Video Player */}
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="absolute inset-0 w-full h-full">
             <iframe
               ref={iframeRef}
               src={movie.embed_url}
-              className="w-full h-full"
+              className="absolute inset-0 w-full h-full"
               frameBorder="0"
               allowFullScreen
               allow="autoplay; encrypted-media; fullscreen; picture-in-picture"

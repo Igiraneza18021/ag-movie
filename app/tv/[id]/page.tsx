@@ -51,16 +51,16 @@ export default async function TVShowPage({ params }: TVShowPageProps) {
     })
     .slice(0, 20)
 
-    return (
+  return (
       <div className="min-h-screen bg-[#090a0a]">
-        <StructuredData type="tvshow" data={tvShow} />
-        <Navigation />
+      <StructuredData type="tvshow" data={tvShow} />
+      <Navigation />
 
         <main>
           <TVShowDetails tvShow={tvShow} seasons={seasons} episodes={episodes} relatedShows={relatedShows} />
-        </main>
+      </main>
 
-        <Footer />
-      </div>
-    )
+      <Footer />
+    </div>
+  )
 }

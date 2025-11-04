@@ -11,6 +11,7 @@ import Link from "next/link"
 import { Play, Download } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
 
 interface MovieDetailsProps {
   movie: Movie
@@ -20,7 +21,7 @@ interface MovieDetailsProps {
 export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
   const [movieParts, setMovieParts] = useState<Movie[]>([])
   const [showTrailerModal, setShowTrailerModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<"overview" | "more">("overview")
+  const [activeTab, setActiveTab] = useState<"overview" | "parts" | "more">("overview")
   const router = useRouter()
   const searchParams = useSearchParams()
   const showDownloads = searchParams.get("dl") === "1"
@@ -28,13 +29,36 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
   // Load movie parts if this is a multi-part movie
   useEffect(() => {
     const loadMovieParts = async () => {
-      // TODO: Load movie parts from database
-      // For now, we'll skip this if not needed
+      const supabase = createClient()
+      try {
+        let query = supabase.from("movies").select("*").eq("status", "active")
+        
+        if (movie.parent_movie_id) {
+          // This is a part of another movie, get all parts including parent
+          query = query.or(`parent_movie_id.eq.${movie.parent_movie_id},id.eq.${movie.parent_movie_id}`)
+        } else if (movie.part_number && movie.part_number === 1) {
+          // This is Part 1, get all its parts
+          query = query.or(`parent_movie_id.eq.${movie.id},id.eq.${movie.id}`)
+        } else {
+          // This is a standalone movie, no parts to load
+          return
+        }
+        
+        const { data: parts, error } = await query.order("part_number", { ascending: true })
+        
+        if (error) throw error
+        setMovieParts(parts || [])
+      } catch (error) {
+        console.error("Failed to load movie parts:", error)
+      }
     }
+
     if (movie.parent_movie_id || (movie.part_number && movie.part_number >= 1)) {
       loadMovieParts()
     }
   }, [movie.id, movie.parent_movie_id, movie.part_number])
+
+  const hasParts = movieParts.length > 1
 
   // Create backdrop images array (mock for now - you'd fetch from TMDB)
   const backdropImages = movie.backdrop_path
@@ -76,6 +100,19 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
               Overview
             </button>
 
+            {hasParts && (
+              <button
+                onClick={() => setActiveTab("parts")}
+                className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "parts"
+                    ? "text-white border-b-2 border-white"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Parts
+              </button>
+            )}
+
             {relatedMovies.length > 0 && (
               <button
                 onClick={() => setActiveTab("more")}
@@ -89,7 +126,7 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
               </button>
             )}
           </div>
-        </div>
+          </div>
       )}
 
       {/* Content */}
@@ -120,61 +157,61 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
                 {backdropImages.length > 0 && (
                   <BackdropGallery title="Images" images={backdropImages} item={movie} />
                 )}
-
-                {/* Movie Parts */}
-                {movieParts.length > 1 && (
-                  <div className="mb-8">
-                    <h2 className="text-2xl text-white mb-4">Movie Parts ({movieParts.length} parts)</h2>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {movieParts.map((part) => (
-                        <Card
-                          key={part.id}
-                          className={`hover:bg-accent transition-colors ${
-                            part.id === movie.id ? "ring-2 ring-primary bg-accent" : ""
-                          }`}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={getTMDBImageUrl(part.poster_path, "w92") || "/placeholder.svg"}
-                                alt={part.title}
-                                className="w-16 h-24 object-cover rounded"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm truncate text-white">{part.title}</h4>
-                                <p className="text-xs text-muted-foreground">
-                                  Part {part.part_number}
-                                  {part.id === movie.id && " (Current)"}
-                                </p>
-                                {part.runtime && (
-                                  <p className="text-xs text-muted-foreground mb-2">{part.runtime} min</p>
-                                )}
-                                <div className="flex gap-2 mt-2">
-                                  <Button asChild size="sm" variant="outline">
-                                    <Link href={`/movie/${part.id}`}>
-                                      <Play className="h-3 w-3 mr-1" />
-                                      Watch
-                                    </Link>
-                                  </Button>
-                                  {part.download_url && (
-                                    <Button asChild size="sm" variant="outline">
-                                      <a href={part.download_url} target="_blank" rel="noopener noreferrer">
-                                        <Download className="h-3 w-3 mr-1" />
-                                        Download
-                                      </a>
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </>
             )}
+
+            {/* Parts Tab */}
+            {activeTab === "parts" && hasParts && (
+              <div className="mb-8">
+                <h2 className="text-2xl text-white mb-4">Movie Parts ({movieParts.length} parts)</h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {movieParts.map((part) => (
+                    <Card
+                      key={part.id}
+                      className={`hover:bg-accent transition-colors ${
+                        part.id === movie.id ? "ring-2 ring-primary bg-accent" : ""
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                        <img
+                          src={getTMDBImageUrl(part.poster_path, "w92") || "/placeholder.svg"}
+                          alt={part.title}
+                            className="w-16 h-24 object-cover rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-sm truncate text-white">{part.title}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Part {part.part_number}
+                            {part.id === movie.id && " (Current)"}
+                          </p>
+                          {part.runtime && (
+                              <p className="text-xs text-muted-foreground mb-2">{part.runtime} min</p>
+                          )}
+                            <div className="flex gap-2 mt-2">
+                              <Button asChild size="sm" variant="outline">
+                              <Link href={`/movie/${part.id}`}>
+                                <Play className="h-3 w-3 mr-1" />
+                                Watch
+                              </Link>
+                            </Button>
+                            {part.download_url && (
+                                <Button asChild size="sm" variant="outline">
+                                <a href={part.download_url} target="_blank" rel="noopener noreferrer">
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Download
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+          )}
 
             {/* More Like This Tab */}
             {activeTab === "more" && relatedMovies.length > 0 && (
@@ -193,9 +230,9 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
                         <div className="absolute bottom-0 left-0 right-0 p-4">
                           <h3 className="text-white font-semibold text-sm line-clamp-2">{item.title}</h3>
-                        </div>
-                      </div>
-                    </div>
+                </div>
+                </div>
+                </div>
                   </Link>
                 )}
                 layout="horizontal"

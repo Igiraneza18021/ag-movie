@@ -119,6 +119,45 @@ export async function getTMDBSeason(tvId: number, seasonNumber: number) {
   return response.json()
 }
 
+export async function getTMDBEpisode(tvId: number, seasonNumber: number, episodeNumber: number) {
+  if (!TMDB_TOKEN) {
+    throw new Error("TMDB token not configured")
+  }
+
+  const response = await fetch(`${TMDB_BASE_URL}/tv/${tvId}/season/${seasonNumber}/episode/${episodeNumber}`, {
+    headers: {
+      'Authorization': TMDB_TOKEN,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch episode from TMDB")
+  }
+
+  return response.json()
+}
+
+export async function getTMDBSeasonEpisodes(tvId: number, seasonNumber: number) {
+  if (!TMDB_TOKEN) {
+    throw new Error("TMDB token not configured")
+  }
+
+  const response = await fetch(`${TMDB_BASE_URL}/tv/${tvId}/season/${seasonNumber}`, {
+    headers: {
+      'Authorization': TMDB_TOKEN,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch season episodes from TMDB")
+  }
+
+  const data = await response.json()
+  return data.episodes || []
+}
+
 export function getTMDBImageUrl(path: string, size = "w500") {
   if (!path) return "/placeholder.svg?height=750&width=500"
   return `https://image.tmdb.org/t/p/${size}${path}`
