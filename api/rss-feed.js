@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+// Initialize Supabase client with correct environment variable names
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// Validate environment variables
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables');
+  console.error('VITE_SUPABASE_URL:', supabaseUrl ? '✓' : '✗ MISSING');
+  console.error('VITE_SUPABASE_PUBLISHABLE_KEY:', supabaseKey ? '✓' : '✗ MISSING');
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Convert Supabase timestamp to RFC 822 format
@@ -124,7 +132,14 @@ export default async function handler(req, res) {
     res.status(200).send(rssFeed);
   } catch (error) {
     console.error('RSS Feed Error:', error);
-    res.status(500).json({ error: 'Failed to generate RSS feed' });
+    res.status(500).json({ 
+      error: 'Failed to generate RSS feed',
+      details: error.message,
+      envCheck: {
+        VITE_SUPABASE_URL: supabaseUrl ? 'present' : 'MISSING',
+        VITE_SUPABASE_PUBLISHABLE_KEY: supabaseKey ? 'present' : 'MISSING'
+      }
+    });
   }
 }
 
