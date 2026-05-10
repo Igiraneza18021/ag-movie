@@ -10,10 +10,29 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { createClient } from "@/lib/supabase/client"
+import { buildMovieWebhookPayload } from "@/lib/make-webhook"
 import { searchTMDBMovie, getTMDBMovie, getTMDBImageUrl } from "@/lib/tmdb"
 import type { TMDBMovie, Movie } from "@/lib/types"
 import { Search, Plus, Edit, Trash2, Eye, X } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+
+function fireMovieCreatedWebhook(movieData: {
+  title: string
+  overview?: string | null
+  genres?: { name: string }[] | null
+  release_date?: string | null
+  vote_average?: number | null
+  poster_path?: string | null
+  embed_url: string
+  download_url?: string | null
+  narrator?: string | null
+}) {
+  void fetch("/api/admin/make-movie-webhook", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildMovieWebhookPayload(movieData)),
+  }).catch(() => {})
+}
 
 export function MovieManager() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -304,6 +323,7 @@ export function MovieManager() {
             title: "Success",
             description: `Part ${partNumber} added successfully`,
           })
+          fireMovieCreatedWebhook(movieData)
           resetForm()
           loadExistingMovies()
         }
@@ -347,6 +367,7 @@ export function MovieManager() {
             title: "Success",
             description: `Movie "${movieData.title}" added successfully`,
           })
+          fireMovieCreatedWebhook(movieData)
           resetForm()
           loadExistingMovies()
         }
@@ -449,6 +470,10 @@ export function MovieManager() {
         toast({
           title: "Success",
           description: `Part ${newPartNumber} added successfully`,
+        })
+        fireMovieCreatedWebhook({
+          ...movieData,
+          narrator: addingPartToMovie.narrator ?? null,
         })
         setAddingPartToMovie(null)
         setPartEmbedUrl("")
