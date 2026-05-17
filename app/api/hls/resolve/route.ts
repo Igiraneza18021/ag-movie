@@ -85,7 +85,7 @@ function findHlsUrl(source: string, baseUrl: string) {
 function getFallbackEmbedUrls(embedUrl: string) {
   const url = new URL(embedUrl)
 
-  if (url.hostname === "hgcloud.to") {
+  if (url.hostname === "hgcloud.to" || url.hostname === "hglink.to") {
     return [`https://hanerix.com${url.pathname}${url.search}`]
   }
 

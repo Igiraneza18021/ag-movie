@@ -15,6 +15,7 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
   const [tvShow, setTVShow] = useState<TVShow | null>(null)
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null)
   const [nextEpisode, setNextEpisode] = useState<Episode | undefined>(undefined)
+  const [episodes, setEpisodes] = useState<Episode[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -55,6 +56,7 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
         }
 
         const episodes = episodesData || []
+        setEpisodes(episodes)
         
         // Find the requested episode
         const seasonNumber = season ? parseInt(season) : 1
@@ -113,8 +115,13 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
 
   return (
     <div className="fixed inset-0 bg-black z-50 w-full h-full overflow-hidden">
-      <EpisodePlayer episode={selectedEpisode} tvShow={tvShow} nextEpisode={nextEpisode} autoPlay={true} />
+      <EpisodePlayer
+        episode={selectedEpisode}
+        tvShow={tvShow}
+        nextEpisode={nextEpisode}
+        episodes={episodes}
+        autoPlay={true}
+      />
     </div>
   )
 }
-
