@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { WatchlistButton } from "@/components/watchlist-button"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie, TVShow } from "@/lib/types"
-import { Play, ThumbsUp, Plus, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react"
+import { getShareCaption, getShareFileName, getShareImageUrl, getShareTitle, getShareUrl } from "@/lib/share-content"
+import { Play, ThumbsUp, Plus, Eye, Download, Share2 } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 interface SpotlightSectionProps {
   item: Movie | TVShow
@@ -55,16 +55,17 @@ export function SpotlightSection({
   const [inView, setInView] = useState(true)
   const [showDetails, setShowDetails] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
 
   const heroRef = useRef<HTMLElement>(null)
   const desktopVideoRef = useRef<HTMLIFrameElement>(null)
   const startTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const mouseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { toast } = useToast()
 
   const ytKey = item ? pickYouTubeKey(item) : null
-  const title = mediaType === "movie" ? (item as Movie).title : (item as TVShow).name
+  const title = getShareTitle(item, mediaType)
   const backdropPath = item?.backdrop_path
   const backgroundImage = backdropPath ? getTMDBImageUrl(backdropPath, "original") : ""
   const releaseDate = mediaType === "movie" ? (item as Movie).release_date : (item as TVShow).first_air_date
@@ -240,6 +241,92 @@ export function SpotlightSection({
     }
     router.push(`?${newParams.toString()}`)
   }
+
+  const handleShareClick = useCallback(async () => {
+    if (typeof window === "undefined" || isSharing) return
+
+    const shareUrl = getShareUrl(item, mediaType)
+    const shareTitle = title
+    const shareText = getShareCaption(item, mediaType)
+
+    const shareTextAndLink = async () => {
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        })
+        return "shared"
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+        toast({
+          title: "Link copied",
+          description: "Share link copied. You can paste it into Instagram, TikTok, or anywhere else.",
+        })
+        return "copied"
+      }
+
+      throw new Error("Sharing is not available on this device.")
+    }
+
+    setIsSharing(true)
+
+    try {
+      const origin = window.location.origin
+      const imageUrl = getShareImageUrl(item, origin)
+      const imageResponse = await fetch(imageUrl, { cache: "force-cache" })
+
+      if (!imageResponse.ok) {
+        await shareTextAndLink()
+        return
+      }
+
+      const blob = await imageResponse.blob()
+      const contentType = blob.type || imageResponse.headers.get("content-type") || "image/jpeg"
+      const file = new File([blob], getShareFileName(item, mediaType, contentType), { type: contentType })
+      const fileShareData = {
+        files: [file],
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl,
+      }
+
+      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+        await navigator.share(fileShareData)
+        return
+      }
+
+      await shareTextAndLink()
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return
+      }
+
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareUrl)
+          toast({
+            title: "Link copied",
+            description: "We couldn't open the share sheet, so the link is ready to paste instead.",
+          })
+          return
+        } catch {
+          // Fall through to generic error toast.
+        }
+      }
+
+      console.error("Failed to share content:", error)
+      toast({
+        title: "Share unavailable",
+        description: "We couldn't prepare the share right now. Please try again in a moment.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSharing(false)
+    }
+  }, [isSharing, item, mediaType, title, toast])
 
   if (isLoading || !item) {
     return (
@@ -421,6 +508,25 @@ export function SpotlightSection({
               <span className="hidden sm:inline">{showDownloads ? "Hide Downloads" : "Downloads"}</span>
             </button>
 
+            {/* Share Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                void handleShareClick()
+              }}
+              disabled={isSharing}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
+                isSharing
+                  ? "bg-white/5 border-white/10 text-white/70 cursor-wait"
+                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white hover:border-white/30"
+              }`}
+              title="Share to Instagram, TikTok, or another app"
+            >
+              <Share2 className="w-4 h-4 flex-shrink-0" />
+              <span className="whitespace-nowrap hidden sm:inline">{isSharing ? "Preparing..." : "Share"}</span>
+            </button>
+
             {/* Watched Button */}
             <button
               onClick={(e) => {
@@ -485,4 +591,3 @@ export function SpotlightSection({
     </section>
   )
 }
-
