@@ -1,29 +1,33 @@
 "use client"
 
-import { notFound, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { EpisodePlayer } from "@/components/episode-player"
 import { createClient } from "@/lib/supabase/client"
 import type { TVShow, Episode } from "@/lib/types"
 
-interface WatchTVPageProps {
-  params: Promise<{ id: string }>
-  searchParams: Promise<{ season?: string; episode?: string }>
-}
-
-export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) {
+export default function WatchTVPage() {
   const [tvShow, setTVShow] = useState<TVShow | null>(null)
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null)
   const [nextEpisode, setNextEpisode] = useState<Episode | undefined>(undefined)
   const [episodes, setEpisodes] = useState<Episode[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const router = useRouter()
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true)
+      setError("")
+      setTVShow(null)
+      setSelectedEpisode(null)
+      setNextEpisode(undefined)
+      setEpisodes([])
+
       try {
-        const { id } = await params
-        const { season, episode } = await searchParams
+        const id = params.id
 
         const supabase = createClient()
         
@@ -36,7 +40,7 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
           .single()
 
         if (showError || !showData) {
-          notFound()
+          setError("TV show was not found or is not available.")
           return
         }
 
@@ -52,6 +56,7 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
 
         if (episodesError) {
           console.error("Error loading episodes:", episodesError)
+          setError("Episodes could not be loaded.")
           return
         }
 
@@ -59,8 +64,8 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
         setEpisodes(episodes)
         
         // Find the requested episode
-        const seasonNumber = season ? parseInt(season) : 1
-        const episodeNumber = episode ? parseInt(episode) : 1
+        const seasonNumber = Number(searchParams.get("season") || 1)
+        const episodeNumber = Number(searchParams.get("episode") || 1)
 
         const episodeFound = episodes.find(
           (ep) => ep.season_number === seasonNumber && ep.episode_number === episodeNumber
@@ -73,7 +78,7 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
             router.replace(`/watch/tv/${id}?season=${firstEp.season_number}&episode=${firstEp.episode_number}`)
             return
           }
-          notFound()
+          setError("No episodes are available for this show.")
           return
         }
 
@@ -93,13 +98,13 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
         setNextEpisode(next)
       } catch (error) {
         console.error("Error loading watch data:", error)
-        notFound()
+        setError("This episode could not be loaded.")
       } finally {
         setLoading(false)
       }
     }
     loadData()
-  }, [params, searchParams, router])
+  }, [params.id, router, searchParams])
 
   if (loading) {
     return (
@@ -110,7 +115,21 @@ export default function WatchTVPage({ params, searchParams }: WatchTVPageProps) 
   }
 
   if (!tvShow || !selectedEpisode) {
-    notFound()
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex items-center justify-center px-6">
+        <div className="max-w-md text-center text-white">
+          <h1 className="text-2xl font-semibold">Episode unavailable</h1>
+          <p className="mt-3 text-sm text-white/70">{error || "This episode could not be found."}</p>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mt-6 rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90"
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
