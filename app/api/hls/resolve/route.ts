@@ -92,6 +92,21 @@ function getFallbackEmbedUrls(embedUrl: string) {
   return []
 }
 
+function getGoogleDriveFileId(embedUrl: string) {
+  const url = new URL(embedUrl)
+
+  if (url.hostname !== "drive.google.com") {
+    return null
+  }
+
+  const filePathMatch = url.pathname.match(/\/file\/d\/([^/]+)/)
+  if (filePathMatch?.[1]) {
+    return filePathMatch[1]
+  }
+
+  return url.searchParams.get("id")
+}
+
 function getResolveAttempts(embedUrl: string) {
   const fallbacks = getFallbackEmbedUrls(embedUrl)
 
@@ -132,6 +147,17 @@ export async function POST(request: NextRequest) {
 
     if (/\.m3u8(?:\?|$)/i.test(embedUrl)) {
       return NextResponse.json({ hlsUrl: embedUrl, referer: embedUrl })
+    }
+
+    const googleDriveFileId = getGoogleDriveFileId(embedUrl)
+    if (googleDriveFileId) {
+      return NextResponse.json({
+        hlsUrl: `https://drive.usercontent.google.com/download?id=${encodeURIComponent(
+          googleDriveFileId,
+        )}&export=download&confirm=t`,
+        referer: embedUrl,
+        proxy: false,
+      })
     }
 
     const attempts = getResolveAttempts(embedUrl)

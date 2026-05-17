@@ -73,6 +73,10 @@ export function NativeHlsPlayer({
         referer: data.referer || itemEmbedUrl,
       })
 
+      if (data.proxy === false) {
+        return data.hlsUrl as string
+      }
+
       return `/api/hls/proxy?${params.toString()}`
     }
 
