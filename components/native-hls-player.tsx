@@ -26,6 +26,14 @@ type PlayerPlaylistEntry = { id: string; title: string; file: string; poster?: s
 type PlayerSource = string | PlayerPlaylistEntry[]
 const EMPTY_PLAYLIST: NativeHlsPlaylistItem[] = []
 
+function isGoogleDriveEmbed(value: string) {
+  try {
+    return new URL(value).hostname === "drive.google.com"
+  } catch {
+    return false
+  }
+}
+
 declare global {
   interface Window {
     Playerjs?: new (config: Record<string, unknown>) => {
@@ -52,8 +60,21 @@ export function NativeHlsPlayer({
   const [scriptReady, setScriptReady] = useState(false)
   const [playerSource, setPlayerSource] = useState<PlayerSource>("")
   const [error, setError] = useState("")
+  const shouldEmbedGoogleDrive = isGoogleDriveEmbed(embedUrl)
 
   useEffect(() => {
+    if (shouldEmbedGoogleDrive) {
+      playerRef.current?.api?.("stop")
+      playerRef.current = null
+      setState("idle")
+      setPlayerSource("")
+      setError("")
+    }
+  }, [shouldEmbedGoogleDrive])
+
+  useEffect(() => {
+    if (shouldEmbedGoogleDrive) return
+
     let cancelled = false
 
     async function resolveEmbed(itemEmbedUrl: string) {
@@ -144,7 +165,7 @@ export function NativeHlsPlayer({
     return () => {
       cancelled = true
     }
-  }, [embedUrl, playlistItems])
+  }, [embedUrl, playlistItems, shouldEmbedGoogleDrive])
 
   useEffect(() => {
     if (!scriptReady || !playerSource || !window.Playerjs) return
@@ -178,6 +199,18 @@ export function NativeHlsPlayer({
       window.PlayerjsEvents = previousEvents
     }
   }, [autoPlay, muted, onEnded, playerSource, playerId, poster, scriptReady, title])
+
+  if (shouldEmbedGoogleDrive) {
+    return (
+      <iframe
+        src={embedUrl}
+        className="absolute inset-0 h-full w-full bg-black"
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+        allowFullScreen
+        title={title}
+      />
+    )
+  }
 
   if (state === "resolving" || state === "idle") {
     return (
