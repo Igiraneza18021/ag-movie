@@ -156,7 +156,6 @@ export async function POST(request: NextRequest) {
           googleDriveFileId,
         )}&export=download&confirm=t`,
         referer: embedUrl,
-        proxy: false,
       })
     }
 
