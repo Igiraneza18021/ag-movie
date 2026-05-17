@@ -108,13 +108,22 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return new NextResponse(upstream.body, {
+    let body: ArrayBuffer
+
+    try {
+      body = await upstream.arrayBuffer()
+    } catch (streamError) {
+      console.warn("HLS upstream stream ended before the segment was fully read:", streamError)
+      return NextResponse.json({ error: "HLS segment was interrupted upstream." }, { status: 502 })
+    }
+
+    return new NextResponse(body, {
       status: upstream.status,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Accept-Ranges": upstream.headers.get("accept-ranges") ?? "bytes",
         "Cache-Control": "no-store",
-        "Content-Length": upstream.headers.get("content-length") ?? "",
+        "Content-Length": String(body.byteLength),
         "Content-Range": upstream.headers.get("content-range") ?? "",
         "Content-Type": contentType || "application/octet-stream",
       },

@@ -22,7 +22,8 @@ interface NativeHlsPlayerProps {
 }
 
 type ResolveState = "idle" | "resolving" | "ready" | "error"
-type PlayerSource = string | Array<{ id: string; title: string; file: string; poster?: string }>
+type PlayerPlaylistEntry = { id: string; title: string; file: string; poster?: string }
+type PlayerSource = string | PlayerPlaylistEntry[]
 const EMPTY_PLAYLIST: NativeHlsPlaylistItem[] = []
 
 declare global {
@@ -46,6 +47,7 @@ export function NativeHlsPlayer({
   const reactId = useId()
   const playerId = `playerjs-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`
   const playerRef = useRef<InstanceType<NonNullable<typeof window.Playerjs>> | null>(null)
+  const pendingPlaylistEntriesRef = useRef<PlayerPlaylistEntry[]>([])
   const [state, setState] = useState<ResolveState>("idle")
   const [scriptReady, setScriptReady] = useState(false)
   const [playerSource, setPlayerSource] = useState<PlayerSource>("")
@@ -78,31 +80,48 @@ export function NativeHlsPlayer({
       setState("resolving")
       setError("")
       setPlayerSource("")
+      pendingPlaylistEntriesRef.current = []
 
       try {
-        const source = playlistItems.length
-          ? (
-              await Promise.all(
-                playlistItems.map(async (item) => {
-                  try {
-                    return {
-                      id: item.id,
-                      title: item.title,
-                      poster: item.poster,
-                      file: await resolveEmbed(item.embedUrl),
-                    }
-                  } catch (playlistError) {
-                    console.warn(`Unable to resolve playlist item ${item.title}:`, playlistError)
-                    return null
-                  }
-                }),
-              )
-            ).filter((item): item is { id: string; title: string; file: string; poster?: string } => Boolean(item))
-          : await resolveEmbed(embedUrl)
+        if (playlistItems.length) {
+          const [currentItem, ...remainingItems] = playlistItems
+          const currentEntry = {
+            id: currentItem.id,
+            title: currentItem.title,
+            poster: currentItem.poster,
+            file: await resolveEmbed(currentItem.embedUrl),
+          }
 
-        if (Array.isArray(source) && source.length === 0) {
-          throw new Error("Unable to find an HLS stream for these episodes.")
+          if (cancelled) return
+
+          setPlayerSource([currentEntry])
+          setState("ready")
+
+          for (const item of remainingItems) {
+            if (cancelled) return
+
+            try {
+              const entry = {
+                id: item.id,
+                title: item.title,
+                poster: item.poster,
+                file: await resolveEmbed(item.embedUrl),
+              }
+
+              if (playerRef.current) {
+                playerRef.current.api?.("push", [entry])
+              } else {
+                pendingPlaylistEntriesRef.current.push(entry)
+              }
+            } catch (playlistError) {
+              console.warn(`Unable to resolve playlist item ${item.title}:`, playlistError)
+            }
+          }
+
+          return
         }
+
+        const source = await resolveEmbed(embedUrl)
 
         if (!cancelled) {
           setPlayerSource(source)
@@ -143,6 +162,11 @@ export function NativeHlsPlayer({
       autoplay: autoPlay ? 1 : 0,
       mute: muted ? 1 : 0,
     })
+
+    if (pendingPlaylistEntriesRef.current.length > 0) {
+      playerRef.current.api?.("push", pendingPlaylistEntriesRef.current)
+      pendingPlaylistEntriesRef.current = []
+    }
 
     return () => {
       playerRef.current?.api?.("stop")

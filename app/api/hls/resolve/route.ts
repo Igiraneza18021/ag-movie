@@ -92,6 +92,16 @@ function getFallbackEmbedUrls(embedUrl: string) {
   return []
 }
 
+function getResolveAttempts(embedUrl: string) {
+  const fallbacks = getFallbackEmbedUrls(embedUrl)
+
+  if (fallbacks.length > 0) {
+    return fallbacks
+  }
+
+  return [embedUrl]
+}
+
 async function fetchEmbedPage(embedUrl: string) {
   const upstream = new URL(embedUrl)
   const response = await fetch(embedUrl, {
@@ -124,13 +134,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ hlsUrl: embedUrl, referer: embedUrl })
     }
 
-    const attempts = [embedUrl, ...getFallbackEmbedUrls(embedUrl)]
+    const attempts = getResolveAttempts(embedUrl)
     let lastStatus = 500
 
     for (const attemptUrl of attempts) {
       if (isBlockedUrl(attemptUrl)) continue
 
-      const { response, finalUrl, html } = await fetchEmbedPage(attemptUrl)
+      let result: Awaited<ReturnType<typeof fetchEmbedPage>>
+
+      try {
+        result = await fetchEmbedPage(attemptUrl)
+      } catch (attemptError) {
+        console.warn("HLS resolve attempt failed:", attemptUrl, attemptError)
+        lastStatus = 504
+        continue
+      }
+
+      const { response, finalUrl, html } = result
       lastStatus = response.status
 
       if (!response.ok) continue

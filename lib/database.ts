@@ -2,6 +2,24 @@ import { createClient } from "@/lib/supabase/client"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import type { Movie, TVShow, Episode, Season } from "@/lib/types"
 
+function isTransientFetchError(error: unknown) {
+  if (!error) return false
+
+  const text = `${String(error)} ${JSON.stringify(error)}`.toLowerCase()
+  return text.includes("fetch failed") || text.includes("econnreset") || text.includes("timeout")
+}
+
+async function runSupabaseQueryWithRetry<T>(query: () => PromiseLike<{ data: T | null; error: unknown }>) {
+  let result = await query()
+
+  if (result.error && isTransientFetchError(result.error)) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    result = await query()
+  }
+
+  return result
+}
+
 // Client-side database functions
 export async function getMovies(limit = 20, offset = 0): Promise<Movie[]> {
   const supabase = createClient()
@@ -172,7 +190,9 @@ export async function getTVShowsServer(limit = 20, offset = 0): Promise<TVShow[]
 export async function getTVShowByIdServer(id: string): Promise<TVShow | null> {
   const supabase = await createServerClient()
 
-  const { data, error } = await supabase.from("tv_shows").select("*").eq("id", id).single()
+  const { data, error } = await runSupabaseQueryWithRetry<TVShow>(() =>
+    supabase.from("tv_shows").select("*").eq("id", id).single(),
+  )
 
   if (error) {
     console.error("Error fetching TV show:", error)
@@ -185,11 +205,13 @@ export async function getTVShowByIdServer(id: string): Promise<TVShow | null> {
 export async function getSeasonsByTVShowServer(tvShowId: string): Promise<Season[]> {
   const supabase = await createServerClient()
 
-  const { data, error } = await supabase
-    .from("seasons")
-    .select("*")
-    .eq("tv_show_id", tvShowId)
-    .order("season_number", { ascending: true })
+  const { data, error } = await runSupabaseQueryWithRetry<Season[]>(() =>
+    supabase
+      .from("seasons")
+      .select("*")
+      .eq("tv_show_id", tvShowId)
+      .order("season_number", { ascending: true }),
+  )
 
   if (error) {
     console.error("Error fetching seasons:", error)
@@ -202,12 +224,14 @@ export async function getSeasonsByTVShowServer(tvShowId: string): Promise<Season
 export async function getEpisodesByTVShowServer(tvShowId: string): Promise<Episode[]> {
   const supabase = await createServerClient()
 
-  const { data, error } = await supabase
-    .from("episodes")
-    .select("*")
-    .eq("tv_show_id", tvShowId)
-    .order("season_number", { ascending: true })
-    .order("episode_number", { ascending: true })
+  const { data, error } = await runSupabaseQueryWithRetry<Episode[]>(() =>
+    supabase
+      .from("episodes")
+      .select("*")
+      .eq("tv_show_id", tvShowId)
+      .order("season_number", { ascending: true })
+      .order("episode_number", { ascending: true }),
+  )
 
   if (error) {
     console.error("Error fetching episodes:", error)
