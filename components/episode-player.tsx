@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/ui/loading"
@@ -28,6 +28,24 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
   const [nextEpisodeTimer, setNextEpisodeTimer] = useState(10)
   const [videoEnded, setVideoEnded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const playerPlaylistItems = useMemo(() => {
+    const orderedEpisodes = episodes.length ? episodes : [episode]
+    const currentIndex = Math.max(
+      0,
+      orderedEpisodes.findIndex((item) => item.id === episode.id),
+    )
+    const playlistOrder = [
+      ...orderedEpisodes.slice(currentIndex),
+      ...orderedEpisodes.slice(0, currentIndex),
+    ]
+
+    return playlistOrder.map((item) => ({
+      id: item.id,
+      embedUrl: item.embed_url,
+      title: `S${item.season_number}E${item.episode_number} - ${item.name || `Episode ${item.episode_number}`}`,
+      poster: getTMDBImageUrl(item.still_path || tvShow.backdrop_path || tvShow.poster_path || "", "w780"),
+    }))
+  }, [episode, episodes, tvShow.backdrop_path, tvShow.poster_path])
 
   // Handle client-side mounting
   useEffect(() => {
@@ -391,43 +409,13 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
           <div className="absolute inset-0 w-full h-full">
             <NativeHlsPlayer
               embedUrl={episode.embed_url}
-              title={episode.name}
+              title={`S${episode.season_number}E${episode.episode_number} - ${episode.name || `Episode ${episode.episode_number}`}`}
               poster={getTMDBImageUrl(episode.still_path || tvShow.backdrop_path || tvShow.poster_path || "", "w780")}
+              playlistItems={playerPlaylistItems}
               autoPlay={autoPlay}
               muted={isMuted}
               onEnded={() => setVideoEnded(true)}
             />
-            
-            {/* Episode Thumbnails in Right Corner - Always visible */}
-            {episodes.length > 1 && (
-              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10">
-                <div className="flex flex-col gap-1 bg-black/80 backdrop-blur-sm rounded-lg p-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-                  {episodes.slice(0, 10).map((ep) => (
-                    <Link
-                      key={ep.id}
-                      href={`/watch/tv/${tvShow.id}?season=${ep.season_number}&episode=${ep.episode_number}`}
-                      className={`flex-shrink-0 w-8 h-10 rounded-sm overflow-hidden border transition-all duration-200 hover:scale-110 ${
-                        ep.id === episode.id 
-                          ? 'border-primary shadow-md shadow-primary/50' 
-                          : 'border-gray-600 hover:border-gray-400'
-                      }`}
-                      title={ep.name}
-                    >
-                      <img
-                        src={getTMDBImageUrl(ep.still_path || tvShow.poster_path || "", "w92") || "/placeholder.svg"}
-                        alt={ep.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </Link>
-                  ))}
-                  {episodes.length > 10 && (
-                    <div className="flex-shrink-0 w-8 h-10 rounded-sm bg-gray-800 flex items-center justify-center text-white text-xs font-bold">
-                      +{episodes.length - 10}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

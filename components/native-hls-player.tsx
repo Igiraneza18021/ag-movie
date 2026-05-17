@@ -4,16 +4,26 @@ import { useEffect, useId, useRef, useState } from "react"
 import Script from "next/script"
 import { LoadingSpinner } from "@/components/ui/loading"
 
+export interface NativeHlsPlaylistItem {
+  id: string
+  embedUrl: string
+  title: string
+  poster?: string
+}
+
 interface NativeHlsPlayerProps {
   embedUrl: string
   title: string
   poster?: string
+  playlistItems?: NativeHlsPlaylistItem[]
   autoPlay?: boolean
   muted?: boolean
   onEnded?: () => void
 }
 
 type ResolveState = "idle" | "resolving" | "ready" | "error"
+type PlayerSource = string | Array<{ id: string; title: string; file: string; poster?: string }>
+const EMPTY_PLAYLIST: NativeHlsPlaylistItem[] = []
 
 declare global {
   interface Window {
@@ -28,6 +38,7 @@ export function NativeHlsPlayer({
   embedUrl,
   title,
   poster,
+  playlistItems = EMPTY_PLAYLIST,
   autoPlay = true,
   muted = false,
   onEnded,
@@ -37,36 +48,64 @@ export function NativeHlsPlayer({
   const playerRef = useRef<InstanceType<NonNullable<typeof window.Playerjs>> | null>(null)
   const [state, setState] = useState<ResolveState>("idle")
   const [scriptReady, setScriptReady] = useState(false)
-  const [playbackUrl, setPlaybackUrl] = useState("")
+  const [playerSource, setPlayerSource] = useState<PlayerSource>("")
   const [error, setError] = useState("")
 
   useEffect(() => {
     let cancelled = false
 
+    async function resolveEmbed(itemEmbedUrl: string) {
+      const response = await fetch("/api/hls/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embedUrl: itemEmbedUrl }),
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data?.hlsUrl) {
+        throw new Error(data?.error || "Unable to find an HLS stream.")
+      }
+
+      const params = new URLSearchParams({
+        url: data.hlsUrl,
+        referer: data.referer || itemEmbedUrl,
+      })
+
+      return `/api/hls/proxy?${params.toString()}`
+    }
+
     async function resolveHls() {
       setState("resolving")
       setError("")
-      setPlaybackUrl("")
+      setPlayerSource("")
 
       try {
-        const response = await fetch("/api/hls/resolve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ embedUrl }),
-        })
-        const data = await response.json()
+        const source = playlistItems.length
+          ? (
+              await Promise.all(
+                playlistItems.map(async (item) => {
+                  try {
+                    return {
+                      id: item.id,
+                      title: item.title,
+                      poster: item.poster,
+                      file: await resolveEmbed(item.embedUrl),
+                    }
+                  } catch (playlistError) {
+                    console.warn(`Unable to resolve playlist item ${item.title}:`, playlistError)
+                    return null
+                  }
+                }),
+              )
+            ).filter((item): item is { id: string; title: string; file: string; poster?: string } => Boolean(item))
+          : await resolveEmbed(embedUrl)
 
-        if (!response.ok || !data?.hlsUrl) {
-          throw new Error(data?.error || "Unable to find an HLS stream.")
+        if (Array.isArray(source) && source.length === 0) {
+          throw new Error("Unable to find an HLS stream for these episodes.")
         }
 
-        const params = new URLSearchParams({
-          url: data.hlsUrl,
-          referer: data.referer || embedUrl,
-        })
-
         if (!cancelled) {
-          setPlaybackUrl(`/api/hls/proxy?${params.toString()}`)
+          setPlayerSource(source)
           setState("ready")
         }
       } catch (resolveError) {
@@ -82,10 +121,10 @@ export function NativeHlsPlayer({
     return () => {
       cancelled = true
     }
-  }, [embedUrl])
+  }, [embedUrl, playlistItems])
 
   useEffect(() => {
-    if (!scriptReady || !playbackUrl || !window.Playerjs) return
+    if (!scriptReady || !playerSource || !window.Playerjs) return
 
     const previousEvents = window.PlayerjsEvents
     window.PlayerjsEvents = (event, id, info) => {
@@ -98,7 +137,7 @@ export function NativeHlsPlayer({
 
     playerRef.current = new window.Playerjs({
       id: playerId,
-      file: playbackUrl,
+      file: playerSource,
       title,
       poster,
       autoplay: autoPlay ? 1 : 0,
@@ -110,7 +149,7 @@ export function NativeHlsPlayer({
       playerRef.current = null
       window.PlayerjsEvents = previousEvents
     }
-  }, [autoPlay, muted, onEnded, playbackUrl, playerId, poster, scriptReady, title])
+  }, [autoPlay, muted, onEnded, playerSource, playerId, poster, scriptReady, title])
 
   if (state === "resolving" || state === "idle") {
     return (
