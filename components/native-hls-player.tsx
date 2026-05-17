@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import Hls from "hls.js"
+import { useEffect, useId, useRef, useState } from "react"
+import Script from "next/script"
 import { LoadingSpinner } from "@/components/ui/loading"
 
 interface NativeHlsPlayerProps {
@@ -15,6 +15,15 @@ interface NativeHlsPlayerProps {
 
 type ResolveState = "idle" | "resolving" | "ready" | "error"
 
+declare global {
+  interface Window {
+    Playerjs?: new (config: Record<string, unknown>) => {
+      api?: (command: string, value?: unknown) => unknown
+    }
+    PlayerjsEvents?: (event: string, id: string, info?: unknown) => void
+  }
+}
+
 export function NativeHlsPlayer({
   embedUrl,
   title,
@@ -23,16 +32,13 @@ export function NativeHlsPlayer({
   muted = false,
   onEnded,
 }: NativeHlsPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const hlsRef = useRef<Hls | null>(null)
+  const reactId = useId()
+  const playerId = `playerjs-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`
+  const playerRef = useRef<InstanceType<NonNullable<typeof window.Playerjs>> | null>(null)
   const [state, setState] = useState<ResolveState>("idle")
+  const [scriptReady, setScriptReady] = useState(false)
   const [playbackUrl, setPlaybackUrl] = useState("")
   const [error, setError] = useState("")
-
-  const proxiedUrl = useMemo(() => {
-    if (!playbackUrl) return ""
-    return playbackUrl
-  }, [playbackUrl])
 
   useEffect(() => {
     let cancelled = false
@@ -79,76 +85,73 @@ export function NativeHlsPlayer({
   }, [embedUrl])
 
   useEffect(() => {
-    const video = videoRef.current
-    if (!video || !proxiedUrl) return
+    if (!scriptReady || !playbackUrl || !window.Playerjs) return
 
-    hlsRef.current?.destroy()
-    hlsRef.current = null
-
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = proxiedUrl
-      return
-    }
-
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-      })
-
-      hlsRef.current = hls
-      hls.loadSource(proxiedUrl)
-      hls.attachMedia(video)
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          setError("The HLS stream could not be played.")
-          setState("error")
-        }
-      })
-
-      return () => {
-        hls.destroy()
-        hlsRef.current = null
+    const previousEvents = window.PlayerjsEvents
+    window.PlayerjsEvents = (event, id, info) => {
+      if (id === playerId && event === "end") {
+        onEnded?.()
       }
+
+      previousEvents?.(event, id, info)
     }
 
-    setError("This browser does not support HLS playback.")
-    setState("error")
-  }, [proxiedUrl])
+    playerRef.current = new window.Playerjs({
+      id: playerId,
+      file: playbackUrl,
+      title,
+      poster,
+      autoplay: autoPlay ? 1 : 0,
+      mute: muted ? 1 : 0,
+    })
+
+    return () => {
+      playerRef.current?.api?.("stop")
+      playerRef.current = null
+      window.PlayerjsEvents = previousEvents
+    }
+  }, [autoPlay, muted, onEnded, playbackUrl, playerId, poster, scriptReady, title])
 
   if (state === "resolving" || state === "idle") {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-black text-white">
-        <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" className="text-white" />
-          <p className="text-sm text-white/80">Preparing stream...</p>
+      <>
+        <Script src="/playerjs.js" strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+        <div className="absolute inset-0 flex items-center justify-center bg-black text-white">
+          <div className="text-center space-y-4">
+            <LoadingSpinner size="lg" className="text-white" />
+            <p className="text-sm text-white/80">Preparing stream...</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   if (state === "error") {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-black px-6 text-white">
-        <div className="max-w-md text-center">
-          <h2 className="text-xl font-semibold">Stream unavailable</h2>
-          <p className="mt-2 text-sm text-white/70">{error}</p>
+      <>
+        <Script src="/playerjs.js" strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+        <div className="absolute inset-0 flex items-center justify-center bg-black px-6 text-white">
+          <div className="max-w-md text-center">
+            <h2 className="text-xl font-semibold">Stream unavailable</h2>
+            <p className="mt-2 text-sm text-white/70">{error}</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <video
-      ref={videoRef}
-      className="absolute inset-0 h-full w-full bg-black"
-      title={title}
-      poster={poster}
-      controls
-      playsInline
-      autoPlay={autoPlay}
-      muted={muted}
-      onEnded={onEnded}
-    />
+    <>
+      <Script src="/playerjs.js" strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+      <div id={playerId} className="absolute inset-0 h-full w-full bg-black" />
+      {!scriptReady && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black text-white">
+          <div className="text-center space-y-4">
+            <LoadingSpinner size="lg" className="text-white" />
+            <p className="text-sm text-white/80">Loading player...</p>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
