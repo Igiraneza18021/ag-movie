@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { EpisodePlayer } from "@/components/episode-player"
 import { createClient } from "@/lib/supabase/client"
+import { isTransientFetchError, runSupabaseQueryWithRetry } from "@/lib/supabase/retry"
 import type { TVShow, Episode } from "@/lib/types"
 
 export default function WatchTVPage() {
@@ -32,12 +33,14 @@ export default function WatchTVPage() {
         const supabase = createClient()
         
         // Load TV show
-        const { data: showData, error: showError } = await supabase
-          .from("tv_shows")
-          .select("*")
-          .eq("id", id)
-          .eq("status", "active")
-          .single()
+        const { data: showData, error: showError } = await runSupabaseQueryWithRetry<TVShow>(() =>
+          supabase
+            .from("tv_shows")
+            .select("*")
+            .eq("id", id)
+            .eq("status", "active")
+            .maybeSingle(),
+        )
 
         if (showError || !showData) {
           setError("TV show was not found or is not available.")
@@ -47,12 +50,14 @@ export default function WatchTVPage() {
         setTVShow(showData)
 
         // Load episodes
-        const { data: episodesData, error: episodesError } = await supabase
-          .from("episodes")
-          .select("*")
-          .eq("tv_show_id", id)
-          .order("season_number", { ascending: true })
-          .order("episode_number", { ascending: true })
+        const { data: episodesData, error: episodesError } = await runSupabaseQueryWithRetry<Episode[]>(() =>
+          supabase
+            .from("episodes")
+            .select("*")
+            .eq("tv_show_id", id)
+            .order("season_number", { ascending: true })
+            .order("episode_number", { ascending: true }),
+        )
 
         if (episodesError) {
           console.error("Error loading episodes:", episodesError)
@@ -98,7 +103,11 @@ export default function WatchTVPage() {
         setNextEpisode(next)
       } catch (error) {
         console.error("Error loading watch data:", error)
-        setError("This episode could not be loaded.")
+        setError(
+          isTransientFetchError(error)
+            ? "The TV show service is temporarily unreachable. Please refresh in a moment."
+            : "This episode could not be loaded.",
+        )
       } finally {
         setLoading(false)
       }

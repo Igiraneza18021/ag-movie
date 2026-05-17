@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { MoviePlayer } from "@/components/movie-player"
 import { createClient } from "@/lib/supabase/client"
+import { isTransientFetchError, runSupabaseQueryWithRetry } from "@/lib/supabase/retry"
 import type { Movie } from "@/lib/types"
 
 interface WatchMoviePageProps {
@@ -25,12 +26,14 @@ export default function WatchMoviePage({ params }: WatchMoviePageProps) {
       try {
         const { id } = await params
         const supabase = createClient()
-        const { data, error } = await supabase
-          .from("movies")
-          .select("*")
-          .eq("id", id)
-          .eq("status", "active")
-          .single()
+        const { data, error } = await runSupabaseQueryWithRetry<Movie>(() =>
+          supabase
+            .from("movies")
+            .select("*")
+            .eq("id", id)
+            .eq("status", "active")
+            .maybeSingle(),
+        )
 
         if (error || !data) {
           setError("Movie was not found or is not available.")
@@ -40,7 +43,11 @@ export default function WatchMoviePage({ params }: WatchMoviePageProps) {
         setMovie(data)
       } catch (error) {
         console.error("Error loading movie:", error)
-        setError("This movie could not be loaded.")
+        setError(
+          isTransientFetchError(error)
+            ? "The movie service is temporarily unreachable. Please refresh in a moment."
+            : "This movie could not be loaded.",
+        )
       } finally {
         setLoading(false)
       }

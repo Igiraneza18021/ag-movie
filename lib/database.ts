@@ -1,24 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { isTransientFetchError, runSupabaseQueryWithRetry } from "@/lib/supabase/retry"
 import type { Movie, TVShow, Episode, Season } from "@/lib/types"
-
-function isTransientFetchError(error: unknown) {
-  if (!error) return false
-
-  const text = `${String(error)} ${JSON.stringify(error)}`.toLowerCase()
-  return text.includes("fetch failed") || text.includes("econnreset") || text.includes("timeout")
-}
-
-async function runSupabaseQueryWithRetry<T>(query: () => PromiseLike<{ data: T | null; error: unknown }>) {
-  let result = await query()
-
-  if (result.error && isTransientFetchError(result.error)) {
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    result = await query()
-  }
-
-  return result
-}
 
 // Client-side database functions
 export async function getMovies(limit = 20, offset = 0): Promise<Movie[]> {
@@ -61,7 +44,9 @@ export async function getTVShows(limit = 20, offset = 0): Promise<TVShow[]> {
 export async function getMovieById(id: string): Promise<Movie | null> {
   const supabase = createClient()
 
-  const { data, error } = await supabase.from("movies").select("*").eq("id", id).single()
+  const { data, error } = await runSupabaseQueryWithRetry<Movie>(() =>
+    supabase.from("movies").select("*").eq("id", id).maybeSingle(),
+  )
 
   if (error) {
     console.error("Error fetching movie:", error)
@@ -74,7 +59,9 @@ export async function getMovieById(id: string): Promise<Movie | null> {
 export async function getTVShowById(id: string): Promise<TVShow | null> {
   const supabase = createClient()
 
-  const { data, error } = await supabase.from("tv_shows").select("*").eq("id", id).single()
+  const { data, error } = await runSupabaseQueryWithRetry<TVShow>(() =>
+    supabase.from("tv_shows").select("*").eq("id", id).maybeSingle(),
+  )
 
   if (error) {
     console.error("Error fetching TV show:", error)
@@ -191,7 +178,7 @@ export async function getTVShowByIdServer(id: string): Promise<TVShow | null> {
   const supabase = await createServerClient()
 
   const { data, error } = await runSupabaseQueryWithRetry<TVShow>(() =>
-    supabase.from("tv_shows").select("*").eq("id", id).single(),
+    supabase.from("tv_shows").select("*").eq("id", id).maybeSingle(),
   )
 
   if (error) {
@@ -245,7 +232,9 @@ export async function getMovieByIdServer(id: string): Promise<Movie | null> {
   try {
     const supabase = await createServerClient()
 
-    const { data, error } = await supabase.from("movies").select("*").eq("id", id).single()
+    const { data, error } = await runSupabaseQueryWithRetry<Movie>(() =>
+      supabase.from("movies").select("*").eq("id", id).maybeSingle(),
+    )
 
     if (error) {
       console.error("Error fetching movie:", error)
@@ -255,6 +244,9 @@ export async function getMovieByIdServer(id: string): Promise<Movie | null> {
     return data
   } catch (error) {
     console.error("Database connection error:", error)
+    if (isTransientFetchError(error)) {
+      throw error
+    }
     return null
   }
 }
