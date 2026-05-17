@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { SpotlightSection } from "@/components/details/spotlight-section"
 import { BackdropGallery } from "@/components/details/backdrop-gallery"
@@ -22,6 +22,7 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
   const [movieParts, setMovieParts] = useState<Movie[]>([])
   const [showTrailerModal, setShowTrailerModal] = useState(false)
   const [activeTab, setActiveTab] = useState<"overview" | "parts" | "more">("overview")
+  const hasAppliedDefaultTab = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const showDownloads = searchParams.get("dl") === "1"
@@ -59,6 +60,17 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
   }, [movie.id, movie.parent_movie_id, movie.part_number])
 
   const hasParts = movieParts.length > 1
+
+  useEffect(() => {
+    hasAppliedDefaultTab.current = false
+  }, [movie.id])
+
+  useEffect(() => {
+    if (hasParts && !hasAppliedDefaultTab.current) {
+      setActiveTab("parts")
+      hasAppliedDefaultTab.current = true
+    }
+  }, [hasParts])
 
   // Create backdrop images array (mock for now - you'd fetch from TMDB)
   const backdropImages = movie.backdrop_path

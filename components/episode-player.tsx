@@ -1,26 +1,25 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/ui/loading"
-import { MobileVideoPlayer } from "@/components/mobile-video-player"
+import { NativeHlsPlayer } from "@/components/native-hls-player"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Episode, TVShow } from "@/lib/types"
-import { Play, X, Volume2, VolumeX, ArrowLeft, Calendar, Clock, Download, ExternalLink, ChevronRight, Settings, RotateCcw } from "lucide-react"
+import { Play, X, Volume2, VolumeX, ArrowLeft, Calendar, Clock, Download } from "lucide-react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 
 interface EpisodePlayerProps {
   episode: Episode
   tvShow: TVShow
   nextEpisode?: Episode
+  episodes?: Episode[]
   onNextEpisode?: () => void
   autoPlay?: boolean
 }
 
-export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, autoPlay = false }: EpisodePlayerProps) {
+export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onNextEpisode, autoPlay = false }: EpisodePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -28,17 +27,29 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, aut
   const [autoNextEnabled, setAutoNextEnabled] = useState(false) // Disabled by default
   const [nextEpisodeTimer, setNextEpisodeTimer] = useState(10)
   const [videoEnded, setVideoEnded] = useState(false)
-  const [episodes, setEpisodes] = useState<Episode[]>([])
-  const [loadingEpisodes, setLoadingEpisodes] = useState(false)
-  const [isMobileDevice, setIsMobileDevice] = useState(false)
-  const [showMobilePlayer, setShowMobilePlayer] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const playerPlaylistItems = useMemo(() => {
+    const orderedEpisodes = episodes.length ? episodes : [episode]
+    const currentIndex = Math.max(
+      0,
+      orderedEpisodes.findIndex((item) => item.id === episode.id),
+    )
+    const playlistOrder = [
+      ...orderedEpisodes.slice(currentIndex),
+      ...orderedEpisodes.slice(0, currentIndex),
+    ]
+
+    return playlistOrder.map((item) => ({
+      id: item.id,
+      embedUrl: item.embed_url,
+      title: `S${item.season_number}E${item.episode_number} - ${item.name || `Episode ${item.episode_number}`}`,
+      poster: getTMDBImageUrl(item.still_path || tvShow.backdrop_path || tvShow.poster_path || "", "w780"),
+    }))
+  }, [episode, episodes, tvShow.backdrop_path, tvShow.poster_path])
 
   // Handle client-side mounting
   useEffect(() => {
     setMounted(true)
-    setIsMobileDevice(typeof window !== 'undefined' && window.innerWidth < 768)
-    fetchEpisodes()
     if (autoPlay) {
       setIsPlaying(true)
     }
@@ -138,43 +149,8 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, aut
     }
   }, [])
 
-  const fetchEpisodes = async () => {
-    try {
-      setLoadingEpisodes(true)
-      
-      // Only fetch on client-side
-      if (typeof window === 'undefined') {
-        setLoadingEpisodes(false)
-        return
-      }
-      
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("episodes")
-        .select("*")
-        .eq("tv_show_id", tvShow.id)
-        .order("season_number", { ascending: true })
-        .order("episode_number", { ascending: true })
-
-      if (error) {
-        console.error("Error fetching episodes:", error)
-        return
-      }
-
-      setEpisodes(data || [])
-    } catch (error) {
-      console.error("Error fetching episodes:", error)
-    } finally {
-      setLoadingEpisodes(false)
-    }
-  }
-
   const handlePlay = () => {
-    if (isMobileDevice) {
-      setShowMobilePlayer(true)
-    } else {
-      setIsPlaying(true)
-    }
+    setIsPlaying(true)
   }
 
   const handleClose = () => {
@@ -431,69 +407,17 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, onNextEpisode, aut
 
           {/* Video Player */}
           <div className="absolute inset-0 w-full h-full">
-            <iframe
-              src={episode.embed_url}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allowFullScreen
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-              title={episode.name}
-              style={{
-                border: 'none',
-                outline: 'none',
-                width: '100%',
-                height: '100%'
-              }}
-              onLoad={() => {
-                console.log('Episode video loaded successfully')
-              }}
-              onError={(e) => {
-                console.error('Episode failed to load:', e)
-              }}
+            <NativeHlsPlayer
+              embedUrl={episode.embed_url}
+              title={`S${episode.season_number}E${episode.episode_number} - ${episode.name || `Episode ${episode.episode_number}`}`}
+              poster={getTMDBImageUrl(episode.still_path || tvShow.backdrop_path || tvShow.poster_path || "", "w780")}
+              playlistItems={playerPlaylistItems}
+              autoPlay={autoPlay}
+              muted={isMuted}
+              onEnded={() => setVideoEnded(true)}
             />
-            
-            {/* Episode Thumbnails in Right Corner - Always visible */}
-            {episodes.length > 1 && (
-              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10">
-                <div className="flex flex-col gap-1 bg-black/80 backdrop-blur-sm rounded-lg p-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-                  {episodes.slice(0, 10).map((ep) => (
-                    <Link
-                      key={ep.id}
-                      href={`/watch/tv/${tvShow.id}?season=${ep.season_number}&episode=${ep.episode_number}`}
-                      className={`flex-shrink-0 w-8 h-10 rounded-sm overflow-hidden border transition-all duration-200 hover:scale-110 ${
-                        ep.id === episode.id 
-                          ? 'border-primary shadow-md shadow-primary/50' 
-                          : 'border-gray-600 hover:border-gray-400'
-                      }`}
-                      title={ep.name}
-                    >
-                      <img
-                        src={getTMDBImageUrl(ep.still_path || tvShow.poster_path || "", "w92") || "/placeholder.svg"}
-                        alt={ep.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </Link>
-                  ))}
-                  {episodes.length > 10 && (
-                    <div className="flex-shrink-0 w-8 h-10 rounded-sm bg-gray-800 flex items-center justify-center text-white text-xs font-bold">
-                      +{episodes.length - 10}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
-      )}
-      
-      {/* Mobile Video Player */}
-      {showMobilePlayer && (
-        <MobileVideoPlayer
-          src={episode.embed_url}
-          title={episode.name}
-          poster={getTMDBImageUrl(episode.still_path || tvShow.poster_path || "", "w780")}
-          onClose={() => setShowMobilePlayer(false)}
-        />
       )}
     </div>
   )

@@ -16,6 +16,8 @@ interface TVShowPageProps {
   params: Promise<{ id: string }>
 }
 
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({ params }: TVShowPageProps): Promise<Metadata> {
   const { id } = await params
   const tvShow = await getTVShowByIdServer(id)

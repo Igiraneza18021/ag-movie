@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
@@ -10,6 +10,7 @@ import "@/lib/disable-debug"
 import "./globals.css"
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ag.micorp.pro"),
   title: "Agasobanuye Movies - Stream Movies & TV Shows Online",
   description: "Agasobanuye Movies - Your premier destination for streaming the latest movies and TV shows online in HD quality. Watch thousands of movies and TV series anytime, anywhere.",
   keywords: [
@@ -41,7 +42,6 @@ export const metadata: Metadata = {
   generator: "Next.js",
   applicationName: "Agasobanuye Movies",
   referrer: "origin-when-cross-origin",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -96,6 +96,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://ag.micorp.pro",
   },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({

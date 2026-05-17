@@ -11,6 +11,8 @@ interface MoviePageProps {
   params: Promise<{ id: string }>
 }
 
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({ params }: MoviePageProps): Promise<Metadata> {
   try {
     const { id } = await params
@@ -70,6 +72,6 @@ export default async function MoviePage({ params }: MoviePageProps) {
     )
   } catch (error) {
     console.error("Error loading movie page:", error)
-    notFound()
+    throw error
   }
 }

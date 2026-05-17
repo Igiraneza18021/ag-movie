@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { isTransientFetchError, runSupabaseQueryWithRetry } from "@/lib/supabase/retry"
 import type { Movie, TVShow, Episode, Season } from "@/lib/types"
 
 // Client-side database functions
@@ -43,7 +44,9 @@ export async function getTVShows(limit = 20, offset = 0): Promise<TVShow[]> {
 export async function getMovieById(id: string): Promise<Movie | null> {
   const supabase = createClient()
 
-  const { data, error } = await supabase.from("movies").select("*").eq("id", id).single()
+  const { data, error } = await runSupabaseQueryWithRetry<Movie>(() =>
+    supabase.from("movies").select("*").eq("id", id).maybeSingle(),
+  )
 
   if (error) {
     console.error("Error fetching movie:", error)
@@ -56,7 +59,9 @@ export async function getMovieById(id: string): Promise<Movie | null> {
 export async function getTVShowById(id: string): Promise<TVShow | null> {
   const supabase = createClient()
 
-  const { data, error } = await supabase.from("tv_shows").select("*").eq("id", id).single()
+  const { data, error } = await runSupabaseQueryWithRetry<TVShow>(() =>
+    supabase.from("tv_shows").select("*").eq("id", id).maybeSingle(),
+  )
 
   if (error) {
     console.error("Error fetching TV show:", error)
@@ -172,7 +177,9 @@ export async function getTVShowsServer(limit = 20, offset = 0): Promise<TVShow[]
 export async function getTVShowByIdServer(id: string): Promise<TVShow | null> {
   const supabase = await createServerClient()
 
-  const { data, error } = await supabase.from("tv_shows").select("*").eq("id", id).single()
+  const { data, error } = await runSupabaseQueryWithRetry<TVShow>(() =>
+    supabase.from("tv_shows").select("*").eq("id", id).maybeSingle(),
+  )
 
   if (error) {
     console.error("Error fetching TV show:", error)
@@ -185,11 +192,13 @@ export async function getTVShowByIdServer(id: string): Promise<TVShow | null> {
 export async function getSeasonsByTVShowServer(tvShowId: string): Promise<Season[]> {
   const supabase = await createServerClient()
 
-  const { data, error } = await supabase
-    .from("seasons")
-    .select("*")
-    .eq("tv_show_id", tvShowId)
-    .order("season_number", { ascending: true })
+  const { data, error } = await runSupabaseQueryWithRetry<Season[]>(() =>
+    supabase
+      .from("seasons")
+      .select("*")
+      .eq("tv_show_id", tvShowId)
+      .order("season_number", { ascending: true }),
+  )
 
   if (error) {
     console.error("Error fetching seasons:", error)
@@ -202,12 +211,14 @@ export async function getSeasonsByTVShowServer(tvShowId: string): Promise<Season
 export async function getEpisodesByTVShowServer(tvShowId: string): Promise<Episode[]> {
   const supabase = await createServerClient()
 
-  const { data, error } = await supabase
-    .from("episodes")
-    .select("*")
-    .eq("tv_show_id", tvShowId)
-    .order("season_number", { ascending: true })
-    .order("episode_number", { ascending: true })
+  const { data, error } = await runSupabaseQueryWithRetry<Episode[]>(() =>
+    supabase
+      .from("episodes")
+      .select("*")
+      .eq("tv_show_id", tvShowId)
+      .order("season_number", { ascending: true })
+      .order("episode_number", { ascending: true }),
+  )
 
   if (error) {
     console.error("Error fetching episodes:", error)
@@ -221,7 +232,9 @@ export async function getMovieByIdServer(id: string): Promise<Movie | null> {
   try {
     const supabase = await createServerClient()
 
-    const { data, error } = await supabase.from("movies").select("*").eq("id", id).single()
+    const { data, error } = await runSupabaseQueryWithRetry<Movie>(() =>
+      supabase.from("movies").select("*").eq("id", id).maybeSingle(),
+    )
 
     if (error) {
       console.error("Error fetching movie:", error)
@@ -231,6 +244,9 @@ export async function getMovieByIdServer(id: string): Promise<Movie | null> {
     return data
   } catch (error) {
     console.error("Database connection error:", error)
+    if (isTransientFetchError(error)) {
+      throw error
+    }
     return null
   }
 }

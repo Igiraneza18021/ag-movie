@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "clean:next": "rm -rf .next",
     "dev": "next dev",
+    "predev": "npm run clean:next",
     "lint": "next lint",
     "start": "next start"
   },

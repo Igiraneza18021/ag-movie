@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MovieActionButtons } from "@/components/movie-action-buttons"
 import { LoadingSpinner } from "@/components/ui/loading"
-import { MobileVideoPlayer } from "@/components/mobile-video-player"
+import { NativeHlsPlayer } from "@/components/native-hls-player"
 import { getTMDBImageUrl } from "@/lib/tmdb"
-import { isMobile } from "@/lib/mobile-utils"
 import type { Movie } from "@/lib/types"
 import { Play, X, Volume2, VolumeX, ChevronRight, Settings, RotateCcw, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -27,9 +26,6 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
   const [autoNextEnabled, setAutoNextEnabled] = useState(false) // Disabled by default
   const [nextMovieTimer, setNextMovieTimer] = useState(10)
   const [videoEnded, setVideoEnded] = useState(false)
-  const [isMobileDevice, setIsMobileDevice] = useState(false)
-  const [showMobilePlayer, setShowMobilePlayer] = useState(false)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -39,112 +35,13 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
   // Handle client-side mounting
   useEffect(() => {
     setMounted(true)
-    setIsMobileDevice(isMobile())
     if (autoPlay) {
       setIsPlaying(true)
     }
   }, [autoPlay])
 
-  // Intercept iframe fullscreen and make container fullscreen instead
-  useEffect(() => {
-    if (!iframeRef.current || !containerRef.current) return
-
-    const iframe = iframeRef.current
-    const container = containerRef.current
-
-    // Function to enter fullscreen on container
-    const enterFullscreen = async () => {
-      try {
-        // Use the most modern API first
-        if (container.requestFullscreen) {
-          await container.requestFullscreen()
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen((Element as any).ALLOW_KEYBOARD_INPUT)
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen()
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen()
-        }
-      } catch (error) {
-        console.error('Failed to enter fullscreen:', error)
-      }
-    }
-
-    // Listen for fullscreen changes
-    const handleFullscreenChange = async () => {
-      const fullscreenElement = 
-        document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
-
-      // If iframe is in fullscreen, exit it and make container fullscreen instead
-      if (fullscreenElement === iframe) {
-        // Exit iframe fullscreen immediately
-        if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {})
-        } else if ((document as any).webkitExitFullscreen) {
-          ;(document as any).webkitExitFullscreen()
-        } else if ((document as any).mozCancelFullScreen) {
-          ;(document as any).mozCancelFullScreen()
-        } else if ((document as any).msExitFullscreen) {
-          ;(document as any).msExitFullscreen()
-        }
-
-        // Immediately make container fullscreen
-        setTimeout(() => {
-          enterFullscreen()
-        }, 50)
-      }
-    }
-
-    // Also listen for clicks on iframe that might trigger fullscreen
-    const handleIframeClick = () => {
-      setTimeout(() => {
-        const fullscreenElement = 
-          document.fullscreenElement ||
-          (document as any).webkitFullscreenElement ||
-          (document as any).mozFullScreenElement ||
-          (document as any).msFullscreenElement
-
-        if (fullscreenElement === iframe) {
-          handleFullscreenChange()
-        }
-      }, 100)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
-    
-    // Monitor for iframe fullscreen attempts
-    const observer = new MutationObserver(() => {
-      handleIframeClick()
-    })
-    
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class'],
-      childList: true,
-      subtree: true
-    })
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
-      observer.disconnect()
-    }
-  }, [])
-
   const handlePlay = () => {
-    if (isMobileDevice) {
-      setShowMobilePlayer(true)
-    } else {
-      setIsPlaying(true)
-    }
+    setIsPlaying(true)
   }
 
   const handleClose = () => {
@@ -325,39 +222,16 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
 
           {/* Video Player */}
           <div className="absolute inset-0 w-full h-full">
-            <iframe
-              ref={iframeRef}
-              src={movie.embed_url}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allowFullScreen
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            <NativeHlsPlayer
+              embedUrl={movie.embed_url}
               title={movie.title}
-              style={{
-                border: 'none',
-                outline: 'none',
-                width: '100%',
-                height: '100%'
-              }}
-              onLoad={() => {
-                console.log('Video loaded successfully')
-              }}
-              onError={(e) => {
-                console.error('Video failed to load:', e)
-              }}
+              poster={backdropUrl}
+              autoPlay={autoPlay}
+              muted={isMuted}
+              onEnded={() => setVideoEnded(true)}
             />
           </div>
         </div>
-      )}
-      
-      {/* Mobile Video Player */}
-      {showMobilePlayer && (
-        <MobileVideoPlayer
-          src={movie.embed_url}
-          title={movie.title}
-          poster={backdropUrl}
-          onClose={() => setShowMobilePlayer(false)}
-        />
       )}
     </div>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { SpotlightSection } from "@/components/details/spotlight-section"
 import { BackdropGallery } from "@/components/details/backdrop-gallery"
@@ -26,7 +26,10 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [episodesLoading, setEpisodesLoading] = useState(false)
   const [showTrailerModal, setShowTrailerModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<"overview" | "episodes" | "more">("overview")
+  const [activeTab, setActiveTab] = useState<"overview" | "episodes" | "more">(
+    episodes.length > 0 ? "episodes" : "overview",
+  )
+  const hasAppliedDefaultTab = useRef(episodes.length > 0)
   const router = useRouter()
   const searchParams = useSearchParams()
   const showDownloads = searchParams.get("dl") === "1"
@@ -102,6 +105,17 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
   // Get unique seasons from episodes
   const uniqueSeasons = Array.from(new Set(allEpisodes.map((ep) => ep.season_number))).sort((a, b) => a - b)
   const availableSeasons = seasons.length > 0 ? seasons : uniqueSeasons.map((num) => ({ season_number: num } as Season))
+
+  useEffect(() => {
+    hasAppliedDefaultTab.current = false
+  }, [tvShow.id])
+
+  useEffect(() => {
+    if (uniqueSeasons.length > 0 && !hasAppliedDefaultTab.current) {
+      setActiveTab("episodes")
+      hasAppliedDefaultTab.current = true
+    }
+  }, [uniqueSeasons.length])
 
   // Set initial season
   useEffect(() => {
