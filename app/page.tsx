@@ -6,7 +6,6 @@ import { Footer } from "@/components/footer"
 import { SearchModal } from "@/components/search-modal"
 import { FirstVisitRedirect } from "@/components/first-visit-redirect"
 import { getMovies, getTVShows } from "@/lib/database-client"
-import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie, TVShow } from "@/lib/types"
 import { SpotlightSection } from "@/components/home/spotlight-section"
 import { PortraitCategoryRow } from "@/components/home/portrait-category-row"
@@ -20,11 +19,17 @@ const isMac = () => {
   return /Mac|iPod|iPhone|iPad/.test(navigator.platform) || /Mac/.test(navigator.userAgent)
 }
 
+function hasContent(items: Record<string, (Movie | TVShow)[]>) {
+  return Object.values(items).some((group) => group.length > 0)
+}
+
 export default function HomePage() {
   const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false)
   const [categoryData, setCategoryData] = useState<Record<string, (Movie | TVShow)[]>>({})
   const [spotlightItem, setSpotlightItem] = useState<Movie | TVShow | null>(null)
   const [continueWatchingItems, setContinueWatchingItems] = useState<any[]>([])
+  const [allMovies, setAllMovies] = useState<Movie[]>([])
+  const [allTVShows, setAllTVShows] = useState<TVShow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [spotlightLoading, setSpotlightLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -68,6 +73,9 @@ export default function HomePage() {
           getTVShows(50),
         ])
 
+        setAllMovies(allMovies)
+        setAllTVShows(allTVShows)
+
         // Process movies for different sections
         const featuredMovies = allMovies.slice(0, 10)
         const trendingMovies = allMovies
@@ -87,17 +95,25 @@ export default function HomePage() {
           .slice(0, 20)
 
         // Set category data
-        setCategoryData({
+        const nextCategoryData = {
           "Trending Movies": trendingMovies,
           "Top Rated Movies": topRatedMovies,
           "Popular TV Shows": trendingTVShows,
           "Top Rated TV Shows": topRatedTVShows,
-        })
+        }
+
+        setCategoryData(nextCategoryData)
 
         // Get hero movie (highest rated with backdrop)
         const heroMovie = featuredMovies.find((movie) => movie.backdrop_path) || featuredMovies[0]
         if (heroMovie) {
           setSpotlightItem(heroMovie)
+        } else {
+          setSpotlightItem(null)
+        }
+
+        if (allMovies.length === 0 && allTVShows.length === 0) {
+          setError("We couldn't reach the content service. Please check your internet connection or Supabase configuration and reload.")
         }
 
         setSpotlightLoading(false)
@@ -177,11 +193,12 @@ export default function HomePage() {
           )}
 
           {/* Provider Series Section */}
-          <ProviderSeriesSection />
+          <ProviderSeriesSection movies={allMovies} tvShows={allTVShows} />
 
           {/* Portrait categories */}
           {Object.keys(categoryData).map((title, index) => {
             const items = categoryData[title] || []
+            if (items.length === 0) return null
             const delay = (continueWatchingItems.length > 0) ? (index + 1) * 160 : index * 160
             return (
               <div key={title} className="animate-stagger" style={{ animationDelay: `${delay}ms` }}>
@@ -189,6 +206,12 @@ export default function HomePage() {
               </div>
             )
           })}
+
+          {!isLoading && !hasContent(categoryData) && (
+            <div className="px-4 md:px-8 py-10 text-center text-white/60">
+              No movies or TV shows are available right now.
+            </div>
+          )}
         </div>
 
         <Footer />

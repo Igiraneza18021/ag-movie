@@ -1,15 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getMovies, getTVShows } from "@/lib/database-client"
 import { PortraitCategoryRow } from "./portrait-category-row"
 import type { Movie, TVShow } from "@/lib/types"
 
-export function ProviderSeriesSection() {
+interface ProviderSeriesSectionProps {
+  movies?: Movie[]
+  tvShows?: TVShow[]
+}
+
+export function ProviderSeriesSection({ movies = [], tvShows = [] }: ProviderSeriesSectionProps) {
   const [selectedProvider, setSelectedProvider] = useState('all')
   const [selectedType, setSelectedType] = useState<'movie' | 'tv'>('movie')
   const [providerData, setProviderData] = useState<(Movie | TVShow)[]>([])
-  const [loading, setLoading] = useState(false)
 
   const providerCategories = [
     { id: 'all', name: 'All Content' },
@@ -18,49 +21,27 @@ export function ProviderSeriesSection() {
   ]
 
   useEffect(() => {
-    const loadProviderData = async () => {
-      setLoading(true)
-      try {
-        if (selectedProvider === 'all') {
-          const [movies, tvShows] = await Promise.all([
-            getMovies(20),
-            getTVShows(20),
-          ])
-          
-          const allItems = selectedType === 'movie' 
-            ? movies 
-            : tvShows
+    const sourceItems = selectedType === 'movie' ? movies : tvShows
 
-          setProviderData(allItems)
-        } else if (selectedProvider === 'trending') {
-          const [movies, tvShows] = await Promise.all([
-            getMovies(20),
-            getTVShows(20),
-          ])
-          
-          const items = selectedType === 'movie' ? movies : tvShows
-          const sorted = items.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
-          setProviderData(sorted)
-        } else if (selectedProvider === 'top-rated') {
-          const [movies, tvShows] = await Promise.all([
-            getMovies(20),
-            getTVShows(20),
-          ])
-          
-          const items = selectedType === 'movie' ? movies : tvShows
-          const filtered = items.filter((item) => (item.vote_average || 0) >= 8.0)
-          setProviderData(filtered)
-        }
-      } catch (error) {
-        console.error('Error loading provider data:', error)
-        setProviderData([])
-      } finally {
-        setLoading(false)
-      }
+    if (selectedProvider === 'all') {
+      setProviderData(sourceItems.slice(0, 20))
+      return
     }
 
-    loadProviderData()
-  }, [selectedProvider, selectedType])
+    if (selectedProvider === 'trending') {
+      const sorted = [...sourceItems].sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
+      setProviderData(sorted.slice(0, 20))
+      return
+    }
+
+    if (selectedProvider === 'top-rated') {
+      const filtered = sourceItems.filter((item) => (item.vote_average || 0) >= 8.0)
+      setProviderData(filtered.slice(0, 20))
+      return
+    }
+
+    setProviderData([])
+  }, [movies, tvShows, selectedProvider, selectedType])
 
   return (
     <section className="py-8">
@@ -125,22 +106,17 @@ export function ProviderSeriesSection() {
 
       {/* Content */}
       <div className="px-2 sm:px-4 md:px-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : providerData.length > 0 ? (
+        {providerData.length > 0 ? (
           <PortraitCategoryRow 
             title={`${providerCategories.find(p => p.id === selectedProvider)?.name} ${selectedType === 'movie' ? 'Movies' : 'TV Shows'}`} 
             items={providerData} 
           />
         ) : (
           <div className="text-center py-12 text-white/60">
-            No content available for {providerCategories.find(p => p.id === selectedProvider)?.name} {selectedType === 'movie' ? 'movies' : 'TV shows'}
+            No content available for {providerCategories.find(p => p.id === selectedProvider)?.name} {selectedType === 'movie' ? 'movies' : 'TV shows'}.
           </div>
         )}
       </div>
     </section>
   )
 }
-
