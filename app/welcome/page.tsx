@@ -82,11 +82,23 @@ export default function WelcomePage() {
       <WelcomeHero movies={featuredMovies} />
 
       <main className="relative z-10 -mt-8 md:-mt-12 pb-20">
-        {/* Trending Now Section - Outside main container for better flow */}
-        <div className="mb-16">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 px-6 md:px-12">
-            Trending Now
-          </h2>
+        {/* Trending Now Section - Outside main container for better flow and no clipping */}
+        <div className="mb-20 overflow-visible">
+          <div className="px-6 md:px-12 mb-6 flex items-center gap-4">
+            <h2
+              className="text-5xl sm:text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#0071eb] via-[#0071eb]/80 to-[#0071eb] tracking-tighter"
+              style={{
+                WebkitTextStroke: "2px rgba(0, 113, 235, 0.5)",
+                textShadow: "0 0 30px rgba(0, 113, 235, 0.3)",
+              }}
+            >
+              TOP 10
+            </h2>
+            <div className="block">
+              <div className="text-white text-sm font-bold tracking-widest uppercase">Content</div>
+              <div className="text-white text-sm font-bold tracking-widest uppercase">Today</div>
+            </div>
+          </div>
           <Top10Section items={trendingContent} />
         </div>
 
