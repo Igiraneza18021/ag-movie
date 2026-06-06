@@ -45,39 +45,15 @@ export function Top10Section({ items }: Top10SectionProps) {
   const top10Items = items.slice(0, 10)
 
   return (
-    <section className="relative py-4 md:py-8">
-      <div className="relative px-2 sm:px-4 md:px-8">
+    <section className="relative py-4 md:py-8 overflow-visible">
+      <div className="relative px-2 sm:px-4 md:px-8 overflow-visible">
         {/* Edge fades */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black to-transparent z-10" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black to-transparent z-10" />
-
-        {/* Navigation buttons */}
-        {canLeft && (
-          <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-16 z-30 items-center justify-start">
-            <button
-              onClick={() => scrollBy(-1)}
-              className="p-3 rounded-full bg-black/80 hover:bg-black/90 text-white shadow-2xl backdrop-blur-md border border-white/10 transition-all duration-300"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          </div>
-        )}
-        {canRight && (
-          <div className="hidden md:flex absolute right-0 top-0 bottom-0 w-16 z-30 items-center justify-end">
-            <button
-              onClick={() => scrollBy(1)}
-              className="p-3 rounded-full bg-black/80 hover:bg-black/90 text-white shadow-2xl backdrop-blur-md border border-white/10 transition-all duration-300"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </div>
-        )}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black via-black/50 to-transparent z-20" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black via-black/50 to-transparent z-20" />
 
         <div
           ref={scrollerRef}
-          className="relative flex gap-12 md:gap-16 overflow-x-auto overflow-y-hidden pb-2 hide-scrollbar px-4 md:px-8"
+          className="relative flex gap-12 md:gap-16 overflow-x-auto overflow-y-visible pb-12 hide-scrollbar px-4 md:px-8 pt-4"
         >
           {top10Items.map((it, index) => {
             const mt = 'title' in it ? 'movie' : 'tv'
@@ -89,7 +65,7 @@ export function Top10Section({ items }: Top10SectionProps) {
             return (
               <div
                 key={`${mt}-${it.id}-${rank}`}
-                className="relative group flex items-end flex-shrink-0 cursor-pointer pl-12 sm:pl-16 md:pl-20"
+                className="relative group flex items-end flex-shrink-0 cursor-pointer pl-12 sm:pl-16 md:pl-20 overflow-visible"
                 onClick={() => router.push(href)}
                 role="button"
                 tabIndex={0}
@@ -106,7 +82,7 @@ export function Top10Section({ items }: Top10SectionProps) {
                     className="text-[100px] sm:text-[120px] md:text-[150px] lg:text-[180px] font-black leading-[0.8] transition-all duration-300"
                     style={{
                       color: "rgb(0, 0, 0)",
-                      WebkitTextStroke: "2px rgb(150, 150, 150)",
+                      WebkitTextStroke: "2px rgb(0, 113, 235)",
                     }}
                   >
                     {rank}
