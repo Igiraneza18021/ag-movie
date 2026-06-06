@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
-import { Film, Tv, Clock, TrendingUp } from "lucide-react"
+import { Film, Tv, Clock, TrendingUp, RefreshCw } from "lucide-react"
 import { AutoReleaseStatus } from "./auto-release-status"
 
 interface Stats {
@@ -17,34 +18,41 @@ export function ContentStats() {
   const [stats, setStats] = useState<Stats>({ movies: 0, tvShows: 0, comingSoon: 0, totalEpisodes: 0 })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function fetchStats() {
-      const supabase = createClient()
+  const fetchStats = async () => {
+    const supabase = createClient()
+    setLoading(true)
 
-      try {
-        const [moviesResult, tvShowsResult, comingSoonMoviesResult, comingSoonTVResult, episodesResult] =
-          await Promise.all([
-            supabase.from("movies").select("id", { count: "exact" }).eq("status", "active").or("part_number.is.null,part_number.eq.1"), // Only count standalone movies or Part 1
-            supabase.from("tv_shows").select("id", { count: "exact" }).eq("status", "active"),
-            supabase.from("movies").select("id", { count: "exact" }).eq("status", "coming_soon").or("part_number.is.null,part_number.eq.1"), // Only count standalone movies or Part 1
-            supabase.from("tv_shows").select("id", { count: "exact" }).eq("status", "coming_soon"),
-            supabase.from("episodes").select("id", { count: "exact" }),
-          ])
+    try {
+      const [moviesResult, tvShowsResult, comingSoonMoviesResult, comingSoonTVResult, episodesResult] =
+        await Promise.all([
+          supabase.from("movies").select("id", { count: "exact" }).eq("status", "active").or("part_number.is.null,part_number.eq.1"),
+          supabase.from("tv_shows").select("id", { count: "exact" }).eq("status", "active"),
+          supabase.from("movies").select("id", { count: "exact" }).eq("status", "coming_soon").or("part_number.is.null,part_number.eq.1"),
+          supabase.from("tv_shows").select("id", { count: "exact" }).eq("status", "coming_soon"),
+          supabase.from("episodes").select("id", { count: "exact" }),
+        ])
 
-        setStats({
-          movies: moviesResult.count || 0,
-          tvShows: tvShowsResult.count || 0,
-          comingSoon: (comingSoonMoviesResult.count || 0) + (comingSoonTVResult.count || 0),
-          totalEpisodes: episodesResult.count || 0,
-        })
-      } catch (error) {
-        console.error("Error fetching stats:", error)
-      } finally {
-        setLoading(false)
-      }
+      setStats({
+        movies: moviesResult.count || 0,
+        tvShows: tvShowsResult.count || 0,
+        comingSoon: (comingSoonMoviesResult.count || 0) + (comingSoonTVResult.count || 0),
+        totalEpisodes: episodesResult.count || 0,
+      })
+    } catch (error) {
+      console.error("Error fetching stats:", error)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchStats()
+
+    const interval = window.setInterval(() => {
+      fetchStats()
+    }, 30000)
+
+    return () => window.clearInterval(interval)
   }, [])
 
   const statCards = [
@@ -76,6 +84,13 @@ export function ContentStats() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button onClick={fetchStats} variant="outline" size="sm" disabled={loading}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh Stats
+        </Button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
           <Card key={stat.title}>
