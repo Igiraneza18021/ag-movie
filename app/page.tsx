@@ -1,222 +1,254 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
-import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
-import { SearchModal } from "@/components/search-modal"
-import { FirstVisitRedirect } from "@/components/first-visit-redirect"
-import { getMovies, getTVShows } from "@/lib/database-client"
+import { useState, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
 import type { Movie, TVShow } from "@/lib/types"
-import { SpotlightSection } from "@/components/home/spotlight-section"
-import { PortraitCategoryRow } from "@/components/home/portrait-category-row"
+import { WelcomeHero } from "@/components/welcome-hero"
 import { Top10Section } from "@/components/home/top10-section"
-import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
-import { ProviderSeriesSection } from "@/components/home/provider-series-section"
+import { Film, Tv, ArrowRight, Play, Star } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { getTMDBImageUrl } from "@/lib/tmdb"
+import Link from "next/link"
 
-// Detect if user is on Mac
-const isMac = () => {
-  if (typeof window === 'undefined') return false
-  return /Mac|iPod|iPhone|iPad/.test(navigator.platform) || /Mac/.test(navigator.userAgent)
-}
+export default function WelcomePage() {
+  const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([])
+  const [featuredTVShows, setFeaturedTVShows] = useState<TVShow[]>([])
+  const [trendingContent, setTrendingContent] = useState<(Movie | TVShow)[]>([])
+  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
-function hasContent(items: Record<string, (Movie | TVShow)[]>) {
-  return Object.values(items).some((group) => group.length > 0)
-}
-
-export default function HomePage() {
-  const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false)
-  const [categoryData, setCategoryData] = useState<Record<string, (Movie | TVShow)[]>>({})
-  const [spotlightItem, setSpotlightItem] = useState<Movie | TVShow | null>(null)
-  const [continueWatchingItems, setContinueWatchingItems] = useState<any[]>([])
-  const [allMovies, setAllMovies] = useState<Movie[]>([])
-  const [allTVShows, setAllTVShows] = useState<TVShow[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [spotlightLoading, setSpotlightLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleQuickSearchOpen = () => setIsQuickSearchOpen(true)
-
-  // Listen for custom event from mobile header search button
   useEffect(() => {
-    const handleOpenQuickSearch = () => {
-      handleQuickSearchOpen()
-    }
-
-    window.addEventListener('openQuickSearch', handleOpenQuickSearch)
-    return () => window.removeEventListener('openQuickSearch', handleOpenQuickSearch)
+    setMounted(true)
+    fetchContent()
+    
+    // Mark user as visited when they reach the welcome page
+    localStorage.setItem('ag-movies-visited', 'true')
   }, [])
 
-  // Keyboard shortcut for search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'g') {
-        e.preventDefault()
-        handleQuickSearchOpen()
-      }
+  const fetchContent = async () => {
+    const supabase = createClient()
+    
+    try {
+      const [moviesResult, tvShowsResult] = await Promise.all([
+        supabase
+          .from("movies")
+          .select("*")
+          .eq("status", "active")
+          .or("part_number.is.null,part_number.eq.1")
+          .order("vote_average", { ascending: false })
+          .limit(20),
+        supabase
+          .from("tv_shows")
+          .select("*")
+          .eq("status", "active")
+          .order("vote_average", { ascending: false })
+          .limit(20)
+      ])
+
+      const movies = moviesResult.data || []
+      const tvShows = tvShowsResult.data || []
+      
+      setFeaturedMovies(movies)
+      setFeaturedTVShows(tvShows)
+      
+      // Mix movies and TV shows for trending
+      const mixed = [...movies.slice(0, 5), ...tvShows.slice(0, 5)].sort((a, b) => 
+        (b.vote_average || 0) - (a.vote_average || 0)
+      )
+      setTrendingContent(mixed)
+
+    } catch (error) {
+      console.error("Error fetching content:", error)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  // Load categories and spotlight
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true)
-        setSpotlightLoading(true)
-        setError(null)
-
-        // Fetch movies and TV shows
-        const [allMovies, allTVShows] = await Promise.all([
-          getMovies(50),
-          getTVShows(50),
-        ])
-
-        setAllMovies(allMovies)
-        setAllTVShows(allTVShows)
-
-        // Process movies for different sections
-        const featuredMovies = allMovies.slice(0, 10)
-        const trendingMovies = allMovies
-          .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
-          .slice(0, 20)
-        const topRatedMovies = allMovies
-          .filter((movie) => (movie.vote_average || 0) >= 8.0)
-          .slice(0, 20)
-
-        // Process TV shows
-        const featuredTVShows = allTVShows.slice(0, 10)
-        const trendingTVShows = allTVShows
-          .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
-          .slice(0, 20)
-        const topRatedTVShows = allTVShows
-          .filter((show) => (show.vote_average || 0) >= 8.0)
-          .slice(0, 20)
-
-        // Set category data
-        const nextCategoryData = {
-          "Trending Movies": trendingMovies,
-          "Top Rated Movies": topRatedMovies,
-          "Popular TV Shows": trendingTVShows,
-          "Top Rated TV Shows": topRatedTVShows,
-        }
-
-        setCategoryData(nextCategoryData)
-
-        // Get hero movie (highest rated with backdrop)
-        const heroMovie = featuredMovies.find((movie) => movie.backdrop_path) || featuredMovies[0]
-        if (heroMovie) {
-          setSpotlightItem(heroMovie)
-        } else {
-          setSpotlightItem(null)
-        }
-
-        if (allMovies.length === 0 && allTVShows.length === 0) {
-          setError("We couldn't reach the content service. Please check your internet connection or Supabase configuration and reload.")
-        }
-
-        setSpotlightLoading(false)
-        setIsLoading(false)
-      } catch (err) {
-        console.error("Error loading home data:", err)
-        setError(err instanceof Error ? err.message : "Failed to load content")
-        setIsLoading(false)
-        setSpotlightLoading(false)
-      }
-    }
-
-    loadData()
-  }, [])
-
-  // Get top 10 items from trending categories
-  const top10Items = useMemo(() => {
-    const trendingMovies = categoryData["Trending Movies"] || []
-    const trendingTV = categoryData["Popular TV Shows"] || []
-    const popularMovies = categoryData["Top Rated Movies"] || []
-    const popularTV = categoryData["Top Rated TV Shows"] || []
-
-    // Combine all trending/popular items and take top 10
-    const allItems = [...trendingMovies, ...trendingTV, ...popularMovies, ...popularTV]
-
-    // Remove duplicates based on id
-    const uniqueItems = allItems.filter(
-      (item, index, self) =>
-        index === self.findIndex((t) => t.id === item.id)
-    )
-
-    return uniqueItems.slice(0, 10)
-  }, [categoryData])
-
-  if (error) {
+  if (!mounted || loading) {
     return (
-      <FirstVisitRedirect>
-        <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0 text-white">
-          <Navigation />
-          <div className="pt-8 md:pt-24 px-6 sm:px-10 pb-10">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">We couldn't load the browse page</h2>
-              <p className="text-white/70 mb-6">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90"
-              >
-                Reload
-              </button>
-            </div>
-          </div>
-          <Footer />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading amazing content...</p>
         </div>
-      </FirstVisitRedirect>
+      </div>
     )
   }
 
   return (
-    <FirstVisitRedirect>
-      <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0">
-        <Navigation />
+    <div className="min-h-screen bg-black overflow-x-hidden">
+      <WelcomeHero movies={featuredMovies} />
 
-        {/* HERO */}
-        <SpotlightSection 
-          item={spotlightItem} 
-          isLoading={spotlightLoading} 
-          onQuickSearchOpen={handleQuickSearchOpen}
-        />
+      <main className="relative z-10 pb-20">
+        {/* Trending Now Section - Increased top padding to avoid clipping by hero separator */}
+        <div className="pt-24 md:pt-32 mb-20 overflow-visible">
+          <div className="px-6 md:px-12 mb-10 flex items-center gap-6">
+            <h2
+              className="text-6xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#0071eb] via-[#0071eb]/90 to-[#0071eb] tracking-tighter leading-none"
+              style={{
+                WebkitTextStroke: "2px rgba(0, 113, 235, 0.4)",
+                textShadow: "0 0 50px rgba(0, 113, 235, 0.3)",
+              }}
+            >
+              TOP 10
+            </h2>
+            <div className="flex flex-col justify-center pt-2">
+              <span className="text-white text-lg md:text-2xl font-black tracking-[0.3em] uppercase opacity-90 leading-tight">Content</span>
+              <span className="text-white text-lg md:text-2xl font-black tracking-[0.3em] uppercase opacity-90 leading-tight">Today</span>
+            </div>
+          </div>
+          <Top10Section items={trendingContent} />
+        </div>
 
-        {/* TOP 10 SECTION */}
-        <Top10Section items={top10Items} />
+        <div className="container mx-auto px-4">
+          {/* Featured Movies Section */}
+          {featuredMovies.length > 0 && (
+            <div className="mb-16">
+              <div className="flex items-center justify-between mb-8 px-4 md:px-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-1.5 h-8 md:h-10 bg-[#0071eb] rounded-full shadow-[0_0_15px_rgba(0,113,235,0.5)]" />
+                  <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+                    Featured Movies
+                  </h2>
+                </div>
+                <Link href="/movies">
+                  <Button variant="ghost" className="text-white hover:bg-white/10 font-bold">
+                    View All
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-4 md:px-8">
+                {featuredMovies.slice(0, 6).map((movie) => (
+                  <div key={movie.id} className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20">
+                    <img
+                      src={getTMDBImageUrl(movie.poster_path) || "/placeholder.svg"}
+                      alt={movie.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    
+                    {/* Always visible: AG Badge top right */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                        AG
+                      </div>
+                    </div>
 
-        <div className="px-2 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 space-y-6 sm:space-y-8">
-          {/* Continue Watching */}
-          {continueWatchingItems.length > 0 && (
-            <ContinueWatchingRow items={continueWatchingItems} />
+                    {/* Default visible: Rating bottom left */}
+                    <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+                      <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        {movie.vote_average?.toFixed(1)}
+                      </div>
+                    </div>
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+                      <div className="space-y-2">
+                        <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+                          {movie.title}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                              {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
+                            </span>
+                            <div className="flex items-center gap-1 text-white text-xs font-black">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              {movie.vote_average?.toFixed(1)}
+                            </div>
+                          </div>
+                          <Link href={`/movie/${movie.id}`}>
+                            <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white transition-colors duration-200">
+                              <Play className="h-4 w-4 fill-current" />
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
-          {/* Provider Series Section */}
-          <ProviderSeriesSection movies={allMovies} tvShows={allTVShows} />
-
-          {/* Portrait categories */}
-          {Object.keys(categoryData).map((title, index) => {
-            const items = categoryData[title] || []
-            if (items.length === 0) return null
-            const delay = (continueWatchingItems.length > 0) ? (index + 1) * 160 : index * 160
-            return (
-              <div key={title} className="animate-stagger" style={{ animationDelay: `${delay}ms` }}>
-                <PortraitCategoryRow title={title} items={items} />
+          {/* Featured TV Shows Section */}
+          {featuredTVShows.length > 0 && (
+            <div className="mb-16">
+              <div className="flex items-center justify-between mb-8 px-4 md:px-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-1.5 h-8 md:h-10 bg-[#0071eb] rounded-full shadow-[0_0_15px_rgba(0,113,235,0.5)]" />
+                  <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+                    Featured TV Shows
+                  </h2>
+                </div>
+                <Link href="/tv-shows">
+                  <Button variant="ghost" className="text-white hover:bg-white/10 font-bold">
+                    View All
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
               </div>
-            )
-          })}
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-4 md:px-8">
+                {featuredTVShows.slice(0, 6).map((show) => (
+                  <div key={show.id} className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20">
+                    <img
+                      src={getTMDBImageUrl(show.poster_path) || "/placeholder.svg"}
+                      alt={show.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    
+                    {/* Always visible: AG Badge top right */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                        AG
+                      </div>
+                    </div>
 
-          {!isLoading && !hasContent(categoryData) && (
-            <div className="px-4 md:px-8 py-10 text-center text-white/60">
-              No movies or TV shows are available right now.
+                    {/* Default visible: Rating bottom left */}
+                    <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+                      <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        {show.vote_average?.toFixed(1)}
+                      </div>
+                    </div>
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+                      <div className="space-y-2">
+                        <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+                          {show.name}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                              {show.first_air_date ? new Date(show.first_air_date).getFullYear() : 'N/A'}
+                            </span>
+                            <div className="flex items-center gap-1 text-white text-xs font-black">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              {show.vote_average?.toFixed(1)}
+                            </div>
+                          </div>
+                          <Link href={`/tv/${show.id}`}>
+                            <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white transition-colors duration-200">
+                              <Play className="h-4 w-4 fill-current" />
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
-
-        <Footer />
-        <SearchModal isOpen={isQuickSearchOpen} onClose={() => setIsQuickSearchOpen(false)} />
-      </div>
-    </FirstVisitRedirect>
+      </main>
+    </div>
   )
 }
+
