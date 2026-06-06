@@ -9,8 +9,9 @@ const PAGE_FETCH_CONCURRENCY = 24
 const TMDB_CONCURRENCY = 6
 const TMDB_BASE_URL = "https://api.themoviedb.org/3"
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p"
-const REQUEST_TIMEOUT_MS = 12000
-const MAX_FETCH_RETRIES = 3
+const REQUEST_TIMEOUT_MS = 25000
+const SITEMAP_TIMEOUT_MS = 45000
+const MAX_FETCH_RETRIES = 5
 const PAGE_PROGRESS_INTERVAL = 100
 const TMDB_PROGRESS_INTERVAL = 50
 
@@ -693,16 +694,17 @@ async function fetchSeasonDetails(tvId, seasonNumber) {
 }
 
 async function fetchSitemapUrls() {
-  const xml = await fetchText(SITEMAP_URL)
+  const xml = await fetchText(SITEMAP_URL, { timeoutMs: SITEMAP_TIMEOUT_MS })
   return dedupeBy(
     [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]).filter((url) => url.includes("/watch/")),
     (url) => url,
   )
 }
 
-async function fetchText(url) {
+async function fetchText(url, options = {}) {
   const response = await fetchWithRetry(url, {
     headers: { "User-Agent": "Mozilla/5.0 AG Movies audit generator" },
+    timeoutMs: options.timeoutMs,
   })
   if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`)
   return response.text()
@@ -710,16 +712,21 @@ async function fetchText(url) {
 
 async function fetchWithRetry(url, options = {}) {
   let lastError = null
+  const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS
+  const { timeoutMs: _timeoutMs, ...fetchOptions } = options
   for (let attempt = 1; attempt <= MAX_FETCH_RETRIES; attempt += 1) {
     try {
       return await fetch(url, {
-        ...options,
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        ...fetchOptions,
+        signal: AbortSignal.timeout(timeoutMs),
       })
     } catch (error) {
       lastError = error
+      if (error?.name === "TimeoutError") {
+        console.warn(`Timeout fetching ${url} on attempt ${attempt}/${MAX_FETCH_RETRIES} after ${timeoutMs}ms.`)
+      }
       if (attempt === MAX_FETCH_RETRIES) break
-      await new Promise((resolve) => setTimeout(resolve, 500 * attempt))
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
     }
   }
   throw lastError
