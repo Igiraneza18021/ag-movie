@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import Link from "next/link"
 
-export default function WelcomePage() {
+export default function LandingPage() {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([])
   const [featuredTVShows, setFeaturedTVShows] = useState<TVShow[]>([])
   const [trendingContent, setTrendingContent] = useState<(Movie | TVShow)[]>([])

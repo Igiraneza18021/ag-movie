@@ -23,7 +23,7 @@ import {
 } from "lucide-react"
 
 const navItems = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/home", label: "Home", icon: Home },
   { href: "/movies", label: "Movies", icon: Film },
   { href: "/tv-shows", label: "TV Shows", icon: Tv },
   { href: "/categories", label: "Categories", icon: Grid3X3 },
@@ -171,7 +171,7 @@ export function Navigation() {
     <>
       {/* Mobile Logo - Top Center */}
       <div className="fixed top-3 left-1/2 transform -translate-x-1/2 z-50 md:hidden pointer-events-auto">
-        <Link href="/">
+        <Link href="/home">
           <Image
             src="/image.png"
             alt="Agasobanuye Movies Logo"
@@ -221,7 +221,7 @@ export function Navigation() {
       >
         {/* Left side: logo + nav */}
         <div className="flex items-center gap-3 lg:gap-6">
-          <Link href="/" className="mr-2 lg:mr-4">
+          <Link href="/home" className="mr-2 lg:mr-4">
             <Image
               src="/image.png"
               alt="Agasobanuye Movies Logo"
