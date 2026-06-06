@@ -45,28 +45,11 @@ export function Top10Section({ items }: Top10SectionProps) {
   const top10Items = items.slice(0, 10)
 
   return (
-    <section className="relative py-8 md:py-12">
-      {/* Header */}
-      <div className="px-2 sm:px-4 md:px-8 mb-6 flex items-center gap-4">
-        <h2
-          className="text-5xl sm:text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary/80 to-primary tracking-tighter"
-          style={{
-            WebkitTextStroke: "2px rgba(99, 102, 241, 0.5)",
-            textShadow: "0 0 30px rgba(99, 102, 241, 0.3)",
-          }}
-        >
-          TOP 10
-        </h2>
-        <div className="block">
-          <div className="text-white text-sm font-bold tracking-widest">CONTENT</div>
-          <div className="text-white text-sm font-bold tracking-widest">TODAY</div>
-        </div>
-      </div>
-
+    <section className="relative py-4 md:py-8">
       <div className="relative px-2 sm:px-4 md:px-8">
         {/* Edge fades */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#090a0a] to-transparent z-10" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#090a0a] to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black to-transparent z-10" />
 
         {/* Navigation buttons */}
         {canLeft && (
@@ -94,7 +77,7 @@ export function Top10Section({ items }: Top10SectionProps) {
 
         <div
           ref={scrollerRef}
-          className="relative flex gap-16 md:gap-20 overflow-x-auto overflow-y-hidden pb-2 hide-scrollbar px-4 md:px-8"
+          className="relative flex gap-12 md:gap-16 overflow-x-auto overflow-y-hidden pb-2 hide-scrollbar px-4 md:px-8"
         >
           {top10Items.map((it, index) => {
             const mt = 'title' in it ? 'movie' : 'tv'
@@ -106,7 +89,7 @@ export function Top10Section({ items }: Top10SectionProps) {
             return (
               <div
                 key={`${mt}-${it.id}-${rank}`}
-                className="relative group flex items-end flex-shrink-0 cursor-pointer"
+                className="relative group flex items-end flex-shrink-0 cursor-pointer pl-12 sm:pl-16 md:pl-20"
                 onClick={() => router.push(href)}
                 role="button"
                 tabIndex={0}
@@ -118,26 +101,15 @@ export function Top10Section({ items }: Top10SectionProps) {
                 }}
               >
                 {/* Rank number */}
-                <div className="absolute -left-8 sm:-left-10 md:-left-12 bottom-0 z-0 pointer-events-none transition-transform duration-300 group-hover:-translate-x-4">
+                <div className="absolute left-0 bottom-0 z-0 pointer-events-none transition-transform duration-300 group-hover:-translate-x-2">
                   <div
-                    className="text-[80px] sm:text-[100px] md:text-[120px] lg:text-[140px] font-black leading-none transition-all duration-300"
+                    className="text-[100px] sm:text-[120px] md:text-[150px] lg:text-[180px] font-black leading-[0.8] transition-all duration-300"
                     style={{
-                      color: "transparent",
-                      WebkitTextStroke: "3px rgb(99, 102, 241)",
-                      textShadow: "0 4px 20px rgba(0, 0, 0, 0.8)",
+                      color: "rgb(0, 0, 0)",
+                      WebkitTextStroke: "2px rgb(150, 150, 150)",
                     }}
                   >
-                    <span
-                      className="absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
-                      style={{
-                        color: "rgb(99, 102, 241)",
-                        WebkitTextStroke: "none",
-                        textShadow: "none",
-                      }}
-                    >
-                      {rank}
-                    </span>
-                    <span className="relative z-10">{rank}</span>
+                    {rank}
                   </div>
                 </div>
 
