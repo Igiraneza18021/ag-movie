@@ -82,21 +82,21 @@ export default function WelcomePage() {
       <WelcomeHero movies={featuredMovies} />
 
       <main className="relative z-10 -mt-8 md:-mt-12 pb-20">
-        <div className="container mx-auto px-4">
-          {/* Trending Now Section */}
-          <div className="mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 px-4 md:px-8">
-              Trending Now
-            </h2>
-            <Top10Section items={trendingContent} />
-          </div>
+        {/* Trending Now Section - Outside main container for better flow */}
+        <div className="mb-16">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 px-6 md:px-12">
+            Trending Now
+          </h2>
+          <Top10Section items={trendingContent} />
+        </div>
 
+        <div className="container mx-auto px-4">
           {/* Featured Movies Section */}
           {featuredMovies.length > 0 && (
             <div className="mb-16">
               <div className="flex items-center justify-between mb-8 px-4 md:px-8">
                 <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center">
-                  <Film className="h-6 w-6 md:h-8 md:w-8 mr-3 text-primary" />
+                  <Film className="h-6 w-6 md:h-8 md:w-8 mr-3 text-[#0071eb]" />
                   Featured Movies
                 </h2>
                 <Link href="/movies">
@@ -147,7 +147,7 @@ export default function WelcomePage() {
             <div className="mb-16">
               <div className="flex items-center justify-between mb-8 px-4 md:px-8">
                 <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center">
-                  <Tv className="h-6 w-6 md:h-8 md:w-8 mr-3 text-primary" />
+                  <Tv className="h-6 w-6 md:h-8 md:w-8 mr-3 text-[#0071eb]" />
                   Featured TV Shows
                 </h2>
                 <Link href="/tv-shows">
