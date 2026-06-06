@@ -34,7 +34,7 @@ export default function NotFound() {
                 {/* Quick Actions */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button asChild size="lg">
-                    <Link href="/home">
+                    <Link href="/browse">
                       <Home className="h-5 w-5 mr-2" />
                       Go Home
                     </Link>

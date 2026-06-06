@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import Link from "next/link"
+import { Footer } from "@/components/footer"
 
 export default function LandingPage() {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([])
@@ -248,6 +249,7 @@ export default function LandingPage() {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   )
 }
