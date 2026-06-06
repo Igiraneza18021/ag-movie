@@ -197,28 +197,51 @@ export default function WelcomePage() {
                 {featuredTVShows.slice(0, 6).map((show) => (
                   <Card key={show.id} className="group cursor-pointer bg-neutral-900 border-none hover:scale-105 transition-transform duration-300">
                     <CardContent className="p-0">
-                      <div className="relative aspect-[2/3]">
+                      <div className="relative aspect-[2/3] overflow-hidden rounded-lg shadow-xl">
                         <img
                           src={getTMDBImageUrl(show.poster_path) || "/placeholder.svg"}
                           alt={show.name}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center flex-col gap-3 p-4">
-                          <p className="text-white text-sm font-semibold text-center line-clamp-2">{show.name}</p>
-                          <div className="flex gap-2">
-                            <Link href={`/tv/${show.id}`}>
-                              <Button size="sm" className="bg-white text-black hover:bg-white/90">
-                                <Play className="h-4 w-4 mr-1 fill-current" />
-                                Watch
-                              </Button>
-                            </Link>
+                        
+                        {/* Always visible: AG Badge top right */}
+                        <div className="absolute top-2 right-2 z-20">
+                          <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                            AG
                           </div>
                         </div>
-                        <div className="absolute top-2 right-2">
-                          <Badge variant="secondary" className="bg-black/60 text-white border-none flex items-center gap-1 backdrop-blur-md">
+
+                        {/* Default visible: Rating bottom left */}
+                        <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+                          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                             {show.vote_average?.toFixed(1)}
-                          </Badge>
+                          </div>
+                        </div>
+
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+                          <div className="space-y-2">
+                            <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+                              {show.name}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex flex-col">
+                                <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                                  {show.first_air_date ? new Date(show.first_air_date).getFullYear() : 'N/A'}
+                                </span>
+                                <div className="flex items-center gap-1 text-white text-xs font-black">
+                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                  {show.vote_average?.toFixed(1)}
+                                </div>
+                              </div>
+                              <Link href={`/tv/${show.id}`}>
+                                <Button size="icon" className="h-8 w-8 rounded-full bg-white text-black hover:bg-white/90 shadow-lg scale-90 group-hover:scale-100 transition-transform">
+                                  <Play className="h-4 w-4 fill-current" />
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
