@@ -83,20 +83,20 @@ export default function WelcomePage() {
 
       <main className="relative z-10 pb-20">
         {/* Trending Now Section - Increased top padding to avoid clipping by hero separator */}
-        <div className="pt-12 md:pt-20 mb-20 overflow-visible">
-          <div className="px-6 md:px-12 mb-8 flex items-center gap-4">
+        <div className="pt-24 md:pt-32 mb-20 overflow-visible">
+          <div className="px-6 md:px-12 mb-10 flex items-center gap-6">
             <h2
-              className="text-6xl sm:text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#0071eb] via-[#0071eb]/80 to-[#0071eb] tracking-tighter"
+              className="text-6xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#0071eb] via-[#0071eb]/90 to-[#0071eb] tracking-tighter leading-none"
               style={{
                 WebkitTextStroke: "2px rgba(0, 113, 235, 0.4)",
-                textShadow: "0 0 40px rgba(0, 113, 235, 0.2)",
+                textShadow: "0 0 50px rgba(0, 113, 235, 0.3)",
               }}
             >
               TOP 10
             </h2>
-            <div className="block pt-2 md:pt-4">
-              <div className="text-white text-base md:text-lg font-bold tracking-[0.2em] uppercase opacity-90">Content</div>
-              <div className="text-white text-base md:text-lg font-bold tracking-[0.2em] uppercase opacity-90">Today</div>
+            <div className="flex flex-col justify-center pt-2">
+              <span className="text-white text-lg md:text-2xl font-black tracking-[0.3em] uppercase opacity-90 leading-tight">Content</span>
+              <span className="text-white text-lg md:text-2xl font-black tracking-[0.3em] uppercase opacity-90 leading-tight">Today</span>
             </div>
           </div>
           <Top10Section items={trendingContent} />
@@ -123,28 +123,51 @@ export default function WelcomePage() {
                 {featuredMovies.slice(0, 6).map((movie) => (
                   <Card key={movie.id} className="group cursor-pointer bg-neutral-900 border-none hover:scale-105 transition-transform duration-300">
                     <CardContent className="p-0">
-                      <div className="relative aspect-[2/3]">
+                      <div className="relative aspect-[2/3] overflow-hidden rounded-lg shadow-xl">
                         <img
                           src={getTMDBImageUrl(movie.poster_path) || "/placeholder.svg"}
                           alt={movie.title}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center flex-col gap-3 p-4">
-                          <p className="text-white text-sm font-semibold text-center line-clamp-2">{movie.title}</p>
-                          <div className="flex gap-2">
-                            <Link href={`/movie/${movie.id}`}>
-                              <Button size="sm" className="bg-white text-black hover:bg-white/90">
-                                <Play className="h-4 w-4 mr-1 fill-current" />
-                                Watch
-                              </Button>
-                            </Link>
+                        
+                        {/* Always visible: AG Badge top right */}
+                        <div className="absolute top-2 right-2 z-20">
+                          <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                            AG
                           </div>
                         </div>
-                        <div className="absolute top-2 right-2">
-                          <Badge variant="secondary" className="bg-black/60 text-white border-none flex items-center gap-1 backdrop-blur-md">
+
+                        {/* Default visible: Rating bottom left */}
+                        <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+                          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                             {movie.vote_average?.toFixed(1)}
-                          </Badge>
+                          </div>
+                        </div>
+
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+                          <div className="space-y-2">
+                            <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+                              {movie.title}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex flex-col">
+                                <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                                  {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
+                                </span>
+                                <div className="flex items-center gap-1 text-white text-xs font-black">
+                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                  {movie.vote_average?.toFixed(1)}
+                                </div>
+                              </div>
+                              <Link href={`/movie/${movie.id}`}>
+                                <Button size="icon" className="h-8 w-8 rounded-full bg-white text-black hover:bg-white/90 shadow-lg scale-90 group-hover:scale-100 transition-transform">
+                                  <Play className="h-4 w-4 fill-current" />
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
