@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { spawn } from "node:child_process"
-import { stat } from "node:fs/promises"
+import { mkdir, stat } from "node:fs/promises"
+import os from "node:os"
 import path from "node:path"
 
 export const runtime = "nodejs"
@@ -26,26 +27,31 @@ interface AuditJobStore {
 
 const MAX_JOBS = 12
 const MAX_LOG_LINES = 1200
+const TEMP_DIR = path.join(os.tmpdir(), "ag-movie-audit")
 
 const COMMANDS: Record<
   AuditCommandKey,
-  { label: string; args: string[]; requiresServiceRole?: boolean; description: string }
+  {
+    label: string
+    description: string
+    requiresServiceRole?: boolean
+    shouldGenerateBeforeUpload?: boolean
+  }
 > = {
   generate_audit: {
     label: "Generate live audit",
-    args: ["scripts/generate-oshakur-links-audit.mjs"],
-    description: "Crawl the live sitemap, enrich with TMDB, and rebuild oshakur-links-audit.md.",
+    description: "Crawl the live sitemap, enrich with TMDB, and rebuild the runtime audit artifact.",
   },
   upload_dry_run: {
     label: "Dry-run DB reconciliation",
-    args: ["scripts/bulk-upload-oshakur.mjs", "--dry-run"],
-    description: "Compare the audit to the live DB without writing any rows.",
+    description: "Generate a fresh audit, then compare it to the live DB without writing any rows.",
+    shouldGenerateBeforeUpload: true,
   },
   upload_apply: {
     label: "Apply DB reconciliation",
-    args: ["scripts/bulk-upload-oshakur.mjs", "--apply"],
+    description: "Generate a fresh audit, then insert missing rows and backfill empty fields in the live DB.",
     requiresServiceRole: true,
-    description: "Insert missing rows and backfill empty fields in the live DB.",
+    shouldGenerateBeforeUpload: true,
   },
 }
 
@@ -58,6 +64,14 @@ function getStore(): AuditJobStore {
     globalThis.__agMovieAuditJobStore = { jobs: [] }
   }
   return globalThis.__agMovieAuditJobStore
+}
+
+function getRuntimeAuditPath() {
+  return path.join(TEMP_DIR, "oshakur-links-audit.md")
+}
+
+function getScriptPath(relativePath: string) {
+  return path.join(process.cwd(), relativePath)
 }
 
 function appendLog(job: AuditJob, chunk: string) {
@@ -79,7 +93,7 @@ function serializeJob(job: AuditJob) {
 }
 
 async function getAuditFileInfo() {
-  const auditPath = path.join(process.cwd(), "oshakur-links-audit.md")
+  const auditPath = getRuntimeAuditPath()
   try {
     const info = await stat(auditPath)
     return {
@@ -102,6 +116,68 @@ function getActiveJob(store: AuditJobStore) {
   return store.jobs.find((job) => job.status === "running") ?? null
 }
 
+async function runNodeScript(job: AuditJob, scriptRelativePath: string, scriptArgs: string[] = []) {
+  await mkdir(TEMP_DIR, { recursive: true })
+
+  const scriptPath = getScriptPath(scriptRelativePath)
+  appendLog(job, `Command: ${process.execPath} ${scriptPath} ${scriptArgs.join(" ")}`.trim())
+  appendLog(job, `Working directory: ${TEMP_DIR}`)
+
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(process.execPath, [scriptPath, ...scriptArgs], {
+      cwd: TEMP_DIR,
+      env: {
+        ...process.env,
+        OSHAKUR_AUDIT_FILE: getRuntimeAuditPath(),
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+
+    child.stdout.on("data", (data) => appendLog(job, String(data)))
+    child.stderr.on("data", (data) => appendLog(job, String(data)))
+    child.on("error", reject)
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve()
+        return
+      }
+      reject(new Error(`Process finished with exit code ${code ?? -1}`))
+    })
+  })
+}
+
+async function runJob(job: AuditJob) {
+  const command = COMMANDS[job.commandKey]
+
+  appendLog(job, `Starting ${command.label}`)
+  appendLog(job, `Runtime audit path: ${getRuntimeAuditPath()}`)
+
+  try {
+    if (job.commandKey === "generate_audit") {
+      await runNodeScript(job, "scripts/generate-oshakur-links-audit.mjs")
+    } else {
+      if (command.shouldGenerateBeforeUpload) {
+        appendLog(job, "Preparing a fresh runtime audit before reconciliation.")
+        await runNodeScript(job, "scripts/generate-oshakur-links-audit.mjs")
+      }
+
+      const uploadArgs = job.commandKey === "upload_apply" ? ["--apply"] : ["--dry-run"]
+      await runNodeScript(job, "scripts/bulk-upload-oshakur.mjs", uploadArgs)
+    }
+
+    job.status = "completed"
+    job.exitCode = 0
+    appendLog(job, "Process finished with exit code 0")
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    appendLog(job, message)
+    job.status = "failed"
+    job.exitCode = 1
+  } finally {
+    job.endedAt = new Date().toISOString()
+  }
+}
+
 function startJob(commandKey: AuditCommandKey) {
   const command = COMMANDS[commandKey]
   const store = getStore()
@@ -122,33 +198,7 @@ function startJob(commandKey: AuditCommandKey) {
     store.jobs.splice(MAX_JOBS)
   }
 
-  appendLog(job, `Starting ${command.label}`)
-  appendLog(job, `Command: ${process.execPath} ${command.args.join(" ")}`)
-  appendLog(job, `Working directory: ${process.cwd()}`)
-
-  const child = spawn(process.execPath, command.args, {
-    cwd: process.cwd(),
-    env: process.env,
-    stdio: ["ignore", "pipe", "pipe"],
-  })
-
-  child.stdout.on("data", (data) => appendLog(job, String(data)))
-  child.stderr.on("data", (data) => appendLog(job, String(data)))
-
-  child.on("error", (error) => {
-    appendLog(job, `Process error: ${error.message}`)
-    job.status = "failed"
-    job.exitCode = -1
-    job.endedAt = new Date().toISOString()
-  })
-
-  child.on("close", (code) => {
-    job.exitCode = code
-    job.status = code === 0 ? "completed" : "failed"
-    job.endedAt = new Date().toISOString()
-    appendLog(job, `Process finished with exit code ${code ?? -1}`)
-  })
-
+  void runJob(job)
   return job
 }
 

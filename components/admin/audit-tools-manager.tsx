@@ -161,8 +161,8 @@ export function AuditToolsManager() {
 
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium">Audit file</p>
-                <p className="truncate text-xs text-muted-foreground">{data?.capabilities.auditFile.path || "oshakur-links-audit.md"}</p>
+                <p className="text-sm font-medium">Runtime audit artifact</p>
+                <p className="truncate text-xs text-muted-foreground">{data?.capabilities.auditFile.path || "/tmp/ag-movie-audit/oshakur-links-audit.md"}</p>
               </div>
               <div className="text-right text-xs text-muted-foreground">
                 <p>{data?.capabilities.auditFile.exists ? "Ready" : "Missing"}</p>
