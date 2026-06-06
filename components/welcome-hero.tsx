@@ -54,15 +54,10 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
           />
         </div>
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded border border-white/30 bg-black/20 text-white backdrop-blur-sm">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded border border-white/30 bg-black/20 text-white backdrop-blur-sm">
             <Globe className="w-4 h-4" />
             <span className="text-sm font-medium">English</span>
           </div>
-          <Link href="/">
-            <Button className="bg-[#0071eb] hover:bg-[#005bb5] text-white font-bold px-4 py-2 text-sm rounded transition-all">
-              Sign In
-            </Button>
-          </Link>
         </div>
       </header>
 
@@ -71,30 +66,16 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 leading-tight">
           Unlimited movies, TV shows, and more
         </h1>
-        <p className="text-xl md:text-2xl text-white mb-6">
+        <p className="text-xl md:text-2xl text-white mb-8">
           Watch anywhere. Cancel anytime.
         </p>
         <div className="w-full max-w-2xl mt-4">
-          <p className="text-lg md:text-xl text-white mb-4">
-            Ready to watch? Enter your email to create or restart your membership.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="flex-grow relative group">
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-14 md:h-16 bg-black/40 border-white/30 text-white placeholder:text-white/60 text-lg px-6 rounded focus:ring-2 focus:ring-[#0071eb] transition-all"
-              />
-            </div>
-            <Link href="/" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full h-14 md:h-16 text-xl md:text-2xl font-bold bg-[#0071eb] hover:bg-[#005bb5] text-white px-8 rounded flex items-center justify-center gap-2 group transition-all">
-                Get Started
-                <ChevronRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-          </div>
+          <Link href="/" className="inline-block">
+            <Button size="lg" className="h-14 md:h-16 text-xl md:text-2xl font-bold bg-[#0071eb] hover:bg-[#005bb5] text-white px-12 rounded-full flex items-center justify-center gap-3 group transition-all shadow-xl hover:scale-105 active:scale-95">
+              Get Started
+              <ChevronRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
         </div>
       </div>
 
