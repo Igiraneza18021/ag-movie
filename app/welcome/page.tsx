@@ -160,6 +160,7 @@ export default function WelcomePage() {
               width={200}
               height={200}
               className="object-contain mb-6"
+              style={{ height: "auto" }}
             />
             <h1 className="text-6xl md:text-8xl font-bold text-foreground bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
               AGASOBANUYE MOVIES

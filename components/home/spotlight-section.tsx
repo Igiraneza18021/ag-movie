@@ -164,11 +164,33 @@ export function SpotlightSection({ item, isLoading, onQuickSearchOpen }: Spotlig
     }
   }
 
-  if (isLoading || !item) {
+  if (isLoading) {
     return (
       <section className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden flex items-end bg-[#090a0a]">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </section>
+    )
+  }
+
+  if (!item) {
+    return (
+      <section className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden flex items-end bg-[#090a0a]">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#121212] to-[#090a0a]" />
+        <div className="relative z-10 w-full px-6 sm:px-8 md:px-12 pb-16 sm:pb-20 md:pb-24 text-center md:text-left">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+            Ag Movies
+          </h1>
+          <p className="text-white/70 text-sm sm:text-base md:text-lg max-w-xl mx-auto md:mx-0 mb-6">
+            We couldn't load featured content right now. Please check your connection and try again.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-white text-black px-6 py-3 rounded-lg font-bold text-sm sm:text-base hover:bg-gray-200 transition-all duration-200"
+          >
+            Reload
+          </button>
         </div>
       </section>
     )
@@ -359,4 +381,3 @@ export function SpotlightSection({ item, isLoading, onQuickSearchOpen }: Spotlig
     </section>
   )
 }
-

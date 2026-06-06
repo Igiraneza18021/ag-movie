@@ -61,6 +61,7 @@ export function Footer() {
               width={48}
               height={48}
               className="object-contain"
+              style={{ height: "auto" }}
             />
             <h2 className="text-2xl font-semibold text-white">AGASOBANUYE MOVIES</h2>
           </Link>

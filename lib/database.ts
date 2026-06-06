@@ -157,75 +157,107 @@ export async function getMoviesServer(limit = 20, offset = 0): Promise<Movie[]> 
 }
 
 export async function getTVShowsServer(limit = 20, offset = 0): Promise<TVShow[]> {
-  const supabase = await createServerClient()
+  try {
+    const supabase = await createServerClient()
 
-  const { data, error } = await supabase
-    .from("tv_shows")
-    .select("*")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
+    const { data, error } = await supabase
+      .from("tv_shows")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1)
 
-  if (error) {
-    console.error("Error fetching TV shows:", error)
+    if (error) {
+      console.error("Error fetching TV shows:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Database connection error:", error)
+    if (isTransientFetchError(error)) {
+      return []
+    }
     return []
   }
-
-  return data || []
 }
 
 export async function getTVShowByIdServer(id: string): Promise<TVShow | null> {
-  const supabase = await createServerClient()
+  try {
+    const supabase = await createServerClient()
 
-  const { data, error } = await runSupabaseQueryWithRetry<TVShow>(() =>
-    supabase.from("tv_shows").select("*").eq("id", id).maybeSingle(),
-  )
+    const { data, error } = await runSupabaseQueryWithRetry<TVShow>(() =>
+      supabase.from("tv_shows").select("*").eq("id", id).maybeSingle(),
+    )
 
-  if (error) {
-    console.error("Error fetching TV show:", error)
+    if (error) {
+      console.error("Error fetching TV show:", error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error("Database connection error:", error)
+    if (isTransientFetchError(error)) {
+      return null
+    }
     return null
   }
-
-  return data
 }
 
 export async function getSeasonsByTVShowServer(tvShowId: string): Promise<Season[]> {
-  const supabase = await createServerClient()
+  try {
+    const supabase = await createServerClient()
 
-  const { data, error } = await runSupabaseQueryWithRetry<Season[]>(() =>
-    supabase
-      .from("seasons")
-      .select("*")
-      .eq("tv_show_id", tvShowId)
-      .order("season_number", { ascending: true }),
-  )
+    const { data, error } = await runSupabaseQueryWithRetry<Season[]>(() =>
+      supabase
+        .from("seasons")
+        .select("*")
+        .eq("tv_show_id", tvShowId)
+        .order("season_number", { ascending: true }),
+    )
 
-  if (error) {
-    console.error("Error fetching seasons:", error)
+    if (error) {
+      console.error("Error fetching seasons:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Database connection error:", error)
+    if (isTransientFetchError(error)) {
+      return []
+    }
     return []
   }
-
-  return data || []
 }
 
 export async function getEpisodesByTVShowServer(tvShowId: string): Promise<Episode[]> {
-  const supabase = await createServerClient()
+  try {
+    const supabase = await createServerClient()
 
-  const { data, error } = await runSupabaseQueryWithRetry<Episode[]>(() =>
-    supabase
-      .from("episodes")
-      .select("*")
-      .eq("tv_show_id", tvShowId)
-      .order("season_number", { ascending: true })
-      .order("episode_number", { ascending: true }),
-  )
+    const { data, error } = await runSupabaseQueryWithRetry<Episode[]>(() =>
+      supabase
+        .from("episodes")
+        .select("*")
+        .eq("tv_show_id", tvShowId)
+        .order("season_number", { ascending: true })
+        .order("episode_number", { ascending: true }),
+    )
 
-  if (error) {
-    console.error("Error fetching episodes:", error)
+    if (error) {
+      console.error("Error fetching episodes:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Database connection error:", error)
+    if (isTransientFetchError(error)) {
+      return []
+    }
     return []
   }
-
-  return data || []
 }
 
 export async function getMovieByIdServer(id: string): Promise<Movie | null> {

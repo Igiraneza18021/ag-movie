@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie, TVShow } from "@/lib/types"
-import { getShareCaption, getShareFileName, getShareImageUrl, getShareTitle, getShareUrl } from "@/lib/share-content"
+import { getShareCaption, getShareFileName, getShareImageUrl, getSharePromoLines, getShareTitle, getShareUrl } from "@/lib/share-content"
 import { Play, ThumbsUp, Plus, Eye, Download, Share2 } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -36,6 +36,210 @@ function formatReleaseDate(date?: string): string {
 function isMobileDevice(): boolean {
   if (typeof window === "undefined") return false
   return window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error(`Failed to load image: ${src}`))
+    image.src = src
+  })
+}
+
+async function fetchShareImageBlob(imageUrl: string, fallbackUrl: string) {
+  const primaryResponse = await fetch(imageUrl, { cache: "force-cache" }).catch(() => null)
+  if (primaryResponse?.ok) {
+    return primaryResponse.blob()
+  }
+
+  const fallbackResponse = await fetch(fallbackUrl, { cache: "force-cache" })
+  if (!fallbackResponse.ok) {
+    throw new Error("Failed to fetch both share image and fallback image.")
+  }
+
+  return fallbackResponse.blob()
+}
+
+function createObjectUrlImage(blob: Blob) {
+  const objectUrl = URL.createObjectURL(blob)
+
+  return loadImage(objectUrl).then(
+    (image) => ({ image, objectUrl }),
+    (error) => {
+      URL.revokeObjectURL(objectUrl)
+      throw error
+    },
+  )
+}
+
+function clipRoundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  context.beginPath()
+
+  if (typeof context.roundRect === "function") {
+    context.roundRect(x, y, width, height, radius)
+    context.clip()
+    return
+  }
+
+  const r = Math.min(radius, width / 2, height / 2)
+  context.moveTo(x + r, y)
+  context.lineTo(x + width - r, y)
+  context.quadraticCurveTo(x + width, y, x + width, y + r)
+  context.lineTo(x + width, y + height - r)
+  context.quadraticCurveTo(x + width, y + height, x + width - r, y + height)
+  context.lineTo(x + r, y + height)
+  context.quadraticCurveTo(x, y + height, x, y + height - r)
+  context.lineTo(x, y + r)
+  context.quadraticCurveTo(x, y, x + r, y)
+  context.closePath()
+  context.clip()
+}
+
+function drawWrappedText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines: number,
+) {
+  const words = text.split(" ")
+  const lines: string[] = []
+  let currentLine = ""
+
+  for (const word of words) {
+    const candidate = currentLine ? `${currentLine} ${word}` : word
+    const width = context.measureText(candidate).width
+
+    if (width <= maxWidth) {
+      currentLine = candidate
+      continue
+    }
+
+    if (currentLine) {
+      lines.push(currentLine)
+    }
+    currentLine = word
+
+    if (lines.length === maxLines - 1) {
+      break
+    }
+  }
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine)
+  }
+
+  const visibleLines = lines.slice(0, maxLines).map((line, index, array) => {
+    if (index !== array.length - 1) return line
+    if (context.measureText(line).width <= maxWidth) return line
+
+    let trimmed = line
+    while (trimmed.length > 0 && context.measureText(`${trimmed}...`).width > maxWidth) {
+      trimmed = trimmed.slice(0, -1).trimEnd()
+    }
+    return `${trimmed}...`
+  })
+
+  visibleLines.forEach((line, index) => {
+    context.fillText(line, x, y + index * lineHeight)
+  })
+
+  return visibleLines.length
+}
+
+async function createSharePromoImage(
+  imageUrl: string,
+  item: Movie | TVShow,
+  mediaType: "movie" | "tv",
+  fallbackUrl: string,
+) {
+  const canvas = document.createElement("canvas")
+  canvas.width = 1080
+  canvas.height = 1350
+  const context = canvas.getContext("2d")
+
+  if (!context) {
+    throw new Error("Canvas is unavailable for share image generation.")
+  }
+
+  const sourceBlob = await fetchShareImageBlob(imageUrl, fallbackUrl)
+  const { image: sourceImage, objectUrl } = await createObjectUrlImage(sourceBlob)
+  const { eyebrow, title, tagline, teaser, linkLabel, brand } = getSharePromoLines(item, mediaType)
+
+  try {
+    context.fillStyle = "#090a0a"
+    context.fillRect(0, 0, canvas.width, canvas.height)
+
+    const imageAreaWidth = 860
+    const imageAreaHeight = 860
+    const imageX = (canvas.width - imageAreaWidth) / 2
+    const imageY = 78
+    const scale = Math.max(imageAreaWidth / sourceImage.width, imageAreaHeight / sourceImage.height)
+    const drawWidth = sourceImage.width * scale
+    const drawHeight = sourceImage.height * scale
+    const drawX = imageX + (imageAreaWidth - drawWidth) / 2
+    const drawY = imageY + (imageAreaHeight - drawHeight) / 2
+
+    context.save()
+    clipRoundedRect(context, imageX, imageY, imageAreaWidth, imageAreaHeight, 32)
+    context.drawImage(sourceImage, drawX, drawY, drawWidth, drawHeight)
+
+    const overlay = context.createLinearGradient(0, imageY + 420, 0, imageY + imageAreaHeight)
+    overlay.addColorStop(0, "rgba(9, 10, 10, 0)")
+    overlay.addColorStop(1, "rgba(9, 10, 10, 0.88)")
+    context.fillStyle = overlay
+    context.fillRect(imageX, imageY, imageAreaWidth, imageAreaHeight)
+    context.restore()
+
+    context.fillStyle = "rgba(255,255,255,0.92)"
+    context.font = "700 30px Arial, sans-serif"
+    context.fillText(eyebrow, 110, 1000)
+
+    context.fillStyle = "#ffffff"
+    context.font = "700 76px Arial, sans-serif"
+    const titleLines = drawWrappedText(context, title, 110, 1070, 860, 86, 3)
+
+    context.fillStyle = "rgba(255,255,255,0.86)"
+    context.font = "600 34px Arial, sans-serif"
+    const taglineY = 1070 + titleLines * 86 + 16
+    const taglineLines = drawWrappedText(context, tagline, 110, taglineY, 860, 44, 3)
+
+    if (teaser) {
+      context.fillStyle = "rgba(255,255,255,0.72)"
+      context.font = "400 28px Arial, sans-serif"
+      drawWrappedText(context, teaser, 110, taglineY + taglineLines * 44 + 24, 860, 38, 2)
+    }
+
+    context.fillStyle = "#ffffff"
+    context.fillRect(110, 1240, 860, 2)
+    context.font = "700 30px Arial, sans-serif"
+    context.fillText(brand, 110, 1292)
+    context.textAlign = "right"
+    context.fillText(linkLabel, 970, 1292)
+    context.textAlign = "left"
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.92)
+    })
+
+    if (!blob) {
+      throw new Error("Failed to generate share image.")
+    }
+
+    return blob
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
 export function SpotlightSection({
@@ -248,6 +452,7 @@ export function SpotlightSection({
     const shareUrl = getShareUrl(item, mediaType)
     const shareTitle = title
     const shareText = getShareCaption(item, mediaType)
+    const shareClipboardText = `${shareText}\n\n${shareUrl}`
 
     const shareTextAndLink = async () => {
       if (navigator.share) {
@@ -260,10 +465,10 @@ export function SpotlightSection({
       }
 
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl)
+        await navigator.clipboard.writeText(shareClipboardText)
         toast({
-          title: "Link copied",
-          description: "Share link copied. You can paste it into Instagram, TikTok, or anywhere else.",
+          title: "Caption copied",
+          description: "Your caption and link are copied. You can paste them into Instagram, TikTok, or anywhere else.",
         })
         return "copied"
       }
@@ -276,15 +481,17 @@ export function SpotlightSection({
     try {
       const origin = window.location.origin
       const imageUrl = getShareImageUrl(item, origin)
-      const imageResponse = await fetch(imageUrl, { cache: "force-cache" })
+      const fallbackUrl = `${origin}/placeholder.jpg`
+      let blob: Blob
 
-      if (!imageResponse.ok) {
-        await shareTextAndLink()
-        return
+      try {
+        blob = await createSharePromoImage(imageUrl, item, mediaType, fallbackUrl)
+      } catch (promoError) {
+        console.warn("Failed to generate branded share image, falling back to raw artwork:", promoError)
+        blob = await fetchShareImageBlob(imageUrl, fallbackUrl)
       }
 
-      const blob = await imageResponse.blob()
-      const contentType = blob.type || imageResponse.headers.get("content-type") || "image/jpeg"
+      const contentType = blob.type || "image/jpeg"
       const file = new File([blob], getShareFileName(item, mediaType, contentType), { type: contentType })
       const fileShareData = {
         files: [file],
@@ -294,7 +501,21 @@ export function SpotlightSection({
       }
 
       if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+        if (navigator.clipboard?.writeText) {
+          try {
+            await navigator.clipboard.writeText(shareClipboardText)
+          } catch {
+            // Ignore clipboard failures and continue with share.
+          }
+        }
+
         await navigator.share(fileShareData)
+        if (navigator.clipboard?.writeText) {
+          toast({
+            title: "Ready to post",
+            description: "The image was shared, and your caption is copied so you can paste it into Reels, Posts, or Stories.",
+          })
+        }
         return
       }
 
@@ -306,10 +527,10 @@ export function SpotlightSection({
 
       if (navigator.clipboard?.writeText) {
         try {
-          await navigator.clipboard.writeText(shareUrl)
+          await navigator.clipboard.writeText(shareClipboardText)
           toast({
-            title: "Link copied",
-            description: "We couldn't open the share sheet, so the link is ready to paste instead.",
+            title: "Caption copied",
+            description: "We couldn't open the share sheet, so the caption and link are ready to paste instead.",
           })
           return
         } catch {

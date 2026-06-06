@@ -6,6 +6,7 @@ import { ComingSoonManager } from "@/components/admin/coming-soon-manager"
 import { ContentStats } from "@/components/admin/content-stats"
 import { PasswordProtection } from "@/components/admin/password-protection"
 import { MovieRequestsManager } from "@/components/admin/movie-requests-manager"
+import { AuditToolsManager } from "@/components/admin/audit-tools-manager"
 
 export default function AdminPage() {
   return (
@@ -18,11 +19,12 @@ export default function AdminPage() {
       <ContentStats />
 
       <Tabs defaultValue="movies" className="mt-8">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="movies">Movies</TabsTrigger>
           <TabsTrigger value="tv-shows">TV Shows</TabsTrigger>
           <TabsTrigger value="coming-soon">Coming Soon</TabsTrigger>
           <TabsTrigger value="requests">Requests</TabsTrigger>
+          <TabsTrigger value="audit-tools">Audit Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="movies" className="mt-6">
@@ -69,6 +71,18 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <MovieRequestsManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit-tools" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Audit Tools</CardTitle>
+              <CardDescription>Run the live sitemap audit and the bulk upload reconciliation with live logs.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AuditToolsManager />
             </CardContent>
           </Card>
         </TabsContent>

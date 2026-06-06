@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "audit:oshakur": "node scripts/generate-oshakur-links-audit.mjs",
+    "audit:upload": "node scripts/bulk-upload-oshakur.mjs --apply",
+    "audit:upload:dry": "node scripts/bulk-upload-oshakur.mjs --dry-run",
     "build": "next build",
     "clean:next": "rm -rf .next",
     "dev": "next dev",
