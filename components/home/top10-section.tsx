@@ -45,15 +45,16 @@ export function Top10Section({ items }: Top10SectionProps) {
   const top10Items = items.slice(0, 10)
 
   return (
-    <section className="relative py-4 md:py-8 overflow-visible">
-      <div className="relative px-2 sm:px-4 md:px-8 overflow-visible">
+    <section className="relative py-4 md:py-8 overflow-visible hide-scrollbar">
+      <div className="relative px-2 sm:px-4 md:px-8 overflow-visible hide-scrollbar">
         {/* Edge fades */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black via-black/50 to-transparent z-20" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black via-black/50 to-transparent z-20" />
 
         <div
           ref={scrollerRef}
-          className="relative flex gap-12 md:gap-16 overflow-x-auto overflow-y-visible pb-12 hide-scrollbar px-4 md:px-8 pt-4"
+          className="relative flex gap-12 md:gap-16 overflow-x-auto overflow-y-visible pb-12 hide-scrollbar px-4 md:px-8 pt-4 scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {top10Items.map((it, index) => {
             const mt = 'title' in it ? 'movie' : 'tv'
@@ -105,11 +106,13 @@ export function Top10Section({ items }: Top10SectionProps) {
                     )}
 
                     {/* Gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                    {/* Title on hover */}
-                    <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="text-white text-xs font-semibold line-clamp-2">{title}</div>
+                    {/* AG Icon in top right */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                        AG
+                      </div>
                     </div>
                   </div>
                 </div>
