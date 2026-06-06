@@ -2,6 +2,7 @@
 
 import { readFile } from "node:fs/promises"
 import { createClient } from "@supabase/supabase-js"
+import { pathToFileURL } from "node:url"
 
 const AUDIT_FILE = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
 const APPLY_FLAG = "--apply"
@@ -571,7 +572,7 @@ function printSummary(summary) {
   }
 }
 
-async function main() {
+export async function main() {
   console.log(`Reading audit from ${AUDIT_FILE}...`)
   const audit = await parseAuditFile(AUDIT_FILE)
   console.log(`Parsed ${audit.movies.length} movie entities and ${audit.tvShows.length} TV show entities from the audit.`)
@@ -608,7 +609,14 @@ async function loadEnvFile(path) {
   } catch {}
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+function isDirectRun() {
+  const entry = process.argv[1]
+  return Boolean(entry) && import.meta.url === pathToFileURL(entry).href
+}
+
+if (isDirectRun()) {
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}

@@ -3,6 +3,8 @@ import { spawn } from "node:child_process"
 import { mkdir, stat } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
+import "../../../../scripts/generate-oshakur-links-audit.mjs"
+import "../../../../scripts/bulk-upload-oshakur.mjs"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"

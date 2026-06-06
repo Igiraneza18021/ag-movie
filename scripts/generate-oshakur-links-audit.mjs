@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readFile, writeFile } from "node:fs/promises"
+import { pathToFileURL } from "node:url"
 
 const SITEMAP_URL = "https://oshakurfilms.com/sitemap.xml"
 const OUTPUT_FILE = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
@@ -1186,7 +1187,7 @@ function buildIntro(summary) {
   return lines.join("\n")
 }
 
-async function main() {
+export async function main() {
   const { pages: parsedPages, failures, totalUrls } = await loadParsedPagesFromSitemap()
   console.log(`Parsed ${parsedPages.length} live source pages. Failed ${failures.length} pages.`)
 
@@ -1265,7 +1266,14 @@ async function main() {
   console.log(`Wrote ${OUTPUT_FILE} with ${enrichedMovies.length + mergedTvGroups.length} grouped content entities.`)
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+function isDirectRun() {
+  const entry = process.argv[1]
+  return Boolean(entry) && import.meta.url === pathToFileURL(entry).href
+}
+
+if (isDirectRun()) {
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}
