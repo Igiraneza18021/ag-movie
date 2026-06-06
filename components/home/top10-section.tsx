@@ -77,11 +77,10 @@ export function Top10Section({ items }: Top10SectionProps) {
                 }}
               >
                 {/* Rank number */}
-                <div className="absolute left-0 bottom-0 z-0 pointer-events-none transition-transform duration-300 group-hover:-translate-x-2">
+                <div className="absolute left-0 bottom-0 z-0 pointer-events-none transition-all duration-500 group-hover:-translate-x-4 group-hover:z-30 group-hover:scale-110">
                   <div
-                    className="text-[100px] sm:text-[120px] md:text-[150px] lg:text-[180px] font-black leading-[0.8] transition-all duration-300"
+                    className="text-[100px] sm:text-[120px] md:text-[150px] lg:text-[180px] font-black leading-[0.8] transition-all duration-500 text-black group-hover:text-[#0071eb] group-hover:drop-shadow-[0_0_15px_rgba(0,113,235,0.5)]"
                     style={{
-                      color: "rgb(0, 0, 0)",
                       WebkitTextStroke: "2px rgb(0, 113, 235)",
                     }}
                   >
@@ -90,7 +89,7 @@ export function Top10Section({ items }: Top10SectionProps) {
                 </div>
 
                 {/* Poster card */}
-                <div className="relative z-10 w-28 sm:w-32 md:w-36 lg:w-40 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-white/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
+                <div className="relative z-10 w-28 sm:w-32 md:w-36 lg:w-40 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-white/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl group-hover:z-20">
                   <div className="relative w-full aspect-[2/3]">
                     {poster ? (
                       <img
