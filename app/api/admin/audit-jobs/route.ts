@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { spawn } from "node:child_process"
 import { mkdir, stat } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import "../../../../scripts/generate-oshakur-links-audit.mjs"
-import "../../../../scripts/bulk-upload-oshakur.mjs"
+import { main as generateAuditMain } from "../../../../scripts/generate-oshakur-links-audit.mjs"
+import { main as bulkUploadMain } from "../../../../scripts/bulk-upload-oshakur.mjs"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -37,7 +36,7 @@ const COMMANDS: Record<
     label: string
     description: string
     requiresServiceRole?: boolean
-    shouldGenerateBeforeUpload?: boolean
+    applyMode?: boolean
   }
 > = {
   generate_audit: {
@@ -47,13 +46,13 @@ const COMMANDS: Record<
   upload_dry_run: {
     label: "Dry-run DB reconciliation",
     description: "Generate a fresh audit, then compare it to the live DB without writing any rows.",
-    shouldGenerateBeforeUpload: true,
+    applyMode: false,
   },
   upload_apply: {
     label: "Apply DB reconciliation",
     description: "Generate a fresh audit, then insert missing rows and backfill empty fields in the live DB.",
     requiresServiceRole: true,
-    shouldGenerateBeforeUpload: true,
+    applyMode: true,
   },
 }
 
@@ -70,10 +69,6 @@ function getStore(): AuditJobStore {
 
 function getRuntimeAuditPath() {
   return path.join(TEMP_DIR, "oshakur-links-audit.md")
-}
-
-function getScriptPath(relativePath: string) {
-  return path.join(process.cwd(), relativePath)
 }
 
 function appendLog(job: AuditJob, chunk: string) {
@@ -118,63 +113,56 @@ function getActiveJob(store: AuditJobStore) {
   return store.jobs.find((job) => job.status === "running") ?? null
 }
 
-async function runNodeScript(job: AuditJob, scriptRelativePath: string, scriptArgs: string[] = []) {
-  await mkdir(TEMP_DIR, { recursive: true })
+async function withCapturedConsole(job: AuditJob, run: () => Promise<void>) {
+  const originalLog = console.log
+  const originalError = console.error
+  const originalWarn = console.warn
 
-  const scriptPath = getScriptPath(scriptRelativePath)
-  appendLog(job, `Command: ${process.execPath} ${scriptPath} ${scriptArgs.join(" ")}`.trim())
-  appendLog(job, `Working directory: ${TEMP_DIR}`)
+  console.log = (...args) => appendLog(job, args.map((arg) => String(arg)).join(" "))
+  console.error = (...args) => appendLog(job, args.map((arg) => String(arg)).join(" "))
+  console.warn = (...args) => appendLog(job, args.map((arg) => String(arg)).join(" "))
 
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(process.execPath, [scriptPath, ...scriptArgs], {
-      cwd: TEMP_DIR,
-      env: {
-        ...process.env,
-        OSHAKUR_AUDIT_FILE: getRuntimeAuditPath(),
-      },
-      stdio: ["ignore", "pipe", "pipe"],
-    })
-
-    child.stdout.on("data", (data) => appendLog(job, String(data)))
-    child.stderr.on("data", (data) => appendLog(job, String(data)))
-    child.on("error", reject)
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve()
-        return
-      }
-      reject(new Error(`Process finished with exit code ${code ?? -1}`))
-    })
-  })
+  try {
+    await run()
+  } finally {
+    console.log = originalLog
+    console.error = originalError
+    console.warn = originalWarn
+  }
 }
 
 async function runJob(job: AuditJob) {
   const command = COMMANDS[job.commandKey]
 
+  await mkdir(TEMP_DIR, { recursive: true })
   appendLog(job, `Starting ${command.label}`)
   appendLog(job, `Runtime audit path: ${getRuntimeAuditPath()}`)
+  appendLog(job, `Working directory: ${TEMP_DIR}`)
 
   try {
-    if (job.commandKey === "generate_audit") {
-      await runNodeScript(job, "scripts/generate-oshakur-links-audit.mjs")
-    } else {
-      if (command.shouldGenerateBeforeUpload) {
-        appendLog(job, "Preparing a fresh runtime audit before reconciliation.")
-        await runNodeScript(job, "scripts/generate-oshakur-links-audit.mjs")
+    await withCapturedConsole(job, async () => {
+      if (job.commandKey === "generate_audit") {
+        await generateAuditMain({ outputFile: getRuntimeAuditPath() })
+        return
       }
 
-      const uploadArgs = job.commandKey === "upload_apply" ? ["--apply"] : ["--dry-run"]
-      await runNodeScript(job, "scripts/bulk-upload-oshakur.mjs", uploadArgs)
-    }
+      appendLog(job, "Preparing a fresh runtime audit before reconciliation.")
+      await generateAuditMain({ outputFile: getRuntimeAuditPath() })
+      await bulkUploadMain({
+        auditFile: getRuntimeAuditPath(),
+        applyMode: Boolean(command.applyMode),
+      })
+    })
 
     job.status = "completed"
     job.exitCode = 0
     appendLog(job, "Process finished with exit code 0")
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = error instanceof Error ? error.stack || error.message : String(error)
     appendLog(job, message)
     job.status = "failed"
     job.exitCode = 1
+    appendLog(job, "Process finished with exit code 1")
   } finally {
     job.endedAt = new Date().toISOString()
   }
