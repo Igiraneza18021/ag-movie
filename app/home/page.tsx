@@ -4,9 +4,6 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { SearchModal } from "@/components/search-modal"
-import { FirstVisitRedirect } from "@/components/first-visit-redirect"
-import { getMovies, getTVShows } from "@/lib/database-client"
-import type { Movie, TVShow } from "@/lib/types"
 import { SpotlightSection } from "@/components/home/spotlight-section"
 import { PortraitCategoryRow } from "@/components/home/portrait-category-row"
 import { Top10Section } from "@/components/home/top10-section"
@@ -150,73 +147,69 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <FirstVisitRedirect>
-        <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0 text-white">
-          <Navigation />
-          <div className="pt-8 md:pt-24 px-6 sm:px-10 pb-10">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">We couldn't load the browse page</h2>
-              <p className="text-white/70 mb-6">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90"
-              >
-                Reload
-              </button>
-            </div>
+      <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0 text-white">
+        <Navigation />
+        <div className="pt-8 md:pt-24 px-6 sm:px-10 pb-10">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">We couldn't load the browse page</h2>
+            <p className="text-white/70 mb-6">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90"
+            >
+              Reload
+            </button>
           </div>
-          <Footer />
         </div>
-      </FirstVisitRedirect>
+        <Footer />
+      </div>
     )
   }
 
   return (
-    <FirstVisitRedirect>
-      <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0">
-        <Navigation />
+    <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0">
+      <Navigation />
 
-        {/* HERO */}
-        <SpotlightSection 
-          item={spotlightItem} 
-          isLoading={spotlightLoading} 
-          onQuickSearchOpen={handleQuickSearchOpen}
-        />
+      {/* HERO */}
+      <SpotlightSection 
+        item={spotlightItem} 
+        isLoading={spotlightLoading} 
+        onQuickSearchOpen={handleQuickSearchOpen}
+      />
 
-        {/* TOP 10 SECTION */}
-        <Top10Section items={top10Items} />
+      {/* TOP 10 SECTION */}
+      <Top10Section items={top10Items} />
 
-        <div className="px-2 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 space-y-6 sm:space-y-8">
-          {/* Continue Watching */}
-          {continueWatchingItems.length > 0 && (
-            <ContinueWatchingRow items={continueWatchingItems} />
-          )}
+      <div className="px-2 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 space-y-6 sm:space-y-8">
+        {/* Continue Watching */}
+        {continueWatchingItems.length > 0 && (
+          <ContinueWatchingRow items={continueWatchingItems} />
+        )}
 
-          {/* Provider Series Section */}
-          <ProviderSeriesSection movies={allMovies} tvShows={allTVShows} />
+        {/* Provider Series Section */}
+        <ProviderSeriesSection movies={allMovies} tvShows={allTVShows} />
 
-          {/* Portrait categories */}
-          {Object.keys(categoryData).map((title, index) => {
-            const items = categoryData[title] || []
-            if (items.length === 0) return null
-            const delay = (continueWatchingItems.length > 0) ? (index + 1) * 160 : index * 160
-            return (
-              <div key={title} className="animate-stagger" style={{ animationDelay: `${delay}ms` }}>
-                <PortraitCategoryRow title={title} items={items} />
-              </div>
-            )
-          })}
-
-          {!isLoading && !hasContent(categoryData) && (
-            <div className="px-4 md:px-8 py-10 text-center text-white/60">
-              No movies or TV shows are available right now.
+        {/* Portrait categories */}
+        {Object.keys(categoryData).map((title, index) => {
+          const items = categoryData[title] || []
+          if (items.length === 0) return null
+          const delay = (continueWatchingItems.length > 0) ? (index + 1) * 160 : index * 160
+          return (
+            <div key={title} className="animate-stagger" style={{ animationDelay: `${delay}ms` }}>
+              <PortraitCategoryRow title={title} items={items} />
             </div>
-          )}
-        </div>
+          )
+        })}
 
-        <Footer />
-        <SearchModal isOpen={isQuickSearchOpen} onClose={() => setIsQuickSearchOpen(false)} />
+        {!isLoading && !hasContent(categoryData) && (
+          <div className="px-4 md:px-8 py-10 text-center text-white/60">
+            No movies or TV shows are available right now.
+          </div>
+        )}
       </div>
-    </FirstVisitRedirect>
+
+      <Footer />
+      <SearchModal isOpen={isQuickSearchOpen} onClose={() => setIsQuickSearchOpen(false)} />
+    </div>
   )
 }
