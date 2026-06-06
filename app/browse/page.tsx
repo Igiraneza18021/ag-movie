@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { SearchModal } from "@/components/search-modal"
 import { getMovies, getTVShows } from "@/lib/database-client"
 import type { Movie, TVShow } from "@/lib/types"
 import { SpotlightSection } from "@/components/home/spotlight-section"
@@ -23,7 +22,6 @@ function hasContent(items: Record<string, (Movie | TVShow)[]>) {
 }
 
 export default function HomePage() {
-  const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false)
   const [categoryData, setCategoryData] = useState<Record<string, (Movie | TVShow)[]>>({})
   const [spotlightItem, setSpotlightItem] = useState<Movie | TVShow | null>(null)
   const [continueWatchingItems, setContinueWatchingItems] = useState<any[]>([])
@@ -32,31 +30,6 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [spotlightLoading, setSpotlightLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const handleQuickSearchOpen = () => setIsQuickSearchOpen(true)
-
-  // Listen for custom event from mobile header search button
-  useEffect(() => {
-    const handleOpenQuickSearch = () => {
-      handleQuickSearchOpen()
-    }
-
-    window.addEventListener('openQuickSearch', handleOpenQuickSearch)
-    return () => window.removeEventListener('openQuickSearch', handleOpenQuickSearch)
-  }, [])
-
-  // Keyboard shortcut for search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'g') {
-        e.preventDefault()
-        handleQuickSearchOpen()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   // Load categories and spotlight
   useEffect(() => {
@@ -176,9 +149,7 @@ export default function HomePage() {
       <SpotlightSection 
         item={spotlightItem} 
         isLoading={spotlightLoading} 
-        onQuickSearchOpen={handleQuickSearchOpen}
       />
-
       {/* TOP 10 SECTION */}
       <Top10Section items={top10Items} />
 
@@ -211,7 +182,6 @@ export default function HomePage() {
       </div>
 
       <Footer />
-      <SearchModal isOpen={isQuickSearchOpen} onClose={() => setIsQuickSearchOpen(false)} />
     </div>
   )
 }
