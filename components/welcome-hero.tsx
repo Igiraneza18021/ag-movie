@@ -59,7 +59,7 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
             <span className="text-sm font-medium">English</span>
           </div>
           <Link href="/">
-            <Button className="bg-[#e50914] hover:bg-[#b2070f] text-white font-bold px-4 py-2 text-sm rounded transition-all">
+            <Button className="bg-[#0071eb] hover:bg-[#005bb5] text-white font-bold px-4 py-2 text-sm rounded transition-all">
               Sign In
             </Button>
           </Link>
@@ -85,11 +85,11 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-14 md:h-16 bg-black/40 border-white/30 text-white placeholder:text-white/60 text-lg px-6 rounded focus:ring-2 focus:ring-[#e50914] transition-all"
+                className="h-14 md:h-16 bg-black/40 border-white/30 text-white placeholder:text-white/60 text-lg px-6 rounded focus:ring-2 focus:ring-[#0071eb] transition-all"
               />
             </div>
             <Link href="/" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full h-14 md:h-16 text-xl md:text-2xl font-bold bg-[#e50914] hover:bg-[#b2070f] text-white px-8 rounded flex items-center justify-center gap-2 group transition-all">
+              <Button size="lg" className="w-full h-14 md:h-16 text-xl md:text-2xl font-bold bg-[#0071eb] hover:bg-[#005bb5] text-white px-8 rounded flex items-center justify-center gap-2 group transition-all">
                 Get Started
                 <ChevronRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -102,7 +102,7 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
       <div className="relative z-20 w-full overflow-hidden leading-none mt-auto">
         <svg
           viewBox="0 0 1440 100"
-          className="w-full h-[60px] md:h-[100px] text-[#e50914]"
+          className="w-full h-[60px] md:h-[100px] text-[#0071eb]"
           preserveAspectRatio="none"
         >
           <path
