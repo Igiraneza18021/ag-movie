@@ -3,7 +3,7 @@
 import { readFile, writeFile } from "node:fs/promises"
 
 const SITEMAP_URL = "https://oshakurfilms.com/sitemap.xml"
-const OUTPUT_FILE = "oshakur-links-audit.md"
+const OUTPUT_FILE = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
 const PAGE_FETCH_CONCURRENCY = 24
 const TMDB_CONCURRENCY = 6
 const TMDB_BASE_URL = "https://api.themoviedb.org/3"

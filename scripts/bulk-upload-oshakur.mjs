@@ -3,7 +3,7 @@
 import { readFile } from "node:fs/promises"
 import { createClient } from "@supabase/supabase-js"
 
-const AUDIT_FILE = "oshakur-links-audit.md"
+const AUDIT_FILE = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
 const APPLY_FLAG = "--apply"
 const DRY_RUN_FLAG = "--dry-run"
 

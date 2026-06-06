@@ -6,6 +6,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  outputFileTracingIncludes: {
+    "/api/admin/audit-jobs": ["./scripts/**/*"],
+  },
   images: {
     unoptimized: true,
   },
