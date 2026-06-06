@@ -4,7 +4,7 @@ import { readFile, writeFile } from "node:fs/promises"
 import { pathToFileURL } from "node:url"
 
 const SITEMAP_URL = "https://oshakurfilms.com/sitemap.xml"
-const OUTPUT_FILE = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
+const DEFAULT_OUTPUT_FILE = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
 const PAGE_FETCH_CONCURRENCY = 24
 const TMDB_CONCURRENCY = 6
 const TMDB_BASE_URL = "https://api.themoviedb.org/3"
@@ -1187,7 +1187,8 @@ function buildIntro(summary) {
   return lines.join("\n")
 }
 
-export async function main() {
+export async function main(options = {}) {
+  const outputFile = options.outputFile?.trim() || process.env.OSHAKUR_AUDIT_FILE?.trim() || DEFAULT_OUTPUT_FILE
   const { pages: parsedPages, failures, totalUrls } = await loadParsedPagesFromSitemap()
   console.log(`Parsed ${parsedPages.length} live source pages. Failed ${failures.length} pages.`)
 
@@ -1262,8 +1263,8 @@ export async function main() {
   lines.push(...movieSections)
   lines.push(...tvSections)
 
-  await writeFile(OUTPUT_FILE, lines.join("\n"), "utf8")
-  console.log(`Wrote ${OUTPUT_FILE} with ${enrichedMovies.length + mergedTvGroups.length} grouped content entities.`)
+  await writeFile(outputFile, lines.join("\n"), "utf8")
+  console.log(`Wrote ${outputFile} with ${enrichedMovies.length + mergedTvGroups.length} grouped content entities.`)
 }
 
 function isDirectRun() {

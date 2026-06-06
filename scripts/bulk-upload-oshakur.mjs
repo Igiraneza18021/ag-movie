@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises"
 import { createClient } from "@supabase/supabase-js"
 import { pathToFileURL } from "node:url"
 
-const AUDIT_FILE = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
 const APPLY_FLAG = "--apply"
 const DRY_RUN_FLAG = "--dry-run"
 
@@ -18,19 +17,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.")
 }
 
-const args = new Set(process.argv.slice(2))
-const applyMode = args.has(APPLY_FLAG)
-const dryRunMode = applyMode ? false : true
-
-if (applyMode && !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for --apply. Use --dry-run to compare without writing.")
-}
-
-const supabase = createClient(
-  SUPABASE_URL,
-  applyMode ? SUPABASE_SERVICE_ROLE_KEY : SUPABASE_ANON_KEY,
-  { auth: { persistSession: false, autoRefreshToken: false } },
-)
+let auditFile = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
+let dryRunMode = true
+let supabase = null
 
 function parseScalar(raw) {
   if (raw == null) return null
@@ -572,9 +561,24 @@ function printSummary(summary) {
   }
 }
 
-export async function main() {
-  console.log(`Reading audit from ${AUDIT_FILE}...`)
-  const audit = await parseAuditFile(AUDIT_FILE)
+export async function main(options = {}) {
+  const args = new Set(process.argv.slice(2))
+  const applyMode = typeof options.applyMode === "boolean" ? options.applyMode : args.has(APPLY_FLAG)
+  dryRunMode = applyMode ? false : true
+  auditFile = options.auditFile?.trim() || process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
+
+  if (applyMode && !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for --apply. Use --dry-run to compare without writing.")
+  }
+
+  supabase = createClient(
+    SUPABASE_URL,
+    applyMode ? SUPABASE_SERVICE_ROLE_KEY : SUPABASE_ANON_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  )
+
+  console.log(`Reading audit from ${auditFile}...`)
+  const audit = await parseAuditFile(auditFile)
   console.log(`Parsed ${audit.movies.length} movie entities and ${audit.tvShows.length} TV show entities from the audit.`)
 
   console.log("Loading live AG Movies database state...")
@@ -587,9 +591,11 @@ export async function main() {
 
   printSummary(summary)
 
-  if (!dryRunMode && summary.errors.length > 0) {
-    process.exitCode = 1
+  if (summary.errors.length > 0) {
+    throw new Error(`Bulk reconciliation finished with ${summary.errors.length} item-level error(s).`)
   }
+
+  return summary
 }
 
 async function loadEnvFile(path) {
