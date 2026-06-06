@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { SearchModal } from "@/components/search-modal"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { PWAInstallGuide } from "@/components/pwa-install-guide"
 import { useWatchlist } from "@/hooks/use-watchlist"
 import {
@@ -17,6 +16,7 @@ import {
   Grid3X3,
   Plus,
   MoreHorizontal,
+  X,
 } from "lucide-react"
 
 const navItems = [
@@ -30,7 +30,6 @@ const navItems = [
 ]
 
 const headerIcons = [
-  { href: "/search", label: "Search", icon: Search },
   { href: "/watchlist", label: "Watchlist", icon: Bookmark },
 ]
 
@@ -42,51 +41,66 @@ const InstallIcon = () => (
 
 export function Navigation() {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  
   const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const moreMenuRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const { watchlist } = useWatchlist()
 
   const watchCount = watchlist?.length || 0
+
+  useEffect(() => {
+    const q = searchParams.get("q")
+    if (q) setSearchQuery(q)
+  }, [searchParams])
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true)
       return
     }
-
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e)
     }
-
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
   }, [])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (pathname.startsWith("/anime")) return
-      if ((e.ctrlKey || e.metaKey) && e.key === "g") {
-        e.preventDefault()
-        setIsSearchOpen(true)
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [pathname])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setShowMoreMenu(false)
       }
+      if (isSearchExpanded && searchInputRef.current && !searchInputRef.current.contains(event.target as Node) && !searchQuery) {
+        setIsSearchExpanded(false)
+      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  }, [isSearchExpanded, searchQuery])
+
+  useEffect(() => {
+    if (isSearchExpanded && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [isSearchExpanded])
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    if (value.trim()) {
+      router.push(`/search?q=${encodeURIComponent(value)}`)
+    } else if (pathname === "/search") {
+      router.push("/browse")
+    }
+  }
 
   const isIOS = typeof window !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent || navigator.vendor || "")
   const isPWA = typeof window !== 'undefined' && (window.navigator as any).standalone
@@ -126,12 +140,12 @@ export function Navigation() {
         </Link>
 
         <div className="flex items-center gap-2 pointer-events-auto">
-          <button
-            onClick={() => setIsSearchOpen(true)}
+          <Link
+            href="/search"
             className="w-10 h-10 rounded-2xl bg-zinc-900/80 backdrop-blur-md border border-white/10 text-zinc-300 flex items-center justify-center shadow-xl active:scale-95 transition-all"
           >
             <Search className="w-5 h-5" />
-          </button>
+          </Link>
           <Link
             href="/watchlist"
             className="relative w-10 h-10 rounded-2xl bg-zinc-900/80 backdrop-blur-md border border-white/10 text-zinc-300 flex items-center justify-center shadow-xl active:scale-95 transition-all"
@@ -181,27 +195,44 @@ export function Navigation() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Expanding Search */}
+          <div 
+            className={`relative flex items-center transition-all duration-300 ${
+              isSearchExpanded ? "w-64" : "w-10"
+            }`}
+          >
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search movies, TV shows..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className={`w-full h-10 bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#0071eb] transition-all ${
+                isSearchExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+            />
+            <button
+              onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+              className={`absolute left-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
+                isSearchExpanded || pathname === "/search"
+                  ? "text-[#0071eb]"
+                  : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            {isSearchExpanded && searchQuery && (
+              <button 
+                onClick={() => { setSearchQuery(""); router.push("/browse"); }}
+                className="absolute right-3 text-zinc-500 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
           {headerIcons.map(({ href, label, icon: Icon }, idx) => {
-            const isWatch = href === "/watchlist"
-            const showBadge = isWatch && watchCount > 0
             const isActive = pathname === href
-
-            if (href === "/search") {
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setIsSearchOpen(true)}
-                  className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
-                    isActive
-                      ? "bg-[#0071eb] text-white"
-                      : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                </button>
-              )
-            }
-
             return (
               <Link
                 key={idx}
@@ -213,7 +244,7 @@ export function Navigation() {
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                {showBadge && (
+                {label === "Watchlist" && watchCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center shadow-lg border-2 border-zinc-900">
                     {watchCount > 99 ? "99+" : watchCount}
                   </span>
@@ -261,7 +292,7 @@ export function Navigation() {
       {showMoreMenu && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setShowMoreMenu(false)} />
-          <div className="absolute inset-x-4 bottom-24 bg-zinc-900 border border-white/10 rounded-[2rem] p-6 max-h-[70vh] overflow-auto shadow-2xl">
+          <div className="absolute inset-x-4 bottom-24 bg-zinc-900 border border-white/10 rounded-[2rem] p-6 max-h-[70vh] overflow-auto shadow-2xl" ref={moreMenuRef}>
             <div className="flex items-center justify-between mb-6">
               <div className="text-white font-black text-xl uppercase tracking-tight">Navigation</div>
               <button
@@ -277,32 +308,6 @@ export function Navigation() {
                 const isWatch = href === "/watchlist"
                 const showBadge = isWatch && watchCount > 0
 
-                if (href === "/search") {
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => { setShowMoreMenu(false); setIsSearchOpen(true); }}
-                      className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-zinc-300"
-                    >
-                      {Icon && <Icon className="w-5 h-5" />}
-                      <span className="text-sm font-bold">{label}</span>
-                    </button>
-                  )
-                }
-
-                if (href === "/ios") {
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => { setShowMoreMenu(false); handleInstallClick(); }}
-                      className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-zinc-300"
-                    >
-                      {Icon && <Icon className="w-5 h-5" />}
-                      <span className="text-sm font-bold">{label}</span>
-                    </button>
-                  )
-                }
-
                 return (
                   <Link
                     key={idx}
@@ -313,7 +318,7 @@ export function Navigation() {
                     }`}
                   >
                     <div className="relative">
-                      {Icon && <Icon className="w-5 h-5" />}
+                      {Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
                       {showBadge && (
                         <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-primary text-[8px] font-black flex items-center justify-center">
                           {watchCount}
@@ -328,8 +333,6 @@ export function Navigation() {
           </div>
         </div>
       )}
-
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )
 }
