@@ -142,24 +142,6 @@ export function Top10Section({ items }: Top10SectionProps) {
             )
           })}
         </div>
-
-        {/* Mobile controls */}
-        <div className="flex md:hidden justify-end gap-2 mt-3 pr-1">
-          <button
-            onClick={() => scrollBy(-1)}
-            className="p-2 rounded-full bg-white/15 hover:bg-white/25 text-white"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => scrollBy(1)}
-            className="p-2 rounded-full bg-white/15 hover:bg-white/25 text-white"
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
       </div>
     </section>
   )
