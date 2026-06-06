@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Play, Info, Check, Plus, Search } from "lucide-react"
+import { Play, Info, Check, Plus } from "lucide-react"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie, TVShow } from "@/lib/types"
 import Link from "next/link"
@@ -10,13 +10,6 @@ import { useWatchlist } from "@/hooks/use-watchlist"
 interface SpotlightSectionProps {
   item: Movie | TVShow | null
   isLoading: boolean
-  onQuickSearchOpen: () => void
-}
-
-// Detect if user is on Mac
-const isMac = () => {
-  if (typeof window === 'undefined') return false
-  return /Mac|iPod|iPhone|iPad/.test(navigator.platform) || /Mac/.test(navigator.userAgent)
 }
 
 // Extract YouTube key from trailer URL
@@ -27,7 +20,7 @@ function pickYouTubeKey(item: Movie | TVShow | null): string | null {
   return match ? match[1] : null
 }
 
-export function SpotlightSection({ item, isLoading, onQuickSearchOpen }: SpotlightSectionProps) {
+export function SpotlightSection({ item, isLoading }: SpotlightSectionProps) {
   const [heroImgLoaded, setHeroImgLoaded] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
@@ -98,9 +91,7 @@ export function SpotlightSection({ item, isLoading, onQuickSearchOpen }: Spotlig
       
       if (videoRef.current) {
         if (isIntersecting) {
-          videoRef.current.play().catch(console.error)
-        } else {
-          videoRef.current.pause()
+          // Playback is handled by autoplay in iframe src
         }
       }
     }, {
@@ -218,14 +209,14 @@ export function SpotlightSection({ item, isLoading, onQuickSearchOpen }: Spotlig
     <section
       ref={heroRef}
       id="spotlight"
-      className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden flex items-end"
+      className="relative w-full h-[70vh] sm:h-[80vh] md:h-[90vh] overflow-hidden flex items-end"
     >
       {/* Base image */}
       {bgImage && (
         <img
           src={bgImage}
           alt={title}
-          className={`absolute inset-0 w-full h-full object-cover will-change-transform scale-[1.02] transition-opacity duration-300 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
             isTransitioning ? 'opacity-0' : 'opacity-100'
           }`}
           onLoad={() => setHeroImgLoaded(true)}
@@ -246,133 +237,108 @@ export function SpotlightSection({ item, isLoading, onQuickSearchOpen }: Spotlig
         />
       )}
 
-      {/* Gradients */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#090a0a]/70 via-black/20 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#090a0a]/80 via-black/40 md:via-black/20 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#090a0a]/80 md:from-[#090a0a]/60 via-[#090a0a]/10 to-transparent" />
+      {/* Enhanced Gradients for Natural Fade */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#090a0a] via-[#090a0a]/20 to-transparent z-10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#090a0a] via-[#090a0a]/50 to-transparent z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#090a0a]/40 via-transparent to-transparent z-10" />
+      
+      {/* Extra deep fade at the very bottom to ensure perfect transition to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#090a0a] to-transparent z-20" />
 
       {/* Mute Button - Top Right Corner (Desktop Only) */}
       {showVideo && ytKey && (
         <button
           onClick={toggleMute}
-          className="hidden md:block absolute top-20 right-4 bg-white/10 text-white p-2 rounded-lg hover:bg-white/20 transition-all duration-200 shadow-lg border border-white/20 backdrop-blur-sm z-30"
+          className="hidden md:block absolute top-32 right-8 bg-black/20 text-white p-3 rounded-full hover:bg-black/40 transition-all duration-200 shadow-lg border border-white/10 backdrop-blur-md z-30"
           title={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? (
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
             </svg>
           ) : (
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
           )}
         </button>
       )}
 
-      {/* QuickSearch Bubble - Desktop Only */}
-      <div className="hidden md:block absolute top-24 left-1/2 -translate-x-1/2 z-20 animate-fade-in-delayed backdrop-blur-sm">
-        <div
-          className="bg-white/10 border border-white/20 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg cursor-pointer hover:bg-white/15 transition-all duration-200"
-          onClick={onQuickSearchOpen}
-        >
-          <Search className="w-4 h-4 text-white" />
-          <span className="text-white text-sm font-medium">
-            Press <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-xs">{isMac() ? 'Cmd+G' : 'Ctrl+G'}</kbd> to quickly search movies/tv
-          </span>
-        </div>
-      </div>
-
       {/* Copy + Actions */}
-      <div className={`relative z-10 p-4 md:p-8 pb-0 w-full md:pl-8 md:pr-0 md:text-left text-center transition-all duration-300 ${
-        isTransitioning ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
+      <div className={`relative z-30 p-6 md:p-12 pb-12 w-full md:text-left text-center transition-all duration-700 ${
+        isTransitioning ? 'opacity-0 transform translate-y-8' : 'opacity-100 transform translate-y-0'
       }`}>
-        <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 w-full md:w-[24rem] animate-fade-in-delayed">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 w-full md:max-w-3xl leading-none tracking-tighter drop-shadow-2xl">
           {title}
         </h1>
 
-        <div className="flex items-center gap-1 sm:gap-2 mb-4 animate-fade-in-delayed-2 justify-center md:justify-start flex-wrap">
-          <div className="bg-gradient-to-r from-primary to-primary/80 text-white px-2 py-1 rounded font-bold tracking-tight text-xs uppercase shadow-lg">
-            Agasobanuye Movies
+        <div className="flex items-center gap-2 mb-6 justify-center md:justify-start flex-wrap">
+          <div className="bg-[#0071eb] text-white px-3 py-1 rounded-md font-black tracking-tight text-xs uppercase shadow-[0_0_15px_rgba(0,113,235,0.5)]">
+            Agasobanuye Exclusive
           </div>
-          <span className="text-neutral-300 text-sm sm:text-base font-medium">{item.vote_average?.toFixed(1) || "8.0"}</span>
-          <span className="text-neutral-400">•</span>
-          <span className="text-neutral-300 text-sm sm:text-base">
+          <span className="text-white text-sm sm:text-base font-black flex items-center gap-1">
+            <svg className="w-4 h-4 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            {item.vote_average?.toFixed(1) || "8.0"}
+          </span>
+          <span className="text-neutral-500">•</span>
+          <span className="text-white text-sm sm:text-base font-bold">
             {formatReleaseDate(releaseDate)}
           </span>
           {runtime && (
             <>
-              <span className="text-neutral-400 hidden sm:inline">•</span>
-              <span className="text-neutral-300 text-sm sm:text-base hidden sm:inline">
+              <span className="text-neutral-500 hidden sm:inline">•</span>
+              <span className="text-white text-sm sm:text-base font-bold hidden sm:inline">
                 {`${Math.floor(runtime / 60)}h ${runtime % 60}m`}
               </span>
             </>
           )}
           {seasons && (
             <>
-              <span className="text-neutral-400 hidden sm:inline">•</span>
-              <span className="text-neutral-300 text-sm sm:text-base hidden sm:inline">
+              <span className="text-neutral-500 hidden sm:inline">•</span>
+              <span className="text-white text-sm sm:text-base font-bold hidden sm:inline">
                 {`${seasons} seasons`}
               </span>
             </>
           )}
-          <span className="text-neutral-400 hidden sm:inline">•</span>
-          <span className="text-green-400 text-sm sm:text-base font-semibold hidden sm:inline">98% Match</span>
         </div>
 
         {/* Details section */}
-        <div className={`transition-all duration-500 overflow-hidden ${
+        <div className={`transition-all duration-700 overflow-hidden ${
           showDetails 
-            ? 'opacity-100 max-h-screen' 
-            : 'opacity-0 max-h-0'
+            ? 'opacity-100 max-h-screen mb-8' 
+            : 'opacity-0 max-h-0 mb-0'
         }`}>
-          <p className="text-white/90 text-sm sm:text-base md:text-lg mb-6 sm:mb-8 md:mb-16 leading-5 sm:leading-6 max-w-xl line-clamp-3 overflow-ellipsis animate-fade-in-delayed-3 mx-auto md:mx-0">
+          <p className="text-white/80 text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl line-clamp-3 overflow-ellipsis mx-auto md:mx-0 drop-shadow-lg">
             {item.overview}
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row mb-4 w-full md:justify-between items-center gap-4 animate-fade-in-delayed-2">
-          <div className="flex items-center gap-2 justify-center">
+        <div className="flex flex-col md:flex-row w-full md:justify-between items-center gap-6">
+          <div className="flex items-center gap-3 justify-center">
             <Link href={watchPath}>
-              <button className="bg-white text-black px-6 sm:px-8 py-2.5 sm:py-3 rounded-md font-bold text-sm sm:text-base flex items-center gap-2 hover:bg-gray-200 transition-all duration-200 shadow-lg">
-                <Play className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" />
-                Play
+              <button className="bg-white text-black px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-black text-sm sm:text-base flex items-center gap-3 hover:bg-[#0071eb] hover:text-white transition-all duration-300 shadow-2xl active:scale-95">
+                <Play className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" />
+                PLAY NOW
               </button>
             </Link>
             <Link href={infoPath}>
-              <button className="bg-gray-600/70 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-md font-bold text-sm sm:text-base flex items-center gap-2 hover:bg-gray-600/50 transition-all duration-200 shadow-lg">
-                <Info className="w-4 h-4 sm:w-5 sm:h-5" />
-                More Info
+              <button className="bg-white/10 text-white px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-black text-sm sm:text-base flex items-center gap-3 hover:bg-white/20 transition-all duration-300 shadow-2xl backdrop-blur-md border border-white/10">
+                <Info className="w-5 h-5 sm:w-6 sm:h-6" />
+                DETAILS
               </button>
             </Link>
-            {showVideo && ytKey && (
-              <button
-                onClick={toggleMute}
-                className="bg-gray-600/70 text-white p-2.5 sm:p-3 rounded-full hover:bg-gray-600/50 transition-all duration-200 shadow-lg border border-gray-500/30"
-                title={isMuted ? "Unmute" : "Mute"}
-              >
-                {isMuted ? (
-                  <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                  </svg>
-                )}
-              </button>
-            )}
+            
             <button
               onClick={handleWatchlistToggle}
-              className={`bg-white/15 text-white p-2 sm:p-2.5 rounded-full hover:bg-white/25 transition-all cursor-pointer ${
-                inWatchlist ? 'bg-white/20' : ''
+              className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl transition-all cursor-pointer shadow-2xl backdrop-blur-md border border-white/10 ${
+                inWatchlist ? 'bg-[#0071eb]/20 text-[#0071eb] border-[#0071eb]/30' : 'bg-white/10 text-white hover:bg-white/20'
               }`}
               aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
             >
               {inWatchlist ? (
-                <Check className="w-4 h-4 sm:w-6 sm:h-6" />
+                <Check className="w-6 h-6 sm:w-8 sm:h-8" />
               ) : (
-                <Plus className="w-4 h-4 sm:w-6 sm:h-6" />
+                <Plus className="w-6 h-6 sm:w-8 sm:h-8" />
               )}
             </button>
           </div>
