@@ -107,12 +107,14 @@ export default function WelcomePage() {
           {featuredMovies.length > 0 && (
             <div className="mb-16">
               <div className="flex items-center justify-between mb-8 px-4 md:px-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center">
-                  <Film className="h-6 w-6 md:h-8 md:w-8 mr-3 text-[#0071eb]" />
-                  Featured Movies
-                </h2>
+                <div className="flex items-center gap-4">
+                  <div className="w-1.5 h-8 md:h-10 bg-[#0071eb] rounded-full shadow-[0_0_15px_rgba(0,113,235,0.5)]" />
+                  <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+                    Featured Movies
+                  </h2>
+                </div>
                 <Link href="/movies">
-                  <Button variant="ghost" className="text-white hover:bg-white/10">
+                  <Button variant="ghost" className="text-white hover:bg-white/10 font-bold">
                     View All
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -121,57 +123,53 @@ export default function WelcomePage() {
               
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-4 md:px-8">
                 {featuredMovies.slice(0, 6).map((movie) => (
-                  <Card key={movie.id} className="group cursor-pointer bg-neutral-900 border-none hover:scale-105 transition-transform duration-300">
-                    <CardContent className="p-0">
-                      <div className="relative aspect-[2/3] overflow-hidden rounded-lg shadow-xl">
-                        <img
-                          src={getTMDBImageUrl(movie.poster_path) || "/placeholder.svg"}
-                          alt={movie.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                        
-                        {/* Always visible: AG Badge top right */}
-                        <div className="absolute top-2 right-2 z-20">
-                          <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
-                            AG
-                          </div>
-                        </div>
+                  <div key={movie.id} className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20">
+                    <img
+                      src={getTMDBImageUrl(movie.poster_path) || "/placeholder.svg"}
+                      alt={movie.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    
+                    {/* Always visible: AG Badge top right */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                        AG
+                      </div>
+                    </div>
 
-                        {/* Default visible: Rating bottom left */}
-                        <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
-                          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            {movie.vote_average?.toFixed(1)}
-                          </div>
-                        </div>
+                    {/* Default visible: Rating bottom left */}
+                    <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+                      <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        {movie.vote_average?.toFixed(1)}
+                      </div>
+                    </div>
 
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
-                          <div className="space-y-2">
-                            <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
-                              {movie.title}
-                            </p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex flex-col">
-                                <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
-                                  {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
-                                </span>
-                                <div className="flex items-center gap-1 text-white text-xs font-black">
-                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                  {movie.vote_average?.toFixed(1)}
-                                </div>
-                              </div>
-                              <Link href={`/movie/${movie.id}`}>
-                                <Button size="icon" className="h-8 w-8 rounded-full bg-white text-black hover:bg-white/90 shadow-lg scale-90 group-hover:scale-100 transition-transform">
-                                  <Play className="h-4 w-4 fill-current" />
-                                </Button>
-                              </Link>
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+                      <div className="space-y-2">
+                        <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+                          {movie.title}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                              {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
+                            </span>
+                            <div className="flex items-center gap-1 text-white text-xs font-black">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              {movie.vote_average?.toFixed(1)}
                             </div>
                           </div>
+                          <Link href={`/movie/${movie.id}`}>
+                            <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white transition-colors duration-200">
+                              <Play className="h-4 w-4 fill-current" />
+                            </div>
+                          </Link>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -181,12 +179,14 @@ export default function WelcomePage() {
           {featuredTVShows.length > 0 && (
             <div className="mb-16">
               <div className="flex items-center justify-between mb-8 px-4 md:px-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center">
-                  <Tv className="h-6 w-6 md:h-8 md:w-8 mr-3 text-[#0071eb]" />
-                  Featured TV Shows
-                </h2>
+                <div className="flex items-center gap-4">
+                  <div className="w-1.5 h-8 md:h-10 bg-[#0071eb] rounded-full shadow-[0_0_15px_rgba(0,113,235,0.5)]" />
+                  <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+                    Featured TV Shows
+                  </h2>
+                </div>
                 <Link href="/tv-shows">
-                  <Button variant="ghost" className="text-white hover:bg-white/10">
+                  <Button variant="ghost" className="text-white hover:bg-white/10 font-bold">
                     View All
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -195,57 +195,53 @@ export default function WelcomePage() {
               
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-4 md:px-8">
                 {featuredTVShows.slice(0, 6).map((show) => (
-                  <Card key={show.id} className="group cursor-pointer bg-neutral-900 border-none hover:scale-105 transition-transform duration-300">
-                    <CardContent className="p-0">
-                      <div className="relative aspect-[2/3] overflow-hidden rounded-lg shadow-xl">
-                        <img
-                          src={getTMDBImageUrl(show.poster_path) || "/placeholder.svg"}
-                          alt={show.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                        
-                        {/* Always visible: AG Badge top right */}
-                        <div className="absolute top-2 right-2 z-20">
-                          <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
-                            AG
-                          </div>
-                        </div>
+                  <div key={show.id} className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20">
+                    <img
+                      src={getTMDBImageUrl(show.poster_path) || "/placeholder.svg"}
+                      alt={show.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    
+                    {/* Always visible: AG Badge top right */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                        AG
+                      </div>
+                    </div>
 
-                        {/* Default visible: Rating bottom left */}
-                        <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
-                          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            {show.vote_average?.toFixed(1)}
-                          </div>
-                        </div>
+                    {/* Default visible: Rating bottom left */}
+                    <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+                      <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        {show.vote_average?.toFixed(1)}
+                      </div>
+                    </div>
 
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
-                          <div className="space-y-2">
-                            <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
-                              {show.name}
-                            </p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex flex-col">
-                                <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
-                                  {show.first_air_date ? new Date(show.first_air_date).getFullYear() : 'N/A'}
-                                </span>
-                                <div className="flex items-center gap-1 text-white text-xs font-black">
-                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                  {show.vote_average?.toFixed(1)}
-                                </div>
-                              </div>
-                              <Link href={`/tv/${show.id}`}>
-                                <Button size="icon" className="h-8 w-8 rounded-full bg-white text-black hover:bg-white/90 shadow-lg scale-90 group-hover:scale-100 transition-transform">
-                                  <Play className="h-4 w-4 fill-current" />
-                                </Button>
-                              </Link>
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+                      <div className="space-y-2">
+                        <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+                          {show.name}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                              {show.first_air_date ? new Date(show.first_air_date).getFullYear() : 'N/A'}
+                            </span>
+                            <div className="flex items-center gap-1 text-white text-xs font-black">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              {show.vote_average?.toFixed(1)}
                             </div>
                           </div>
+                          <Link href={`/tv/${show.id}`}>
+                            <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white transition-colors duration-200">
+                              <Play className="h-4 w-4 fill-current" />
+                            </div>
+                          </Link>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
