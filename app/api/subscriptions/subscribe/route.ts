@@ -47,7 +47,10 @@ export async function POST(request: Request) {
     })
 
   } catch (error: any) {
-    console.error("Subscription error:", error)
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
+    console.error("Subscription flow error:", error)
+    return NextResponse.json({ 
+      error: error.message || "Internal server error",
+      details: process.env.NODE_ENV === "development" ? error.stack : undefined
+    }, { status: 500 })
   }
 }
