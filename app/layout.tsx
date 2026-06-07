@@ -133,7 +133,9 @@ export default function RootLayout({
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ContentRefreshProvider />
-        <Navigation />
+        <Suspense fallback={null}>
+          <Navigation />
+        </Suspense>
         <Suspense fallback={null}>
           {children}
           <Toaster />

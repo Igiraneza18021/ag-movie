@@ -125,7 +125,11 @@ export function PortraitCategoryRow({ title, items }: PortraitCategoryRowProps) 
           {items.map((it, index) => {
             const mt = 'title' in it ? 'movie' : 'tv'
             return (
-              <div key={`${mt}-${it.id}`} className="flex-shrink-0 animate-stagger" style={{animationDelay: `${index * 100}ms`}}>
+              <div
+                key={`${mt}-${it.id}`}
+                className="flex-none w-36 sm:w-48 lg:w-56 animate-stagger"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
                 <PosterCard item={it} />
               </div>
             )
@@ -137,7 +141,9 @@ export function PortraitCategoryRow({ title, items }: PortraitCategoryRowProps) 
           {items.map((it) => {
             const mt = 'title' in it ? 'movie' : 'tv'
             return (
-              <PosterCard key={`mobile-${mt}-${it.id}`} item={it} />
+              <div key={`mobile-${mt}-${it.id}`} className="flex-none w-36 sm:w-48">
+                <PosterCard item={it} />
+              </div>
             )
           })}
         </div>
@@ -158,4 +164,3 @@ export function PortraitCategoryRow({ title, items }: PortraitCategoryRowProps) 
     </section>
   )
 }
-
