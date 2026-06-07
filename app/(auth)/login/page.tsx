@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { Loader2, Github } from "lucide-react"
+import { Loader2, Github, Home as HomeIcon } from "lucide-react"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
 
@@ -96,6 +96,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Top Right Home Button */}
+      <div className="absolute top-6 right-6 z-50">
+        <Link href="/">
+          <Button variant="ghost" className="bg-black/20 hover:bg-white/10 text-white rounded-full px-6 border border-white/10 backdrop-blur-md font-black uppercase tracking-widest text-xs transition-all active:scale-95">
+            <HomeIcon className="mr-2 h-4 w-4" />
+            Home
+          </Button>
+        </Link>
+      </div>
+
       {/* Cinematic Background Poster Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
         <div 
