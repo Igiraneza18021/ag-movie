@@ -65,6 +65,10 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
 
       {/* Main Hero Content */}
       <div className="relative z-10 flex-grow flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
+        <div className="mb-6 flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#0071eb] animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Premium ad-free experience available</span>
+        </div>
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 leading-tight uppercase tracking-tighter">
           Unlimited movies, TV shows, and more
         </h1>
