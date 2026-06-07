@@ -10,14 +10,23 @@ export function StructuredData({ type, data }: StructuredDataProps) {
   
   if (type === 'movie') {
     const movie = data as Movie
+    const agasobanuyeTitle = `${movie.title} Agasobanuye`
     const movieStructuredData = {
       "@context": "https://schema.org",
       "@type": "Movie",
-      "name": movie.title,
+      "name": agasobanuyeTitle,
+      "alternateName": movie.title,
       "description": movie.overview,
       "image": movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : undefined,
       "datePublished": movie.release_date,
       "duration": movie.runtime ? `PT${movie.runtime}M` : undefined,
+      "keywords": [
+        movie.title,
+        agasobanuyeTitle,
+        `${movie.title} agasobanuye`,
+        "Agasobanuye Movies",
+        "agasobanuye",
+      ],
       "aggregateRating": movie.vote_average ? {
         "@type": "AggregateRating",
         "ratingValue": movie.vote_average,
@@ -47,16 +56,25 @@ export function StructuredData({ type, data }: StructuredDataProps) {
 
   if (type === 'tvshow') {
     const tvShow = data as TVShow
+    const agasobanuyeTitle = `${tvShow.name} Agasobanuye`
     const tvShowStructuredData = {
       "@context": "https://schema.org",
       "@type": "TVSeries",
-      "name": tvShow.name,
+      "name": agasobanuyeTitle,
+      "alternateName": tvShow.name,
       "description": tvShow.overview,
       "image": tvShow.poster_path ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}` : undefined,
       "datePublished": tvShow.first_air_date,
       "dateModified": tvShow.last_air_date,
       "numberOfSeasons": tvShow.number_of_seasons,
       "numberOfEpisodes": tvShow.number_of_episodes,
+      "keywords": [
+        tvShow.name,
+        agasobanuyeTitle,
+        `${tvShow.name} agasobanuye`,
+        "Agasobanuye Movies",
+        "agasobanuye",
+      ],
       "aggregateRating": tvShow.vote_average ? {
         "@type": "AggregateRating",
         "ratingValue": tvShow.vote_average,
