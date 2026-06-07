@@ -171,7 +171,7 @@ export default function LandingPage() {
                   Subscribe for an uninterrupted, no-ads experience. While we keep ads to a minimum for everyone, Premium members enjoy zero distractions.
                 </p>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-8 pt-4">
-                  <Link href="/login">
+                  <Link href="/subscribe">
                     <Button className="h-16 px-12 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_15px_40px_rgba(0,113,235,0.4)] transition-all active:scale-95 text-lg">
                       Subscribe Now
                     </Button>
