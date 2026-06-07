@@ -128,16 +128,14 @@ function VerifyContent() {
 
       <div className="w-full max-w-xl z-10">
         <div className="flex justify-center mb-12">
-          <Link href="/" className="flex flex-col items-center gap-2">
-            <div className="bg-zinc-900/50 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl">
-              <Image
-                src="/image.png"
-                alt="Agasobanuye Movies Logo"
-                width={60}
-                height={60}
-                className="object-contain"
-              />
-            </div>
+          <Link href="/" className="flex flex-col items-center gap-4 group">
+            <Image
+              src="/image.png"
+              alt="Agasobanuye Movies Logo"
+              width={100}
+              height={100}
+              className="object-contain drop-shadow-[0_0_30px_rgba(0,113,235,0.4)] group-hover:scale-110 transition-transform duration-500"
+            />
             <h1 className="text-2xl font-black text-white uppercase tracking-tighter">
               Agasobanuye <span className="text-[#0071eb]">Movies</span>
             </h1>
