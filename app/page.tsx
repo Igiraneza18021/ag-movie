@@ -185,19 +185,14 @@ export default function LandingPage() {
                 </div>
               </div>
               
-              <div className="flex-shrink-0 w-full md:w-2/5 aspect-[4/3] relative rounded-[3rem] overflow-hidden group shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0071eb]/30 via-transparent to-black/60 z-10" />
-                <img 
-                  src="/image.png" 
-                  alt="Premium" 
-                  className="w-full h-full object-cover grayscale-[0.5] group-hover:scale-110 group-hover:grayscale-0 transition-all duration-1000" 
-                />
-                <div className="absolute inset-0 flex items-center justify-center z-20">
-                  <div className="w-24 h-24 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center border border-white/20 shadow-2xl scale-90 group-hover:scale-100 transition-transform duration-500">
-                    <div className="w-16 h-16 bg-[#0071eb] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(0,113,235,0.5)]">
-                      <Check className="text-white w-8 h-8 stroke-[4]" />
-                    </div>
-                  </div>
+              <div className="flex-shrink-0 w-full md:w-2/5 flex justify-center md:justify-end">
+                <div className="relative group">
+                  <div className="absolute -inset-10 bg-[#0071eb]/20 rounded-full blur-[80px] opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
+                  <img 
+                    src="/image.png" 
+                    alt="Premium" 
+                    className="w-48 h-48 md:w-64 md:h-64 object-contain relative z-20 drop-shadow-[0_0_50px_rgba(0,113,235,0.5)] group-hover:scale-110 transition-transform duration-700" 
+                  />
                 </div>
               </div>
             </div>
