@@ -230,10 +230,21 @@ export default function SubscribePage() {
               )}
             </Button>
 
-            <div className="flex items-center justify-center gap-4 opacity-50 grayscale pt-4">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MTN_Logo.svg" alt="MTN" className="h-8" />
-              <div className="w-px h-6 bg-white/20" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Airtel_logo.svg" alt="Airtel" className="h-6" />
+            <div className="flex items-center justify-center gap-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500 pt-6">
+              {/* Professional MTN Logo SVG */}
+              <svg className="h-8 w-auto" viewBox="0 0 50 32" xmlns="http://www.w3.org/2000/svg">
+                <rect width="50" height="32" rx="16" fill="#ffcc00"/>
+                <ellipse cx="25" cy="16" rx="20" ry="12" stroke="#000" strokeWidth="1.5" fill="none"/>
+                <text x="25" y="19" textAnchor="middle" fill="#000" fontSize="10" fontWeight="900" fontFamily="Arial, sans-serif" letterSpacing="-0.5">MTN</text>
+              </svg>
+
+              <div className="w-px h-8 bg-white/10" />
+
+              {/* Professional Airtel Logo SVG */}
+              <svg className="h-8 w-auto" viewBox="0 0 80 32" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 16C10 7.16344 17.1634 0 26 0H54C62.8366 0 70 7.16344 70 16C70 24.8366 62.8366 32 54 32H26C17.1634 32 10 24.8366 10 16Z" fill="#ff0000"/>
+                <text x="40" y="21" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="900" fontFamily="Arial, sans-serif" letterSpacing="0.5">airtel</text>
+              </svg>
             </div>
           </form>
         </div>
