@@ -39,13 +39,21 @@ export default function CompleteProfilePage() {
 
   useEffect(() => {
     async function checkUser() {
+      const isPreview = new URLSearchParams(window.location.search).get("preview") === "true"
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      
+      if (!user && !isPreview) {
         router.push("/login")
         return
       }
-      setUser(user)
-      setFullName(user.user_metadata?.full_name || "")
+
+      if (user) {
+        setUser(user)
+        setFullName(user.user_metadata?.full_name || "")
+      } else if (isPreview) {
+        setFullName("Guest User")
+      }
+      
       setCheckingUser(false)
     }
     checkUser()
@@ -82,8 +90,16 @@ export default function CompleteProfilePage() {
   }, [selectedStyleId, fullName, user?.email])
 
   const handleComplete = async () => {
+    const isPreview = new URLSearchParams(window.location.search).get("preview") === "true"
+
     if (!fullName.trim()) {
       toast.error("Please enter your name")
+      return
+    }
+
+    if (isPreview && !user) {
+      toast.success("Preview mode: Profile would be updated now!")
+      router.push("/browse")
       return
     }
 
