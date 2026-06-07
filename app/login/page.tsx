@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Loader2, Github, Mail } from "lucide-react"
+import { getTMDBImageUrl } from "@/lib/tmdb"
+import type { Movie } from "@/lib/types"
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -30,6 +32,7 @@ const authSchema = z.object({
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [backgroundMovies, setBackgroundMovies] = useState<Movie[]>([])
   const router = useRouter()
   const supabase = createClient()
 
@@ -40,6 +43,27 @@ export default function LoginPage() {
       password: "",
     },
   })
+
+  useEffect(() => {
+    async function fetchBackgroundContent() {
+      try {
+        const { data } = await supabase
+          .from("movies")
+          .select("id, poster_path")
+          .eq("status", "active")
+          .limit(40)
+        
+        if (data) {
+          // Multiply content to fill the grid if needed
+          const repeated = [...data, ...data, ...data].slice(0, 60)
+          setBackgroundMovies(repeated as any)
+        }
+      } catch (error) {
+        console.error("Error fetching background content:", error)
+      }
+    }
+    fetchBackgroundContent()
+  }, [supabase])
 
   async function onSubmit(values: z.infer<typeof authSchema>) {
     setIsLoading(true)
@@ -87,7 +111,29 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Blobs */}
+      {/* Cinematic Background Poster Grid */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
+        <div 
+          className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 p-4 scale-125 -rotate-12 -translate-y-[10%] -translate-x-[5%]"
+          style={{ width: '120%', height: '120%' }}
+        >
+          {backgroundMovies.map((movie, i) => (
+            <div key={`${movie.id}-${i}`} className="aspect-[2/3] relative rounded-lg overflow-hidden shadow-2xl border border-white/5">
+              <img
+                src={getTMDBImageUrl(movie.poster_path, "w200")}
+                alt=""
+                className="object-cover w-full h-full grayscale-[0.4]"
+              />
+            </div>
+          ))}
+        </div>
+        {/* Overlays */}
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black" />
+      </div>
+
+      {/* Background Blobs for extra glow */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#0071eb]/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#0071eb]/10 rounded-full blur-[120px] pointer-events-none" />
 
