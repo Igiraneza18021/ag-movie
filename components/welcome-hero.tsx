@@ -50,11 +50,16 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
             className="object-contain h-8 md:h-12 w-auto"
           />
         </div>
-        <div className="flex items-center gap-4 text-white">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded border border-white/30 bg-black/20 text-white backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded border border-white/30 bg-black/20 text-white backdrop-blur-sm">
             <Globe className="w-4 h-4" />
             <span className="text-sm font-black uppercase tracking-wider">English</span>
           </div>
+          <Link href="/browse">
+            <Button className="bg-[#0071eb] hover:bg-[#005bb5] text-white font-black px-6 py-2 text-sm rounded-lg transition-all shadow-lg active:scale-95">
+              Sign In
+            </Button>
+          </Link>
         </div>
       </header>
 
