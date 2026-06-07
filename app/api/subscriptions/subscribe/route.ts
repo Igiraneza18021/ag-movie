@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { initiateCashin } from "@/lib/paypack"
 import { NextResponse } from "next/server"
 
+const SUBSCRIPTION_AMOUNT_RWF = 2000
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
@@ -13,8 +15,7 @@ export async function POST(request: Request) {
 
     const { phoneNumber } = await request.json()
     
-    const isDevMode = process.env.DEV_MODE === "true" || process.env.NEXT_PUBLIC_DEV_MODE === "true"
-    const amount = isDevMode ? 100 : 2000
+    const amount = SUBSCRIPTION_AMOUNT_RWF
 
     if (!phoneNumber) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
@@ -47,7 +48,10 @@ export async function POST(request: Request) {
     })
 
   } catch (error: any) {
-    console.error("Subscription error:", error)
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
+    console.error("Subscription flow error:", error)
+    return NextResponse.json({ 
+      error: error.message || "Internal server error",
+      details: process.env.NODE_ENV === "development" ? error.stack : undefined
+    }, { status: 500 })
   }
 }
