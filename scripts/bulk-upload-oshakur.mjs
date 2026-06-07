@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url"
 
 const APPLY_FLAG = "--apply"
 const DRY_RUN_FLAG = "--dry-run"
+const SUPABASE_PAGE_SIZE = 1000
 
 await loadEnvFile(".env")
 
@@ -214,28 +215,36 @@ async function parseAuditFile(path) {
 }
 
 async function loadLiveDb() {
-  const [
-    moviesResult,
-    showsResult,
-    seasonsResult,
-    episodesResult,
-  ] = await Promise.all([
-    supabase.from("movies").select("*"),
-    supabase.from("tv_shows").select("*"),
-    supabase.from("seasons").select("*"),
-    supabase.from("episodes").select("*"),
+  const [movies, tvShows, seasons, episodes] = await Promise.all([
+    fetchAllRows("movies"),
+    fetchAllRows("tv_shows"),
+    fetchAllRows("seasons"),
+    fetchAllRows("episodes"),
   ])
 
-  for (const result of [moviesResult, showsResult, seasonsResult, episodesResult]) {
-    if (result.error) throw new Error(result.error.message)
+  return {
+    movies,
+    tvShows,
+    seasons,
+    episodes,
+  }
+}
+
+async function fetchAllRows(table) {
+  const rows = []
+  let from = 0
+
+  while (true) {
+    const to = from + SUPABASE_PAGE_SIZE - 1
+    const { data, error } = await supabase.from(table).select("*").range(from, to)
+    if (error) throw new Error(`${table} select failed: ${error.message}`)
+    if (!data || data.length === 0) break
+    rows.push(...data)
+    if (data.length < SUPABASE_PAGE_SIZE) break
+    from += SUPABASE_PAGE_SIZE
   }
 
-  return {
-    movies: moviesResult.data || [],
-    tvShows: showsResult.data || [],
-    seasons: seasonsResult.data || [],
-    episodes: episodesResult.data || [],
-  }
+  return rows
 }
 
 function isBlank(value) {
