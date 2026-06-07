@@ -2,8 +2,6 @@ import { createClient } from "@/lib/supabase/server"
 import { initiateCashin } from "@/lib/paypack"
 import { NextResponse } from "next/server"
 
-const SUBSCRIPTION_AMOUNT_RWF = 2000
-
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
@@ -14,8 +12,8 @@ export async function POST(request: Request) {
     }
 
     const { phoneNumber } = await request.json()
-    
-    const amount = SUBSCRIPTION_AMOUNT_RWF
+    const isDevMode = process.env.DEV_MODE === "true" || process.env.NEXT_PUBLIC_DEV_MODE === "true"
+    const amount = isDevMode ? 100 : 2000
 
     if (!phoneNumber) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
