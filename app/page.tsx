@@ -111,7 +111,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-4">
                   <div className="w-1.5 h-8 md:h-10 bg-[#0071eb] rounded-full shadow-[0_0_15px_rgba(0,113,235,0.5)]" />
                   <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
-                    Featured Movies
+                    Featured Agasobanuye Movies
                   </h2>
                 </div>
                 <Link href="/movies">
@@ -183,7 +183,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-4">
                   <div className="w-1.5 h-8 md:h-10 bg-[#0071eb] rounded-full shadow-[0_0_15px_rgba(0,113,235,0.5)]" />
                   <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
-                    Featured TV Shows
+                    Featured Agasobanuye TV Shows
                   </h2>
                 </div>
                 <Link href="/tv-shows">

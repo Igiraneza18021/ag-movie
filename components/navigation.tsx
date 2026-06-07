@@ -26,7 +26,6 @@ const navItems = [
   { href: "/categories", label: "Categories", icon: Grid3X3 },
   { href: "/coming-soon", label: "Coming Soon", icon: Clock },
   { href: "/request-movie", label: "Request", icon: Plus },
-  { href: "/watchlist", label: "Watchlist", icon: Bookmark },
 ]
 
 const headerIcons = [
