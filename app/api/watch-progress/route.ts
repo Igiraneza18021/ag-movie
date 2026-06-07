@@ -27,6 +27,24 @@ export async function POST(request: Request) {
     const progress_percent = duration_seconds ? (progress_seconds / duration_seconds) * 100 : 0
     const is_completed = progress_percent > 95 // Mark as completed if > 95%
 
+    // 1. Check for existing entry to handle rewatches and started_at
+    const { data: existing } = await supabase
+      .from("watch_progress_entries")
+      .select("id, is_completed, rewatch_count, started_at")
+      .eq("user_id", user.id)
+      .match(content_type === 'movie' ? { movie_id } : { episode_id })
+      .maybeSingle()
+
+    let rewatch_count = existing?.rewatch_count || 0
+    let started_at = existing?.started_at || new Date().toISOString()
+    let final_is_completed = is_completed
+
+    // Logic: If they were completed and are starting again (at low timestamp), it's a rewatch
+    if (existing?.is_completed && progress_seconds < 60) {
+      rewatch_count += 1
+      final_is_completed = false // Reset completion for the new rewatch session
+    }
+
     // Upsert watch progress
     const { error } = await supabase
       .from("watch_progress_entries")
@@ -40,10 +58,12 @@ export async function POST(request: Request) {
         progress_seconds,
         duration_seconds,
         progress_percent,
-        is_completed,
+        is_completed: final_is_completed,
+        started_at,
+        rewatch_count,
         last_watched_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        ...(is_completed ? { completed_at: new Date().toISOString() } : {})
+        ...(final_is_completed ? { completed_at: new Date().toISOString() } : {})
       }, {
         onConflict: content_type === 'movie' ? 'user_id,movie_id' : 'user_id,episode_id'
       })
