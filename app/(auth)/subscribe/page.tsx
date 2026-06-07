@@ -12,8 +12,6 @@ import { Loader2, Home as HomeIcon, CheckCircle2, ShieldCheck, Zap, Info } from 
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
 
-const SUBSCRIPTION_PRICE_RWF = 2000
-
 export default function SubscribePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -25,8 +23,9 @@ export default function SubscribePage() {
 
   const router = useRouter()
   const supabase = createClient()
-  
-  const subscriptionPrice = SUBSCRIPTION_PRICE_RWF
+
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true"
+  const subscriptionPrice = isDevMode ? 100 : 2000
 
   const handleTerminalStatus = (status: string) => {
     if (status === "successful") {

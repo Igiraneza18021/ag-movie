@@ -1,7 +1,6 @@
 import crypto from "crypto"
 
 const PAYPACK_BASE_URL = "https://payments.paypack.rw/api"
-const PAYPACK_WEBHOOK_MODE: PaypackWebhookMode = "production"
 
 export type PaypackWebhookMode = "development" | "production"
 
@@ -20,7 +19,8 @@ export interface PaypackTransactionResult {
 }
 
 export function getPaypackWebhookMode(): PaypackWebhookMode {
-  return PAYPACK_WEBHOOK_MODE
+  const isDevMode = process.env.DEV_MODE === "true" || process.env.NEXT_PUBLIC_DEV_MODE === "true"
+  return isDevMode ? "development" : "production"
 }
 
 export async function getPaypackAccessToken() {
