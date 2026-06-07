@@ -25,7 +25,7 @@ export default function SubscribePage() {
   const supabase = createClient()
   
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true"
-  const subscriptionPrice = isDevMode ? 20 : 2000
+  const subscriptionPrice = isDevMode ? 100 : 2000
 
   useEffect(() => {
     if (!transactionRef || !isWaiting) return
