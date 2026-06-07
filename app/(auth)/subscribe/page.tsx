@@ -18,9 +18,46 @@ export default function SubscribePage() {
   const [backgroundMovies, setBackgroundMovies] = useState<Movie[]>([])
   const [user, setUser] = useState<any>(null)
   const [checkingUser, setCheckingUser] = useState(true)
+  const [transactionRef, setTransactionRef] = useState<string | null>(null)
+  const [isWaiting, setIsWaiting] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    if (!transactionRef || !isWaiting) return
+
+    // Listen for real-time updates to this specific transaction
+    const channel = supabase
+      .channel(`payment-${transactionRef}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'paypack_transactions',
+          filter: `paypack_ref=eq.${transactionRef}`,
+        },
+        (payload) => {
+          const status = payload.new.status
+          if (status === 'successful') {
+            toast.success("Payment confirmed! Welcome to Premium.")
+            setIsWaiting(false)
+            router.push("/browse")
+            router.refresh()
+          } else if (status === 'failed') {
+            toast.error("Payment failed or was cancelled.")
+            setIsWaiting(false)
+            setTransactionRef(null)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [transactionRef, isWaiting, router, supabase])
 
   useEffect(() => {
     async function checkUser() {
@@ -76,12 +113,9 @@ export default function SubscribePage() {
 
       if (!response.ok) throw new Error(data.error || "Failed to initiate subscription")
 
-      toast.success("Payment request sent! Please check your phone to confirm.")
-      
-      // We can redirect or wait for status
-      setTimeout(() => {
-        router.push("/browse")
-      }, 3000)
+      setTransactionRef(data.ref)
+      setIsWaiting(true)
+      toast.success("Request sent! Confirm on your phone.")
 
     } catch (error: any) {
       toast.error(error.message || "Failed to initiate subscription")
@@ -96,22 +130,65 @@ export default function SubscribePage() {
         <Loader2 className="h-12 w-12 animate-spin text-[#0071eb]" />
       </div>
     )
-  }
-
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Top Right Home Button */}
-      <div className="absolute top-6 right-6 z-50">
-        <Link href="/">
-          <Button variant="ghost" className="bg-black/20 hover:bg-white/10 text-white rounded-full px-6 border border-white/10 backdrop-blur-md font-black uppercase tracking-widest text-xs transition-all active:scale-95">
-            <HomeIcon className="mr-2 h-4 w-4" />
-            Home
-          </Button>
-        </Link>
-      </div>
+      {!isWaiting && (
+        <div className="absolute top-6 right-6 z-50">
+          <Link href="/">
+            <Button variant="ghost" className="bg-black/20 hover:bg-white/10 text-white rounded-full px-6 border border-white/10 backdrop-blur-md font-black uppercase tracking-widest text-xs transition-all active:scale-95">
+              <HomeIcon className="mr-2 h-4 w-4" />
+              Home
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Cinematic Background Poster Grid */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
+  ...
+      <div className="w-full max-w-4xl z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        {isWaiting ? (
+          /* Waiting for Payment State */
+          <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-500">
+            <div className="relative">
+              <div className="absolute inset-0 bg-[#0071eb] rounded-full blur-[60px] opacity-20 animate-pulse" />
+              <div className="relative w-32 h-32 md:w-40 md:h-40 border-4 border-[#0071eb]/20 rounded-full flex items-center justify-center">
+                <div className="absolute inset-0 border-t-4 border-[#0071eb] rounded-full animate-spin" />
+                <Image
+                  src="/image.png"
+                  alt="Processing"
+                  width={60}
+                  height={60}
+                  className="object-contain"
+                />
+              </div>
+            </div>
+
+            <div className="text-center space-y-4 max-w-md">
+              <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">
+                Waiting for <span className="text-[#0071eb]">Confirmation</span>
+              </h2>
+              <p className="text-zinc-400 font-bold text-lg">
+                Please check your phone and enter your Mobile Money PIN to authorize the payment of <span className="text-white">2,000 RWF</span>.
+              </p>
+              <div className="flex items-center justify-center gap-2 text-[#0071eb] text-sm font-black uppercase tracking-widest bg-[#0071eb]/10 py-2 px-4 rounded-full border border-[#0071eb]/20">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Listening for Payment...
+              </div>
+            </div>
+
+            <Button 
+              variant="ghost" 
+              onClick={() => { setIsWaiting(false); setTransactionRef(null); }}
+              className="text-zinc-500 hover:text-white font-black uppercase tracking-widest text-xs transition-all"
+            >
+              Cancel Request
+            </Button>
+          </div>
+        ) : (
+          /* Normal Subscription Form */
+          <>
+            <div className="space-y-8">
         <div 
           className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 p-4 scale-125 -rotate-12 -translate-y-[10%] -translate-x-[5%]"
           style={{ width: '120%', height: '120%' }}
@@ -237,8 +314,8 @@ export default function SubscribePage() {
                 <text x="40" y="21" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="900" fontFamily="Arial, sans-serif" letterSpacing="0.5">airtel</text>
               </svg>
             </div>
-          </form>
-        </div>
+          </>
+        )}
       </div>
 
       <p className="mt-12 text-center text-zinc-600 text-[10px] uppercase tracking-[0.2em] font-black pointer-events-none">
