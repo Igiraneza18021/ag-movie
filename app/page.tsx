@@ -157,8 +157,6 @@ export default function LandingPage() {
 
         {/* Subscription Section relocated to bottom */}
         <section className="relative py-32 bg-black overflow-hidden mt-12">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl bg-[#0071eb]/15 rounded-full blur-[140px] pointer-events-none" />
-          
           <div className="container mx-auto px-6 relative z-20">
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16">
               <div className="flex-1 space-y-8 text-center md:text-left">
@@ -187,11 +185,10 @@ export default function LandingPage() {
               
               <div className="flex-shrink-0 w-full md:w-2/5 flex justify-center md:justify-end">
                 <div className="relative group">
-                  <div className="absolute -inset-10 bg-[#0071eb]/20 rounded-full blur-[80px] opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
                   <img 
                     src="/image.png" 
                     alt="Premium" 
-                    className="w-48 h-48 md:w-64 md:h-64 object-contain relative z-20 drop-shadow-[0_0_50px_rgba(0,113,235,0.5)] group-hover:scale-110 transition-transform duration-700" 
+                    className="w-48 h-48 md:w-64 md:h-64 object-contain relative z-20 drop-shadow-[0_0_50px_rgba(0,113,235,0.3)] group-hover:scale-110 transition-transform duration-700" 
                   />
                 </div>
               </div>
