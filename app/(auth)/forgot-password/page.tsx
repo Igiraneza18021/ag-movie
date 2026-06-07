@@ -67,7 +67,8 @@ export default function ForgotPasswordPage() {
         redirectTo: `${window.location.origin}/auth/callback?next=/profile/reset-password`,
       })
       if (error) throw error
-      toast.success("Password reset link sent to your email!")
+      toast.success("Password reset code sent to your email!")
+      router.push(`/verify?email=${encodeURIComponent(values.email)}&type=recovery`)
     } catch (error: any) {
       toast.error(error.message || "Something went wrong")
     } finally {

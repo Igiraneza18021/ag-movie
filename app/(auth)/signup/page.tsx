@@ -78,7 +78,8 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
-      toast.success("Check your email to confirm your account!")
+      toast.success("Check your email for the verification code!")
+      router.push(`/verify?email=${encodeURIComponent(values.email)}&type=signup`)
     } catch (error: any) {
       toast.error(error.message || "Something went wrong")
     } finally {
