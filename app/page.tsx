@@ -80,51 +80,6 @@ export default function LandingPage() {
     <div className="min-h-screen bg-black overflow-x-hidden">
       <WelcomeHero movies={featuredMovies} />
 
-      <section className="relative z-10 py-24 bg-black overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl bg-[#0071eb]/10 rounded-full blur-[120px] pointer-events-none" />
-        
-        <div className="container mx-auto px-6 relative z-20">
-          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 bg-zinc-900/40 backdrop-blur-3xl border border-white/5 p-8 md:p-16 rounded-[3.5rem] shadow-2xl">
-            <div className="flex-1 space-y-6 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0071eb]/20 border border-[#0071eb]/30 text-[#0071eb] text-xs font-black uppercase tracking-widest">
-                Premium Experience
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-[0.9]">
-                Go <span className="text-[#0071eb]">Ad-Free</span> <br/>
-                For Ultimate immersion
-              </h2>
-              <p className="text-zinc-400 text-lg md:text-xl font-bold max-w-xl">
-                Subscribe for an uninterrupted, no-ads experience. While we keep ads to a minimum for everyone, Premium members enjoy zero distractions.
-              </p>
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-4">
-                <Link href="/login">
-                  <Button className="h-14 px-10 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_10px_30px_rgba(0,113,235,0.4)] transition-all active:scale-95">
-                    Subscribe Now
-                  </Button>
-                </Link>
-                <p className="text-zinc-500 text-sm font-black uppercase tracking-tight">Starting at $4.99/mo</p>
-              </div>
-            </div>
-            
-            <div className="flex-shrink-0 w-full md:w-1/3 aspect-square relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0071eb]/20 to-transparent z-10" />
-              <img 
-                src="/image.png" 
-                alt="Premium" 
-                className="w-full h-full object-cover grayscale opacity-50 group-hover:scale-110 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" 
-              />
-              <div className="absolute inset-0 flex items-center justify-center z-20">
-                <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 shadow-2xl">
-                  <div className="w-12 h-12 bg-[#0071eb] rounded-full flex items-center justify-center">
-                    <Check className="text-white w-6 h-6 stroke-[4]" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <main className="relative z-10 pb-20">
         {/* Trending Now Section - Increased top padding to avoid clipping by hero separator */}
         <div className="pt-24 md:pt-32 mb-20 overflow-visible">
@@ -199,6 +154,52 @@ export default function LandingPage() {
             </div>
           )}
         </div>
+
+        {/* Subscription Section relocated to bottom */}
+        <section className="relative py-24 bg-black overflow-hidden mt-12">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl bg-[#0071eb]/10 rounded-full blur-[120px] pointer-events-none" />
+          
+          <div className="container mx-auto px-6 relative z-20">
+            <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 bg-zinc-900/40 backdrop-blur-3xl border border-white/5 p-8 md:p-16 rounded-[3.5rem] shadow-2xl">
+              <div className="flex-1 space-y-6 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0071eb]/20 border border-[#0071eb]/30 text-[#0071eb] text-xs font-black uppercase tracking-widest">
+                  Premium Experience
+                </div>
+                <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-[0.9]">
+                  Go <span className="text-[#0071eb]">Ad-Free</span> <br/>
+                  For Ultimate immersion
+                </h2>
+                <p className="text-zinc-400 text-lg md:text-xl font-bold max-w-xl">
+                  Subscribe for an uninterrupted, no-ads experience. While we keep ads to a minimum for everyone, Premium members enjoy zero distractions.
+                </p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-4">
+                  <Link href="/login">
+                    <Button className="h-14 px-10 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_10px_30px_rgba(0,113,235,0.4)] transition-all active:scale-95">
+                      Subscribe Now
+                    </Button>
+                  </Link>
+                  <p className="text-zinc-500 text-sm font-black uppercase tracking-tight">Starting at $4.99/mo</p>
+                </div>
+              </div>
+              
+              <div className="flex-shrink-0 w-full md:w-1/3 aspect-square relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0071eb]/20 to-transparent z-10" />
+                <img 
+                  src="/image.png" 
+                  alt="Premium" 
+                  className="w-full h-full object-cover grayscale opacity-50 group-hover:scale-110 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" 
+                />
+                <div className="absolute inset-0 flex items-center justify-center z-20">
+                  <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 shadow-2xl">
+                    <div className="w-12 h-12 bg-[#0071eb] rounded-full flex items-center justify-center">
+                      <Check className="text-white w-6 h-6 stroke-[4]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>
