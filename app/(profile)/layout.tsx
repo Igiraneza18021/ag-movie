@@ -83,7 +83,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       variant="ghost" 
                       className={`w-full justify-start h-12 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] transition-all cursor-pointer ${
                         isActive 
-                          ? "bg-[#0071eb] text-white shadow-[0_10px_20px_rgba(0,113,235,0.2)]" 
+                          ? "bg-[#0071eb] text-white shadow-[0_10px_20px_rgba(0,113,235,0.2)] hover:bg-[#0071eb] hover:text-white" 
                           : "text-zinc-500 hover:text-white hover:bg-white/5"
                       }`}
                     >
