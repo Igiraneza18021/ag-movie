@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { MovieRoom } from "@/components/movie-room"
 import { createClient } from "@/lib/supabase/server"
@@ -110,7 +109,6 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       
       <main className="pt-16">
         <MovieRoom 

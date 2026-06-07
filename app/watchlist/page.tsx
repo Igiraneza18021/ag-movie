@@ -1,6 +1,5 @@
 "use client"
 
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,7 +15,6 @@ export default function WatchlistPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-8">
             <div className="animate-pulse">
@@ -37,7 +35,6 @@ export default function WatchlistPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
 
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">

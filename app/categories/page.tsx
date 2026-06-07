@@ -1,4 +1,3 @@
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { GenreCard } from "@/components/genre-card"
 import { createClient } from "@/lib/supabase/server"
@@ -14,7 +13,6 @@ export default async function CategoriesPage() {
     console.error("Error fetching genres:", genresError)
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center py-12">
@@ -32,7 +30,6 @@ export default async function CategoriesPage() {
   if (genres.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-8">
             <div className="mb-8">
@@ -93,7 +90,6 @@ export default async function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
 
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">

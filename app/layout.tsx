@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
 import { ContentRefreshProvider } from "@/components/content-refresh-provider"
+import { Navigation } from "@/components/navigation"
 import { Suspense } from "react"
 import "@/lib/disable-debug"
 import "./globals.css"
@@ -132,6 +133,7 @@ export default function RootLayout({
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ContentRefreshProvider />
+        <Navigation />
         <Suspense fallback={null}>
           {children}
           <Toaster />

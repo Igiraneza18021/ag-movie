@@ -1,4 +1,3 @@
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { SearchResults } from "@/components/search-results"
 import { createClient } from "@/lib/supabase/server"
@@ -18,7 +17,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   if (!query.trim()) {
     return (
       <div className="min-h-screen bg-black">
-        <Navigation />
         <main className="pt-32">
           <div className="container mx-auto px-6 py-8">
             <div className="text-center py-20">
@@ -73,7 +71,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="min-h-screen bg-black">
-      <Navigation />
 
       <main className="pt-32">
         <div className="container mx-auto px-6 py-8">

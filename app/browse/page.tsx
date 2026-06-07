@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { getMovies, getTVShows } from "@/lib/database-client"
 import type { Movie, TVShow } from "@/lib/types"
@@ -123,7 +122,6 @@ export default function HomePage() {
   if (error) {
     return (
       <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0 text-white">
-        <Navigation />
         <div className="pt-8 md:pt-24 px-6 sm:px-10 pb-10">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">We couldn't load the browse page</h2>
@@ -143,7 +141,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#090a0a] pb-12 md:pb-0">
-      <Navigation />
 
       {/* HERO */}
       <SpotlightSection 

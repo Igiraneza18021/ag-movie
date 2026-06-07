@@ -1,5 +1,4 @@
 import { Metadata } from "next"
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { MovieGrid } from "@/components/movie-grid"
 import { FilterSidebar } from "@/components/filter-sidebar"
@@ -84,7 +83,6 @@ export default async function MoviesPage({ searchParams }: MoviesPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
 
       <main className="pt-16 md:pt-16 pb-24 md:pb-20">
         <div className="container mx-auto px-4 py-4 md:py-8">
