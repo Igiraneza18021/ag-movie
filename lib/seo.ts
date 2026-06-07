@@ -4,44 +4,55 @@ import type { Movie, TVShow } from '@/lib/types'
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ag.micorp.pro'
 const siteName = 'Agasobanuye Movies'
 
+function dedupeKeywords(values: Array<string | undefined | null>) {
+  return [...new Set(values.map((value) => String(value ?? '').trim()).filter(Boolean))]
+}
+
 export function generateMovieMetadata(movie: Movie): Metadata {
-  const title = `${movie.title} - Watch Online | ${siteName}`
+  const agasobanuyeTitle = `${movie.title} Agasobanuye`
+  const title = `${agasobanuyeTitle} - Watch Online | ${siteName}`
   const description = movie.overview 
-    ? `${movie.overview.substring(0, 155)}...` 
-    : `Watch ${movie.title} online in HD quality. Stream the latest movies on ${siteName}.`
+    ? `${movie.overview.substring(0, 155)}... Watch ${agasobanuyeTitle} online on ${siteName}.`
+    : `Watch ${agasobanuyeTitle} online in HD quality. Stream the latest movies on ${siteName}.`
   
   const imageUrl = movie.poster_path 
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : `${baseUrl}/placeholder.jpg`
+  const keywords = dedupeKeywords([
+    movie.title,
+    agasobanuyeTitle,
+    `${movie.title} agasobanuye`,
+    `${movie.title} agasobanuye movie`,
+    `${movie.title} watch online`,
+    `${movie.title} streaming`,
+    'Agasobanuye Movies',
+    'agasobanuye',
+    'agasobanuye movies',
+    'watch online',
+    'streaming',
+    'HD movie',
+    'movie streaming',
+    'watch movies online',
+    ...(movie.genres?.map(genre => genre.name) || []),
+  ])
 
   return {
     title,
     description,
-    keywords: [
-      movie.title,
-      'Agasobanuye Movies',
-      'agasobanuye',
-      'watch online',
-      'streaming',
-      'HD movie',
-      'movie streaming',
-      'watch movies online',
-      `${movie.title} watch online`,
-      `${movie.title} streaming`,
-      ...(movie.genres?.map(genre => genre.name) || [])
-    ],
+    keywords,
     openGraph: {
       title,
       description,
       type: 'video.movie',
       url: `${baseUrl}/movie/${movie.id}`,
       siteName,
+      locale: 'en_US',
       images: [
         {
           url: imageUrl,
           width: 500,
           height: 750,
-          alt: `${movie.title} movie poster`,
+          alt: `${agasobanuyeTitle} movie poster`,
         },
       ],
     },
@@ -62,44 +73,51 @@ export function generateMovieMetadata(movie: Movie): Metadata {
 }
 
 export function generateTVShowMetadata(tvShow: TVShow): Metadata {
-  const title = `${tvShow.name} - Watch Online | ${siteName}`
+  const agasobanuyeTitle = `${tvShow.name} Agasobanuye`
+  const title = `${agasobanuyeTitle} - Watch Online | ${siteName}`
   const description = tvShow.overview 
-    ? `${tvShow.overview.substring(0, 155)}...` 
-    : `Watch ${tvShow.name} online in HD quality. Stream the latest TV shows on ${siteName}.`
+    ? `${tvShow.overview.substring(0, 155)}... Watch ${agasobanuyeTitle} online on ${siteName}.`
+    : `Watch ${agasobanuyeTitle} online in HD quality. Stream the latest TV shows on ${siteName}.`
   
   const imageUrl = tvShow.poster_path 
     ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}`
     : `${baseUrl}/placeholder.jpg`
+  const keywords = dedupeKeywords([
+    tvShow.name,
+    agasobanuyeTitle,
+    `${tvShow.name} agasobanuye`,
+    `${tvShow.name} agasobanuye series`,
+    `${tvShow.name} watch online`,
+    `${tvShow.name} streaming`,
+    'Agasobanuye Movies',
+    'agasobanuye',
+    'agasobanuye tv shows',
+    'watch online',
+    'streaming',
+    'TV series',
+    'HD TV show',
+    'TV show streaming',
+    'watch TV shows online',
+    ...(tvShow.genres?.map(genre => genre.name) || []),
+  ])
 
   return {
     title,
     description,
-    keywords: [
-      tvShow.name,
-      'Agasobanuye Movies',
-      'agasobanuye',
-      'watch online',
-      'streaming',
-      'TV series',
-      'HD TV show',
-      'TV show streaming',
-      'watch TV shows online',
-      `${tvShow.name} watch online`,
-      `${tvShow.name} streaming`,
-      ...(tvShow.genres?.map(genre => genre.name) || [])
-    ],
+    keywords,
     openGraph: {
       title,
       description,
       type: 'video.tv_show',
       url: `${baseUrl}/tv/${tvShow.id}`,
       siteName,
+      locale: 'en_US',
       images: [
         {
           url: imageUrl,
           width: 500,
           height: 750,
-          alt: `${tvShow.name} TV show poster`,
+          alt: `${agasobanuyeTitle} TV show poster`,
         },
       ],
     },
