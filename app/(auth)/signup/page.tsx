@@ -136,7 +136,7 @@ export default function SignUpPage() {
               />
             </div>
             <h1 className="text-2xl font-black text-white uppercase tracking-tighter">
-              Agasobanuye<span className="text-[#0071eb]">Movies</span>
+              Agasobanuye <span className="text-[#0071eb]">Movies</span>
             </h1>
           </Link>
         </div>
