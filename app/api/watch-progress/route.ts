@@ -1,6 +1,151 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
+function toDateOnly(value: string) {
+  return value.slice(0, 10)
+}
+
+async function syncMovieWatchlistStatus(params: {
+  supabase: Awaited<ReturnType<typeof createClient>>
+  userId: string
+  movieId: string
+  now: string
+  progressPercent: number
+  rewatchCount: number
+}) {
+  const { supabase, userId, movieId, now, progressPercent, rewatchCount } = params
+  const startDate = toDateOnly(now)
+  const progressValue = Math.max(0, Math.min(100, Math.round(progressPercent)))
+
+  const { data: existingEntry, error: existingEntryError } = await supabase
+    .from("watchlist_entries")
+    .select("id, watch_status, start_date, end_date, total_rewatched")
+    .eq("user_id", userId)
+    .eq("movie_id", movieId)
+    .maybeSingle()
+
+  if (existingEntryError) {
+    throw existingEntryError
+  }
+
+  const completed = progressPercent >= 80
+  const nextStatus =
+    completed
+      ? "completed"
+      : existingEntry?.watch_status === "re_watching"
+        ? "re_watching"
+        : "watching"
+
+  if (!existingEntry?.id) {
+    const { error: insertError } = await supabase.from("watchlist_entries").insert({
+      user_id: userId,
+      item_type: "movie",
+      movie_id: movieId,
+      watch_status: nextStatus,
+      progress: progressValue,
+      start_date: startDate,
+      end_date: completed ? startDate : null,
+      total_rewatched: rewatchCount,
+      notes: null,
+      liked: false,
+    })
+
+    if (insertError) throw insertError
+    return
+  }
+
+  const shouldMoveToWatching = ["not_set", "planning", "paused", "dropped"].includes(existingEntry.watch_status)
+
+  const { error: updateError } = await supabase
+    .from("watchlist_entries")
+    .update({
+      watch_status: completed
+        ? "completed"
+        : shouldMoveToWatching
+          ? "watching"
+          : existingEntry.watch_status === "re_watching"
+            ? "re_watching"
+            : existingEntry.watch_status,
+      progress: progressValue,
+      start_date: existingEntry.start_date ?? startDate,
+      end_date: completed ? existingEntry.end_date ?? startDate : null,
+      total_rewatched: Math.max(existingEntry.total_rewatched ?? 0, rewatchCount),
+    })
+    .eq("id", existingEntry.id)
+
+  if (updateError) throw updateError
+}
+
+async function syncTvWatchlistStatus(params: {
+  supabase: Awaited<ReturnType<typeof createClient>>
+  userId: string
+  tvShowId: string
+  now: string
+  completedEpisodes: number
+  showCompleted: boolean
+  showRewatchCount: number
+}) {
+  const { supabase, userId, tvShowId, now, completedEpisodes, showCompleted, showRewatchCount } = params
+  const startDate = toDateOnly(now)
+
+  const { data: existingEntry, error: existingEntryError } = await supabase
+    .from("watchlist_entries")
+    .select("id, watch_status, start_date, end_date, total_rewatched")
+    .eq("user_id", userId)
+    .eq("tv_show_id", tvShowId)
+    .maybeSingle()
+
+  if (existingEntryError) {
+    throw existingEntryError
+  }
+
+  const nextStatus =
+    showCompleted
+      ? "completed"
+      : existingEntry?.watch_status === "re_watching"
+        ? "re_watching"
+        : "watching"
+
+  if (!existingEntry?.id) {
+    const { error: insertError } = await supabase.from("watchlist_entries").insert({
+      user_id: userId,
+      item_type: "tv",
+      tv_show_id: tvShowId,
+      watch_status: nextStatus,
+      progress: completedEpisodes,
+      start_date: startDate,
+      end_date: showCompleted ? startDate : null,
+      total_rewatched: showRewatchCount,
+      notes: null,
+      liked: false,
+    })
+
+    if (insertError) throw insertError
+    return
+  }
+
+  const shouldMoveToWatching = ["not_set", "planning", "paused", "dropped"].includes(existingEntry.watch_status)
+
+  const { error: updateError } = await supabase
+    .from("watchlist_entries")
+    .update({
+      watch_status: showCompleted
+        ? "completed"
+        : shouldMoveToWatching
+          ? "watching"
+          : existingEntry.watch_status === "re_watching"
+            ? "re_watching"
+            : existingEntry.watch_status,
+      progress: completedEpisodes,
+      start_date: existingEntry.start_date ?? startDate,
+      end_date: showCompleted ? existingEntry.end_date ?? startDate : null,
+      total_rewatched: Math.max(existingEntry.total_rewatched ?? 0, showRewatchCount),
+    })
+    .eq("id", existingEntry.id)
+
+  if (updateError) throw updateError
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
@@ -79,6 +224,22 @@ export async function POST(request: Request) {
     if (error) {
       console.error("Error saving watch progress:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (content_type === "movie" && movie_id) {
+      try {
+        await syncMovieWatchlistStatus({
+          supabase,
+          userId: user.id,
+          movieId: movie_id,
+          now,
+          progressPercent: progress_percent,
+          rewatchCount: rewatch_count,
+        })
+      } catch (watchlistError: any) {
+        console.error("Error syncing movie watchlist status:", watchlistError)
+        return NextResponse.json({ error: watchlistError.message ?? "Failed to sync watchlist status" }, { status: 500 })
+      }
     }
 
     if (content_type === "episode" && tv_show_id) {
@@ -168,6 +329,21 @@ export async function POST(request: Request) {
       if (showProgressError) {
         console.error("Error saving TV show progress:", showProgressError)
         return NextResponse.json({ error: showProgressError.message }, { status: 500 })
+      }
+
+      try {
+        await syncTvWatchlistStatus({
+          supabase,
+          userId: user.id,
+          tvShowId: tv_show_id,
+          now,
+          completedEpisodes,
+          showCompleted,
+          showRewatchCount,
+        })
+      } catch (watchlistError: any) {
+        console.error("Error syncing TV watchlist status:", watchlistError)
+        return NextResponse.json({ error: watchlistError.message ?? "Failed to sync watchlist status" }, { status: 500 })
       }
     }
 

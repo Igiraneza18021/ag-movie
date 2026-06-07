@@ -174,6 +174,8 @@ export type WatchStatus =
   | "paused"
   | "dropped"
 
+export type WatchlistFilter = "all" | Exclude<WatchStatus, "not_set">
+
 export interface WatchlistMediaSummary {
   id: string
   type: WatchlistItemType
