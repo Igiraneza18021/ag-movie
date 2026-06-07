@@ -350,6 +350,23 @@ function buildEpisodeCandidateGroups(episodes) {
   return [...groups.entries()].map(([key, rows]) => ({ key, rows }))
 }
 
+function findEpisodeMatches(liveEpisodes, showId, seasonNumber, episodeNumber) {
+  return liveEpisodes.filter((row) =>
+    row.tv_show_id === showId
+    && Number(row.season_number) === seasonNumber
+    && Number(row.episode_number) === episodeNumber
+  )
+}
+
+function chooseBestEpisodeMatch(matches, targetSeasonId) {
+  if (matches.length === 0) return null
+  return (
+    matches.find((row) => row.season_id === targetSeasonId)
+    || matches.find((row) => !isBlank(row.season_id))
+    || matches[0]
+  )
+}
+
 function makeMoviePayload(entity, part) {
   const partNumber = part.partNumber ?? 1
   return {
@@ -635,11 +652,13 @@ async function reconcileTvShows(auditShows, liveDb, summary) {
 
         for (const candidateGroup of buildEpisodeCandidateGroups(season.episodes)) {
           const representative = candidateGroup.rows[0]
-          let existingEpisode = liveDb.episodes.find((row) =>
-            row.tv_show_id === show.id
-            && Number(row.season_number) === representative.season_number
-            && Number(row.episode_number) === representative.episode_number
-          ) || null
+          const episodeMatches = findEpisodeMatches(
+            liveDb.episodes,
+            show.id,
+            representative.season_number,
+            representative.episode_number,
+          )
+          let existingEpisode = chooseBestEpisodeMatch(episodeMatches, existingSeason.id)
           const uniqueEmbedUrls = dedupeNonBlank(candidateGroup.rows.map((row) => row.embed_url))
           const uniqueDownloadUrls = dedupeNonBlank(candidateGroup.rows.map((row) => row.download_url))
 
@@ -678,6 +697,12 @@ async function reconcileTvShows(auditShows, liveDb, summary) {
           }
           const episodePayload = makeEpisodePayload(show.id, existingSeason.id, episode)
 
+          const conflictingSeasonEpisode = episodeMatches.find((row) =>
+            row.id !== existingEpisode?.id
+            && row.season_id === existingSeason.id
+            && Number(row.episode_number) === episode.episode_number
+          ) || null
+
           if (!existingEpisode) {
             if (dryRunMode) {
               summary.newEpisodes += 1
@@ -689,10 +714,16 @@ async function reconcileTvShows(auditShows, liveDb, summary) {
             continue
           }
 
+          const episodeMissingFields = ["tmdb_id", "name"]
+          if (
+            isBlank(existingEpisode.season_id)
+            && !conflictingSeasonEpisode
+          ) {
+            episodeMissingFields.push("season_id")
+          }
+
           const episodePatch = {
-            ...mergeMissingFields(existingEpisode, episodePayload, [
-              "tmdb_id", "name", "season_id",
-            ]),
+            ...mergeMissingFields(existingEpisode, episodePayload, episodeMissingFields),
             ...mergeReplaceableLinkFields(existingEpisode, episodePayload, [
               "embed_url", "download_url",
             ], {
