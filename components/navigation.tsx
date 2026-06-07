@@ -54,6 +54,8 @@ export function Navigation() {
 
   const watchCount = watchlist?.length || 0
 
+  if (pathname === "/") return null
+
   useEffect(() => {
     const q = searchParams.get("q")
     if (q) setSearchQuery(q)

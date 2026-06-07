@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Globe } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
@@ -12,13 +13,11 @@ interface WelcomeHeroProps {
 }
 
 export function WelcomeHero({ movies }: WelcomeHeroProps) {
-  const [email, setEmail] = useState("")
-
   // Create a larger array of movies for the background grid
   const gridMovies = [...movies, ...movies, ...movies, ...movies, ...movies].slice(0, 60)
 
   return (
-    <div className="relative min-h-[100vh] w-full overflow-hidden flex flex-col pt-20">
+    <div className="relative min-h-[100vh] w-full overflow-hidden flex flex-col">
       {/* Background Poster Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-black">
         <div 
@@ -40,12 +39,31 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/70 z-2" />
       </div>
 
+      {/* Header Navigation (Logo only for Landing) */}
+      <header className="relative z-20 flex items-center justify-between px-6 py-6 md:px-12 md:py-8 container mx-auto">
+        <div className="flex items-center">
+          <Image
+            src="/image.png"
+            alt="Agasobanuye Movies Logo"
+            width={160}
+            height={40}
+            className="object-contain h-8 md:h-12 w-auto"
+          />
+        </div>
+        <div className="flex items-center gap-4 text-white">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded border border-white/30 bg-black/20 text-white backdrop-blur-sm">
+            <Globe className="w-4 h-4" />
+            <span className="text-sm font-black uppercase tracking-wider">English</span>
+          </div>
+        </div>
+      </header>
+
       {/* Main Hero Content */}
       <div className="relative z-10 flex-grow flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 leading-tight">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 leading-tight uppercase tracking-tighter">
           Unlimited movies, TV shows, and more
         </h1>
-        <p className="text-xl md:text-2xl text-white mb-8">
+        <p className="text-xl md:text-2xl text-white mb-8 font-bold">
           Watch anywhere. Cancel anytime.
         </p>
         <div className="w-full max-w-2xl mt-8 flex justify-center">
