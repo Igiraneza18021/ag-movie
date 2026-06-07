@@ -3,13 +3,11 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { Movie, TVShow } from "@/lib/types"
+import { PosterCard } from "@/components/home/poster-card"
 import { WelcomeHero } from "@/components/welcome-hero"
 import { Top10Section } from "@/components/home/top10-section"
-import { Film, Tv, ArrowRight, Play, Star } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { getTMDBImageUrl } from "@/lib/tmdb"
 import Link from "next/link"
 import { Footer } from "@/components/footer"
 
@@ -124,53 +122,7 @@ export default function LandingPage() {
               
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-4 md:px-8">
                 {featuredMovies.slice(0, 6).map((movie) => (
-                  <div key={movie.id} className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20">
-                    <img
-                      src={getTMDBImageUrl(movie.poster_path) || "/placeholder.svg"}
-                      alt={movie.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    
-                    {/* Always visible: AG Badge top right */}
-                    <div className="absolute top-2 right-2 z-20">
-                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
-                        AG
-                      </div>
-                    </div>
-
-                    {/* Default visible: Rating bottom left */}
-                    <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
-                      <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        {movie.vote_average?.toFixed(1)}
-                      </div>
-                    </div>
-
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
-                      <div className="space-y-2">
-                        <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
-                          {movie.title}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
-                              {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
-                            </span>
-                            <div className="flex items-center gap-1 text-white text-xs font-black">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              {movie.vote_average?.toFixed(1)}
-                            </div>
-                          </div>
-                          <Link href={`/movie/${movie.id}`}>
-                            <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white transition-colors duration-200">
-                              <Play className="h-4 w-4 fill-current" />
-                            </div>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <PosterCard key={movie.id} item={movie} />
                 ))}
               </div>
             </div>
@@ -196,53 +148,7 @@ export default function LandingPage() {
               
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-4 md:px-8">
                 {featuredTVShows.slice(0, 6).map((show) => (
-                  <div key={show.id} className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20">
-                    <img
-                      src={getTMDBImageUrl(show.poster_path) || "/placeholder.svg"}
-                      alt={show.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    
-                    {/* Always visible: AG Badge top right */}
-                    <div className="absolute top-2 right-2 z-20">
-                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
-                        AG
-                      </div>
-                    </div>
-
-                    {/* Default visible: Rating bottom left */}
-                    <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
-                      <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        {show.vote_average?.toFixed(1)}
-                      </div>
-                    </div>
-
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
-                      <div className="space-y-2">
-                        <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
-                          {show.name}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
-                              {show.first_air_date ? new Date(show.first_air_date).getFullYear() : 'N/A'}
-                            </span>
-                            <div className="flex items-center gap-1 text-white text-xs font-black">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              {show.vote_average?.toFixed(1)}
-                            </div>
-                          </div>
-                          <Link href={`/tv/${show.id}`}>
-                            <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white transition-colors duration-200">
-                              <Play className="h-4 w-4 fill-current" />
-                            </div>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <PosterCard key={show.id} item={show} />
                 ))}
               </div>
             </div>
@@ -253,4 +159,3 @@ export default function LandingPage() {
     </div>
   )
 }
-

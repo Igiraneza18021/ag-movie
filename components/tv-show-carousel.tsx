@@ -1,13 +1,10 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { PosterCard } from "@/components/home/poster-card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { WatchlistButton } from "@/components/watchlist-button"
-import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { TVShow } from "@/lib/types"
-import { ChevronLeft, ChevronRight, Play, Mic } from "lucide-react"
-import Link from "next/link"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { CarouselSkeleton } from "@/components/skeletons/carousel-skeleton"
 
 interface TVShowCarouselProps {
@@ -82,66 +79,13 @@ export function TVShowCarousel({ title, tvShows, loading }: TVShowCarouselProps)
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
+            className="flex gap-3 sm:gap-6 overflow-x-auto scrollbar-hide pb-4 pt-4 px-2"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {tvShows.map((show) => (
-              <Link key={show.id} href={`/tv/${show.id}`} className="flex-none w-48 group/item cursor-pointer">
-                <div className="relative overflow-hidden rounded-lg bg-card">
-                  <img
-                    src={getTMDBImageUrl(show.poster_path || "") || "/placeholder.svg?height=288&width=192"}
-                    alt={show.name}
-                    className="w-full h-72 object-cover transition-transform group-hover/item:scale-105"
-                  />
-
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          window.location.href = `/tv/${show.id}`
-                        }}
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      <WatchlistButton
-                        id={show.id.toString()}
-                        type="tv"
-                        title={show.name}
-                        poster_path={show.poster_path || ""}
-                        vote_average={show.vote_average || 0}
-                        first_air_date={show.first_air_date || ""}
-                        variant="outline"
-                        size="sm"
-                        showText={false}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Rating Badge */}
-                  {show.vote_average && (
-                    <Badge className="absolute top-2 right-2 text-xs">★ {show.vote_average.toFixed(1)}</Badge>
-                  )}
-
-                  {/* Narrator Badge */}
-                  {show.narrator && (
-                    <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                      <Mic className="h-3 w-3" />
-                      <span className="truncate">{show.narrator}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-3">
-                  <h3 className="font-semibold text-foreground text-sm truncate">{show.name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {show.first_air_date ? new Date(show.first_air_date).getFullYear() : ""}
-                  </p>
-                </div>
-              </Link>
+              <div key={show.id} className="flex-none w-36 sm:w-48 lg:w-56">
+                <PosterCard item={show} />
+              </div>
             ))}
           </div>
         </div>

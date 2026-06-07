@@ -1,72 +1,68 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { WatchlistButton } from "@/components/watchlist-button"
+import { Star, Play } from "lucide-react"
+import Link from "next/link"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie, TVShow } from "@/lib/types"
-import { Play, Mic } from "lucide-react"
-import Link from "next/link"
 
 interface PosterCardProps {
   item: Movie | TVShow
 }
 
 export function PosterCard({ item }: PosterCardProps) {
-  const mt = 'title' in item ? 'movie' : 'tv'
-  const href = `/${mt}/${item.id}`
-  const posterUrl = getTMDBImageUrl(item.poster_path || "") || "/placeholder.svg?height=288&width=192"
-  const title = 'title' in item ? item.title : item.name
-  const releaseDate = 'release_date' in item ? item.release_date : item.first_air_date
-  const year = releaseDate ? new Date(releaseDate).getFullYear() : ""
+  const isMovie = "title" in item
+  const title = isMovie ? (item as Movie).title : (item as TVShow).name
+  const date = isMovie ? (item as Movie).release_date : (item as TVShow).first_air_date
+  const year = date ? new Date(date).getFullYear() : "N/A"
+  const href = isMovie ? `/movie/${item.id}` : `/tv/${item.id}`
 
   return (
-    <Link href={href} className="flex-none w-36 sm:w-48 group/item cursor-pointer block">
-      <div className="relative overflow-hidden rounded-lg bg-card w-full">
-        <img
-          src={posterUrl}
-          alt={title}
-          className="w-full h-52 sm:h-72 object-cover transition-transform group-hover/item:scale-105"
-        />
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="flex gap-2">
-            <Button size="sm" onClick={(e) => e.preventDefault()}>
-              <Play className="h-4 w-4" />
-            </Button>
-            <WatchlistButton
-              id={item.id.toString()}
-              type={mt}
-              title={title}
-              poster_path={item.poster_path || ""}
-              vote_average={item.vote_average || 0}
-              release_date={'release_date' in item ? item.release_date : undefined}
-              first_air_date={'first_air_date' in item ? item.first_air_date : undefined}
-              variant="outline"
-              size="sm"
-              showText={false}
-            />
-          </div>
+    <Link 
+      href={href}
+      className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20 w-full"
+    >
+      <img
+        src={getTMDBImageUrl(item.poster_path || "") || "/placeholder.svg"}
+        alt={title}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+      />
+      
+      {/* Always visible: AG Badge top right */}
+      <div className="absolute top-2 right-2 z-20">
+        <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+          AG
         </div>
-
-        {/* Rating Badge */}
-        {item.vote_average && (
-          <Badge className="absolute top-2 right-2 text-xs">★ {item.vote_average.toFixed(1)}</Badge>
-        )}
-
-        {/* Narrator Badge */}
-        {'narrator' in item && item.narrator && (
-          <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded text-xs max-w-[calc(100%-1rem)]">
-            <Mic className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{item.narrator}</span>
-          </div>
-        )}
       </div>
 
-      <div className="mt-2 sm:mt-3 w-full">
-        <h3 className="font-semibold text-foreground text-xs sm:text-sm line-clamp-2 break-words">{title}</h3>
-        <p className="text-xs text-muted-foreground">{year}</p>
+      {/* Default visible: Rating bottom left */}
+      <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+        <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold border border-white/5">
+          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+          {item.vote_average?.toFixed(1) || "0.0"}
+        </div>
+      </div>
+
+      {/* Hover Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+        <div className="space-y-2 text-left">
+          <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+            {title}
+          </p>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                {year}
+              </span>
+              <div className="flex items-center gap-1 text-white text-xs font-black">
+                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                {item.vote_average?.toFixed(1) || "0.0"}
+              </div>
+            </div>
+            <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white">
+              <Play className="h-4 w-4 fill-current ml-0.5" />
+            </div>
+          </div>
+        </div>
       </div>
     </Link>
   )
