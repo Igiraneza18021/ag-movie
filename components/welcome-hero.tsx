@@ -1,10 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Image from "next/image"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ChevronRight, Globe, Loader2 } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
@@ -20,7 +18,7 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
   const gridMovies = [...movies, ...movies, ...movies, ...movies, ...movies].slice(0, 60)
 
   return (
-    <div className="relative min-h-[100vh] w-full overflow-hidden flex flex-col">
+    <div className="relative min-h-[100vh] w-full overflow-hidden flex flex-col pt-20">
       {/* Background Poster Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-black">
         <div 
@@ -41,25 +39,6 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
         <div className="absolute inset-0 bg-black/50 z-1" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/70 z-2" />
       </div>
-
-      {/* Header Navigation */}
-      <header className="relative z-20 flex items-center justify-between px-6 py-6 md:px-12 md:py-8 container mx-auto">
-        <div className="flex items-center">
-          <Image
-            src="/image.png"
-            alt="Agasobanuye Movies Logo"
-            width={160}
-            height={40}
-            className="object-contain h-8 md:h-12 w-auto"
-          />
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded border border-white/30 bg-black/20 text-white backdrop-blur-sm">
-            <Globe className="w-4 h-4" />
-            <span className="text-sm font-medium">English</span>
-          </div>
-        </div>
-      </header>
 
       {/* Main Hero Content */}
       <div className="relative z-10 flex-grow flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
