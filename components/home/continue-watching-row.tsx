@@ -73,7 +73,7 @@ export function ContinueWatchingRow({ items }: ContinueWatchingRowProps) {
       <div className="px-2 sm:px-4 md:px-8 mb-3 flex items-center justify-between">
         <h2 className="text-white text-2xl font-semibold">Continue Watching</h2>
         <button
-          onClick={() => router.push("/watchlist")}
+          onClick={() => router.push("/user-watchlist")}
           className="text-white/80 hover:text-white text-sm inline-flex items-center gap-1"
         >
           View all <ChevronRight className="w-4 h-4" />
@@ -122,7 +122,7 @@ export function ContinueWatchingRow({ items }: ContinueWatchingRowProps) {
 
           {showMore && (
             <button
-              onClick={() => router.push("/watchlist")}
+              onClick={() => router.push("/user-watchlist")}
               className="relative rounded-xl overflow-hidden bg-neutral-900/60 border border-white/10 hover:bg-neutral-800/80 transition"
             >
               <div className="w-full aspect-video flex items-center justify-center">
@@ -137,4 +137,3 @@ export function ContinueWatchingRow({ items }: ContinueWatchingRowProps) {
     </section>
   )
 }
-

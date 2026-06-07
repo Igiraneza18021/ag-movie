@@ -2,13 +2,22 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Calendar, Star, Bookmark, ArrowRight } from "lucide-react"
+import { Trash2, Calendar, Star, Bookmark, Heart, Pencil } from "lucide-react"
 import { useWatchlist } from "@/hooks/use-watchlist"
 import Link from "next/link"
 import Image from "next/image"
+import { WatchlistEntryDialog } from "@/components/watchlist-entry-dialog"
+import { useMemo, useState } from "react"
+import type { WatchlistEntry } from "@/lib/types"
 
 export default function WatchlistPage() {
-  const { watchlist, isLoading, removeFromWatchlist, clearWatchlist } = useWatchlist()
+  const { watchlist, isLoading, saveWatchlistEntry, deleteWatchlistEntry, clearWatchlist } = useWatchlist()
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
+
+  const selectedEntry = useMemo(
+    () => watchlist.find((entry) => entry.id === selectedEntryId) ?? null,
+    [selectedEntryId, watchlist],
+  )
 
   if (isLoading) {
     return (
@@ -65,17 +74,17 @@ export default function WatchlistPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {watchlist.map((item) => (
-            <div key={`${item.type}-${item.id}`} className="group relative">
-              <Link href={item.type === "movie" ? `/movie/${item.id}` : `/tv/${item.id}`}>
+          {watchlist.map((entry) => (
+            <div key={entry.id} className="group relative">
+              <Link href={entry.item_type === "movie" ? `/movie/${entry.media.id}` : `/tv/${entry.media.id}`}>
                 <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/5 shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:border-[#0071eb]/50">
                   <Image
                     src={
-                      item.poster_path
-                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                      entry.media.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${entry.media.poster_path}`
                         : "/placeholder.svg"
                     }
-                    alt={item.title}
+                    alt={entry.media.title}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0"
                   />
@@ -85,46 +94,91 @@ export default function WatchlistPage() {
                   <div className="absolute top-3 left-3">
                     <div className="bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1">
                       <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                      {item.vote_average.toFixed(1)}
+                      {(entry.media.vote_average ?? 0).toFixed(1)}
                     </div>
                   </div>
 
                   {/* Type Badge */}
                   <div className="absolute top-3 right-3">
                     <div className="bg-[#0071eb] text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">
-                      {item.type === "movie" ? "Movie" : "TV"}
+                      {entry.item_type === "movie" ? "Movie" : "TV"}
                     </div>
                   </div>
+
+                  {entry.liked ? (
+                    <div className="absolute bottom-3 right-3">
+                      <div className="rounded-full bg-red-500/90 p-2 text-white shadow-xl">
+                        <Heart className="h-3.5 w-3.5 fill-current" />
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </Link>
 
               <div className="mt-4 space-y-2 px-1">
-                <Link href={item.type === "movie" ? `/movie/${item.id}` : `/tv/${item.id}`}>
+                <Link href={entry.item_type === "movie" ? `/movie/${entry.media.id}` : `/tv/${entry.media.id}`}>
                   <h3 className="font-black text-white text-sm uppercase tracking-tight line-clamp-1 group-hover:text-[#0071eb] transition-colors">
-                    {item.title}
+                    {entry.media.title}
                   </h3>
                 </Link>
+
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
+                    {entry.watch_status.replaceAll("_", " ")}
+                  </Badge>
+                  <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
+                    Progress {entry.progress}
+                    {entry.media.type === "tv" && entry.media.number_of_episodes ? `/${entry.media.number_of_episodes}` : ""}
+                  </Badge>
+                  {entry.score != null ? (
+                    <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
+                      Score {entry.score}/10
+                    </Badge>
+                  ) : null}
+                </div>
 
                 <div className="flex items-center justify-between">
                    <div className="flex items-center text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
                     <Calendar className="h-3 w-3 mr-1.5 text-[#0071eb]" />
-                    {item.release_date || item.first_air_date
-                      ? new Date(item.release_date || item.first_air_date!).getFullYear()
+                    {entry.media.release_date || entry.media.first_air_date
+                      ? new Date(entry.media.release_date || entry.media.first_air_date!).getFullYear()
                       : "TBA"}
                   </div>
-                  <button
-                    onClick={() => removeFromWatchlist(item.id, item.type)}
-                    className="p-2 text-zinc-600 hover:text-red-500 transition-colors bg-white/5 rounded-lg border border-white/5 hover:bg-red-500/10 hover:border-red-500/20"
-                    title="Remove from watchlist"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedEntryId(entry.id)}
+                      className="p-2 text-zinc-400 hover:text-white transition-colors bg-white/5 rounded-lg border border-white/5 hover:bg-white/10"
+                      title="Edit watchlist entry"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => void deleteWatchlistEntry(entry.id)}
+                      className="p-2 text-zinc-600 hover:text-red-500 transition-colors bg-white/5 rounded-lg border border-white/5 hover:bg-red-500/10 hover:border-red-500/20"
+                      title="Remove from watchlist"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {selectedEntry ? (
+        <WatchlistEntryDialog
+          item={selectedEntry.media}
+          entry={selectedEntry}
+          open={Boolean(selectedEntry)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedEntryId(null)
+          }}
+          onSave={saveWatchlistEntry}
+          onDelete={deleteWatchlistEntry}
+        />
+      ) : null}
     </div>
   )
 }

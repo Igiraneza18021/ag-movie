@@ -7,6 +7,7 @@ import { getShareCaption, getShareFileName, getShareImageUrl, getSharePromoLines
 import { Play, ThumbsUp, Plus, Eye, Download, Share2 } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { WatchlistButton } from "@/components/watchlist-button"
 
 interface SpotlightSectionProps {
   item: Movie | TVShow
@@ -250,7 +251,6 @@ export function SpotlightSection({
   onTrailerClick,
   showDownloads = false,
 }: SpotlightSectionProps) {
-  const [inWatchlist, setInWatchlist] = useState(false)
   const [watched, setWatched] = useState(false)
   const [liked, setLiked] = useState(false)
   const [heroImgLoaded, setHeroImgLoaded] = useState(false)
@@ -417,12 +417,6 @@ export function SpotlightSection({
   const toggleMute = useCallback(() => {
     setIsMuted(!isMuted)
   }, [isMuted])
-
-  const handleWatchlistToggle = useCallback(() => {
-    if (!item?.id) return
-    // TODO: Implement watchlist toggle
-    setInWatchlist(!inWatchlist)
-  }, [item, inWatchlist])
 
   const handleLikeClick = useCallback(() => {
     if (!item?.id) return
@@ -784,21 +778,29 @@ export function SpotlightSection({
             </button>
 
             {/* Watchlist Button */}
-            <button
+            <div
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                handleWatchlistToggle()
               }}
-              className={`p-2 rounded-lg transition-all duration-200 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
-                inWatchlist
-                  ? "bg-green-600/80 hover:bg-green-500/80 border-green-500/30 text-white"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              }`}
-              title={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+              className="relative z-20"
             >
-              <Plus className="w-4 h-4" />
-            </button>
+              <WatchlistButton
+                id={item.id}
+                type={mediaType}
+                title={mediaType === "movie" ? (item as Movie).title : (item as TVShow).name}
+                poster_path={item.poster_path || null}
+                vote_average={item.vote_average || 0}
+                release_date={mediaType === "movie" ? (item as Movie).release_date : undefined}
+                first_air_date={mediaType === "tv" ? (item as TVShow).first_air_date : undefined}
+                number_of_episodes={mediaType === "tv" ? (item as TVShow).number_of_episodes : undefined}
+                variant="ghost"
+                size="sm"
+                iconOnly
+                showText={false}
+                className="h-10 w-10 rounded-lg border border-white/20 bg-white/10 p-0 text-white shadow-lg backdrop-blur-sm hover:bg-white/20"
+              />
+            </div>
           </div>
 
           {/* Content Rating */}

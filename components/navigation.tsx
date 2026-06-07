@@ -40,7 +40,7 @@ const navItems = [
 ]
 
 const headerIcons = [
-  { href: "/watchlist", label: "Watchlist", icon: Bookmark },
+  { href: "/user-watchlist", label: "Watchlist", icon: Bookmark },
 ]
 
 export function Navigation() {

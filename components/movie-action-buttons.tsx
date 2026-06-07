@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MovieRoomCreator } from "@/components/movie-room-creator"
 import { MovieRoomJoiner } from "@/components/movie-room-joiner"
+import { WatchlistEntryDialog } from "@/components/watchlist-entry-dialog"
+import { useWatchlist } from "@/hooks/use-watchlist"
 import type { Movie } from "@/lib/types"
 import { Play, Download, ExternalLink, MoreVertical, Users, Share2, Heart, Bookmark } from "lucide-react"
-import { WatchlistButton } from "@/components/watchlist-button"
 
 interface MovieActionButtonsProps {
   movie: Movie
@@ -18,10 +20,25 @@ interface MovieActionButtonsProps {
 
 export function MovieActionButtons({ movie, onPlay, onLike, isLiked = false }: MovieActionButtonsProps) {
   const [isLikedState, setIsLikedState] = useState(isLiked)
+  const [isWatchlistDialogOpen, setIsWatchlistDialogOpen] = useState(false)
+  const pathname = usePathname()
+  const { isAuthenticated, promptLogin, getEntryByItem, isInWatchlist, saveWatchlistEntry, deleteWatchlistEntry } = useWatchlist()
 
   const handleLike = () => {
     setIsLikedState(!isLikedState)
     onLike?.()
+  }
+
+  const existingEntry = getEntryByItem(movie.id, "movie")
+  const inWatchlist = isInWatchlist(movie.id, "movie")
+
+  const openWatchlistDialog = () => {
+    if (!isAuthenticated) {
+      promptLogin(pathname)
+      return
+    }
+
+    setIsWatchlistDialogOpen(true)
   }
 
   const handleShare = () => {
@@ -77,20 +94,12 @@ export function MovieActionButtons({ movie, onPlay, onLike, isLiked = false }: M
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="w-56">
             {/* Watchlist */}
-            <DropdownMenuItem asChild>
-              <div className="w-full">
-                <WatchlistButton
-                  id={movie.id.toString()}
-                  type="movie"
-                  title={movie.title}
-                  poster_path={movie.poster_path}
-                  vote_average={movie.vote_average || 0}
-                  release_date={movie.release_date}
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
-                />
-              </div>
+            <DropdownMenuItem onSelect={(event) => {
+              event.preventDefault()
+              openWatchlistDialog()
+            }} className="cursor-pointer">
+              <Bookmark className="h-4 w-4 mr-2" />
+              {inWatchlist ? "Edit Watchlist" : "Add to List"}
             </DropdownMenuItem>
 
             {/* Like */}
@@ -135,6 +144,22 @@ export function MovieActionButtons({ movie, onPlay, onLike, isLiked = false }: M
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <WatchlistEntryDialog
+        item={{
+          id: movie.id,
+          type: "movie",
+          title: movie.title,
+          poster_path: movie.poster_path || null,
+          vote_average: movie.vote_average || 0,
+          release_date: movie.release_date ?? null,
+        }}
+        entry={existingEntry}
+        open={isWatchlistDialogOpen}
+        onOpenChange={setIsWatchlistDialogOpen}
+        onSave={saveWatchlistEntry}
+        onDelete={existingEntry?.id ? deleteWatchlistEntry : undefined}
+      />
     </div>
   )
 }

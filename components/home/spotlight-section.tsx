@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Play, Info, Check, Plus } from "lucide-react"
+import { Play, Info } from "lucide-react"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie, TVShow } from "@/lib/types"
 import Link from "next/link"
-import { useWatchlist } from "@/hooks/use-watchlist"
+import { WatchlistButton } from "@/components/watchlist-button"
 
 interface SpotlightSectionProps {
   item: Movie | TVShow | null
@@ -16,10 +16,7 @@ export function SpotlightSection({ item, isLoading }: SpotlightSectionProps) {
   const [heroImgLoaded, setHeroImgLoaded] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const heroRef = useRef<HTMLDivElement>(null)
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()
-
-  const mt = item && 'title' in item ? 'movie' : 'tv'
-  const inWatchlist = item ? isInWatchlist(item.id, mt) : false
+  const mt = item && "title" in item ? "movie" : "tv"
 
   // Handle item transitions
   useEffect(() => {
@@ -32,23 +29,6 @@ export function SpotlightSection({ item, isLoading }: SpotlightSectionProps) {
       return () => clearTimeout(timer)
     }
   }, [item])
-
-  const handleWatchlistToggle = () => {
-    if (!item) return
-    if (inWatchlist) {
-      removeFromWatchlist(item.id, mt)
-    } else {
-      addToWatchlist({
-        id: item.id,
-        type: mt,
-        title: 'title' in item ? item.title : item.name,
-        poster_path: item.poster_path || null,
-        vote_average: item.vote_average || 0,
-        release_date: 'release_date' in item ? item.release_date : undefined,
-        first_air_date: 'first_air_date' in item ? item.first_air_date : undefined,
-      })
-    }
-  }
 
   if (isLoading) {
     return (
@@ -187,19 +167,21 @@ export function SpotlightSection({ item, isLoading }: SpotlightSectionProps) {
               </button>
             </Link>
             
-            <button
-              onClick={handleWatchlistToggle}
-              className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl transition-all cursor-pointer shadow-2xl backdrop-blur-md border border-white/10 flex-shrink-0 ${
-                inWatchlist ? 'bg-[#0071eb]/20 text-[#0071eb] border-[#0071eb]/30' : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-              aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
-            >
-              {inWatchlist ? (
-                <Check className="w-6 h-6 sm:w-8 sm:h-8" />
-              ) : (
-                <Plus className="w-6 h-6 sm:w-8 sm:h-8" />
-              )}
-            </button>
+            <WatchlistButton
+              id={item.id}
+              type={mt}
+              title={title}
+              poster_path={item.poster_path || null}
+              vote_average={item.vote_average || 0}
+              release_date={"release_date" in item ? item.release_date : undefined}
+              first_air_date={"first_air_date" in item ? item.first_air_date : undefined}
+              number_of_episodes={"number_of_episodes" in item ? item.number_of_episodes : undefined}
+              variant="ghost"
+              size="lg"
+              iconOnly
+              showText={false}
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl border border-white/10 bg-white/10 text-white shadow-2xl backdrop-blur-md hover:bg-white/20"
+            />
           </div>
         </div>
       </div>
