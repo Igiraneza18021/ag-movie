@@ -30,7 +30,29 @@ export default function SubscribePage() {
   useEffect(() => {
     if (!transactionRef || !isWaiting) return
 
-    // Listen for real-time updates to this specific transaction
+    // 1. Initial check: maybe it processed before the listener started?
+    const checkStatus = async () => {
+      const { data, error } = await supabase
+        .from('paypack_transactions')
+        .select('status')
+        .eq('paypack_ref', transactionRef)
+        .single()
+      
+      if (!error && data?.status === 'successful') {
+        toast.success("Payment confirmed! Welcome to Premium.")
+        setIsWaiting(false)
+        router.push("/browse")
+        router.refresh()
+      } else if (!error && data?.status === 'failed') {
+        toast.error("Payment failed or was cancelled.")
+        setIsWaiting(false)
+        setTransactionRef(null)
+      }
+    }
+    
+    checkStatus()
+
+    // 2. Listen for real-time updates
     const channel = supabase
       .channel(`payment-${transactionRef}`)
       .on(
