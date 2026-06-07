@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { TVShowDetails } from "@/components/tv-show-details"
 import { StructuredData } from "@/components/seo/structured-data"
@@ -65,7 +64,6 @@ export default async function TVShowPage({ params }: TVShowPageProps) {
     return (
       <div className="min-h-screen bg-[#090a0a]">
         <StructuredData type="tvshow" data={tvShow} />
-        <Navigation />
 
         <main>
           <TVShowDetails tvShow={tvShow} seasons={seasons} episodes={episodes} relatedShows={relatedShows} />

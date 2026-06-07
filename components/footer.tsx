@@ -8,7 +8,7 @@ const sections = [
   {
     title: "Explore",
     links: [
-      { label: "Home", href: "/" },
+      { label: "Home", href: "/browse" },
       { label: "Movies", href: "/movies" },
       { label: "TV Shows", href: "/tv-shows" },
       { label: "Categories", href: "/categories" },
@@ -54,7 +54,7 @@ export function Footer() {
       <div className="max-w-6xl mx-auto grid gap-10 md:grid-cols-[1.2fr,2fr] items-start">
         {/* Brand + blurb */}
         <div>
-          <Link href="/" className="inline-flex items-center space-x-3">
+          <Link href="/browse" className="inline-flex items-center space-x-3">
             <Image
               src="/image.png"
               alt="Agasobanuye Movies Logo"

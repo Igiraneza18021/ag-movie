@@ -1,13 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { MovieGrid } from "@/components/movie-grid"
-import { TVShowGrid } from "@/components/tv-show-grid"
 import type { Movie, TVShow } from "@/lib/types"
-import { Film, Tv, Plus } from "lucide-react"
+import { Star, Play, Search, Plus } from "lucide-react"
 import Link from "next/link"
+import { getTMDBImageUrl } from "@/lib/tmdb"
+import { Button } from "@/components/ui/button"
 
 interface SearchResultsProps {
   movies: Movie[]
@@ -17,106 +14,95 @@ interface SearchResultsProps {
 }
 
 export function SearchResults({ movies, tvShows, query, type }: SearchResultsProps) {
-  const [activeTab, setActiveTab] = useState(type === "all" ? "all" : type === "movies" ? "movies" : "tv-shows")
+  const allResults = [...movies, ...tvShows]
 
-  const totalResults = movies.length + tvShows.length
-
-  if (totalResults === 0) {
+  if (allResults.length === 0) {
     return (
-      <div className="text-center py-12">
-        <h3 className="text-xl font-semibold text-foreground mb-2">No Results Found</h3>
-        <p className="text-muted-foreground mb-6">
-          We couldn't find any {type === "all" ? "content" : type === "movies" ? "movies" : "TV shows"} matching "
-          {query}"
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-6 border border-white/5 shadow-xl">
+          <Search className="w-10 h-10 text-zinc-500" />
+        </div>
+        <h2 className="text-2xl font-black text-white mb-2">No results found</h2>
+        <p className="text-zinc-500 max-w-xs mx-auto mb-8">
+          We couldn't find anything matching "{query}". Try different keywords or check your spelling.
         </p>
-        <p className="text-muted-foreground mb-6">Try different keywords or browse our categories</p>
-        
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="rounded-xl font-bold">
             <Link href="/categories">
               Browse Categories
             </Link>
           </Button>
-          <Button asChild>
-            <Link href={`/request-movie?title=${encodeURIComponent(query)}&type=${type === "movies" ? "movie" : "tv_show"}`}>
+          <Button asChild className="bg-[#0071eb] hover:bg-[#005bb5] rounded-xl font-bold">
+            <Link href={`/request-movie?title=${encodeURIComponent(query)}`}>
               <Plus className="h-4 w-4 mr-2" />
-              Request "{query}"
+              Request Content
             </Link>
           </Button>
         </div>
-      </div>
-    )
-  }
-
-  if (type !== "all") {
-    return (
-      <div>
-        <div className="mb-6 text-center">
-          <p className="text-muted-foreground mb-4">
-            Can't find what you're looking for? Request it and we'll try to add it!
-          </p>
-          <Button asChild variant="outline">
-            <Link href={`/request-movie?title=${encodeURIComponent(query)}&type=${type === "movies" ? "movie" : "tv_show"}`}>
-              <Plus className="h-4 w-4 mr-2" />
-              Request "{query}"
-            </Link>
-          </Button>
-        </div>
-        {type === "movies" ? <MovieGrid movies={movies} /> : <TVShowGrid tvShows={tvShows} />}
       </div>
     )
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="all">All ({totalResults})</TabsTrigger>
-        <TabsTrigger value="movies" className="flex items-center gap-2">
-          <Film className="h-4 w-4" />
-          Movies ({movies.length})
-        </TabsTrigger>
-        <TabsTrigger value="tv-shows" className="flex items-center gap-2">
-          <Tv className="h-4 w-4" />
-          TV Shows ({tvShows.length})
-        </TabsTrigger>
-      </TabsList>
+    <div className="space-y-12 pb-20">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+        {allResults.map((item) => {
+          const isMovie = "title" in item
+          const title = isMovie ? (item as Movie).title : (item as TVShow).name
+          const date = isMovie ? (item as Movie).release_date : (item as TVShow).first_air_date
+          const year = date ? new Date(date).getFullYear() : "N/A"
+          const href = isMovie ? `/movie/${item.id}` : `/tv/${item.id}`
 
-      <TabsContent value="all" className="mt-8">
-        <div className="space-y-12">
-          <div className="text-center mb-8">
-            <p className="text-muted-foreground mb-4">
-              Can't find what you're looking for? Request it and we'll try to add it!
-            </p>
-            <Button asChild variant="outline">
-              <Link href={`/request-movie?title=${encodeURIComponent(query)}&type=movie`}>
-                <Plus className="h-4 w-4 mr-2" />
-                Request "{query}"
-              </Link>
-            </Button>
-          </div>
-          
-          {movies.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-6">Movies</h2>
-              <MovieGrid movies={movies} />
-            </div>
-          )}
-          {tvShows.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-6">TV Shows</h2>
-              <TVShowGrid tvShows={tvShows} />
-            </div>
-          )}
-        </div>
-      </TabsContent>
+          return (
+            <Link 
+              key={`${isMovie ? 'movie' : 'tv'}-${item.id}`} 
+              href={href}
+              className="group cursor-pointer relative aspect-[2/3] overflow-hidden rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:z-20"
+            >
+              <img
+                src={getTMDBImageUrl(item.poster_path) || "/placeholder.svg"}
+                alt={title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              
+              <div className="absolute top-2 right-2 z-20">
+                <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                  AG
+                </div>
+              </div>
 
-      <TabsContent value="movies" className="mt-8">
-        <MovieGrid movies={movies} />
-      </TabsContent>
+              <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
+                <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold border border-white/5">
+                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  {item.vote_average?.toFixed(1)}
+                </div>
+              </div>
 
-      <TabsContent value="tv-shows" className="mt-8">
-        <TVShowGrid tvShows={tvShows} />
-      </TabsContent>
-    </Tabs>
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
+                <div className="space-y-2">
+                  <p className="text-white text-sm font-black leading-tight line-clamp-2 drop-shadow-lg">
+                    {title}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                        {year}
+                      </span>
+                      <div className="flex items-center gap-1 text-white text-xs font-black">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        {item.vote_average?.toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg scale-90 group-hover:scale-100 transition-transform hover:bg-[#0071eb] hover:text-white">
+                      <Play className="h-4 w-4 fill-current ml-0.5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )
+        })}
+      </div>
+    </div>
   )
 }

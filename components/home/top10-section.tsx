@@ -45,56 +45,16 @@ export function Top10Section({ items }: Top10SectionProps) {
   const top10Items = items.slice(0, 10)
 
   return (
-    <section className="relative py-8 md:py-12">
-      {/* Header */}
-      <div className="px-2 sm:px-4 md:px-8 mb-6 flex items-center gap-4">
-        <h2
-          className="text-5xl sm:text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary/80 to-primary tracking-tighter"
-          style={{
-            WebkitTextStroke: "2px rgba(99, 102, 241, 0.5)",
-            textShadow: "0 0 30px rgba(99, 102, 241, 0.3)",
-          }}
-        >
-          TOP 10
-        </h2>
-        <div className="block">
-          <div className="text-white text-sm font-bold tracking-widest">CONTENT</div>
-          <div className="text-white text-sm font-bold tracking-widest">TODAY</div>
-        </div>
-      </div>
-
-      <div className="relative px-2 sm:px-4 md:px-8">
+    <section className="relative py-4 md:py-8 overflow-visible hide-scrollbar">
+      <div className="relative px-2 sm:px-4 md:px-8 overflow-visible hide-scrollbar">
         {/* Edge fades */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#090a0a] to-transparent z-10" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#090a0a] to-transparent z-10" />
-
-        {/* Navigation buttons */}
-        {canLeft && (
-          <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-16 z-30 items-center justify-start">
-            <button
-              onClick={() => scrollBy(-1)}
-              className="p-3 rounded-full bg-black/80 hover:bg-black/90 text-white shadow-2xl backdrop-blur-md border border-white/10 transition-all duration-300"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          </div>
-        )}
-        {canRight && (
-          <div className="hidden md:flex absolute right-0 top-0 bottom-0 w-16 z-30 items-center justify-end">
-            <button
-              onClick={() => scrollBy(1)}
-              className="p-3 rounded-full bg-black/80 hover:bg-black/90 text-white shadow-2xl backdrop-blur-md border border-white/10 transition-all duration-300"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </div>
-        )}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black via-black/50 to-transparent z-20" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black via-black/50 to-transparent z-20" />
 
         <div
           ref={scrollerRef}
-          className="relative flex gap-16 md:gap-20 overflow-x-auto overflow-y-hidden pb-2 hide-scrollbar px-4 md:px-8"
+          className="relative flex gap-12 md:gap-16 overflow-x-auto overflow-y-visible pb-12 hide-scrollbar px-4 md:px-8 pt-4 scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {top10Items.map((it, index) => {
             const mt = 'title' in it ? 'movie' : 'tv'
@@ -106,7 +66,7 @@ export function Top10Section({ items }: Top10SectionProps) {
             return (
               <div
                 key={`${mt}-${it.id}-${rank}`}
-                className="relative group flex items-end flex-shrink-0 cursor-pointer"
+                className="relative group flex items-end flex-shrink-0 cursor-pointer pl-12 sm:pl-16 md:pl-20 overflow-visible"
                 onClick={() => router.push(href)}
                 role="button"
                 tabIndex={0}
@@ -118,31 +78,19 @@ export function Top10Section({ items }: Top10SectionProps) {
                 }}
               >
                 {/* Rank number */}
-                <div className="absolute -left-8 sm:-left-10 md:-left-12 bottom-0 z-0 pointer-events-none transition-transform duration-300 group-hover:-translate-x-4">
+                <div className="absolute left-0 bottom-0 z-0 pointer-events-none transition-all duration-500 group-hover:-translate-x-4 group-hover:z-30 group-hover:scale-110">
                   <div
-                    className="text-[80px] sm:text-[100px] md:text-[120px] lg:text-[140px] font-black leading-none transition-all duration-300"
+                    className="text-[100px] sm:text-[120px] md:text-[150px] lg:text-[180px] font-black leading-[0.8] transition-all duration-500 text-black group-hover:text-[#0071eb] group-hover:drop-shadow-[0_0_15px_rgba(0,113,235,0.5)]"
                     style={{
-                      color: "transparent",
-                      WebkitTextStroke: "3px rgb(99, 102, 241)",
-                      textShadow: "0 4px 20px rgba(0, 0, 0, 0.8)",
+                      WebkitTextStroke: "2px rgb(0, 113, 235)",
                     }}
                   >
-                    <span
-                      className="absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
-                      style={{
-                        color: "rgb(99, 102, 241)",
-                        WebkitTextStroke: "none",
-                        textShadow: "none",
-                      }}
-                    >
-                      {rank}
-                    </span>
-                    <span className="relative z-10">{rank}</span>
+                    {rank}
                   </div>
                 </div>
 
                 {/* Poster card */}
-                <div className="relative z-10 w-28 sm:w-32 md:w-36 lg:w-40 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-white/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
+                <div className="relative z-10 w-28 sm:w-32 md:w-36 lg:w-40 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 group-hover:border-white/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl group-hover:z-20">
                   <div className="relative w-full aspect-[2/3]">
                     {poster ? (
                       <img
@@ -158,35 +106,19 @@ export function Top10Section({ items }: Top10SectionProps) {
                     )}
 
                     {/* Gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                    {/* Title on hover */}
-                    <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="text-white text-xs font-semibold line-clamp-2">{title}</div>
+                    {/* AG Icon in top right */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
+                        AG
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             )
           })}
-        </div>
-
-        {/* Mobile controls */}
-        <div className="flex md:hidden justify-end gap-2 mt-3 pr-1">
-          <button
-            onClick={() => scrollBy(-1)}
-            className="p-2 rounded-full bg-white/15 hover:bg-white/25 text-white"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => scrollBy(1)}
-            className="p-2 rounded-full bg-white/15 hover:bg-white/25 text-white"
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
         </div>
       </div>
     </section>

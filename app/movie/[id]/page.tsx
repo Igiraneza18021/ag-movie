@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { MovieDetails } from "@/components/movie-details"
 import { StructuredData } from "@/components/seo/structured-data"
@@ -61,7 +60,6 @@ export default async function MoviePage({ params }: MoviePageProps) {
     return (
       <div className="min-h-screen bg-[#090a0a]">
         <StructuredData type="movie" data={movie} />
-        <Navigation />
 
         <main>
           <MovieDetails movie={movie} relatedMovies={relatedMovies} />

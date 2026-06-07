@@ -1,7 +1,5 @@
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { SearchResults } from "@/components/search-results"
-import { SearchBar } from "@/components/search-bar"
 import { createClient } from "@/lib/supabase/server"
 
 interface SearchPageProps {
@@ -18,18 +16,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   if (!query.trim()) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="pt-16">
-          <div className="container mx-auto px-4 py-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">Search</h1>
-              <p className="text-muted-foreground mb-6">Find movies and TV shows</p>
-              <SearchBar />
-            </div>
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold text-foreground mb-2">Start Your Search</h3>
-              <p className="text-muted-foreground">Enter a movie or TV show title to get started</p>
+      <div className="min-h-screen bg-black">
+        <main className="pt-32">
+          <div className="container mx-auto px-6 py-8">
+            <div className="text-center py-20">
+              <h1 className="text-4xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter">Start Searching</h1>
+              <p className="text-zinc-500 text-lg md:text-xl max-w-lg mx-auto">
+                Enter a title in the search bar above to find your favorite Agasobanuye movies and TV shows.
+              </p>
             </div>
           </div>
         </main>
@@ -49,9 +43,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         .from("movies")
         .select("*")
         .eq("status", "active")
-        .or("part_number.is.null,part_number.eq.1") // Only show standalone movies or Part 1
+        .or("part_number.is.null,part_number.eq.1")
         .ilike("title", `%${query}%`)
-        .limit(20),
+        .order("vote_average", { ascending: false })
+        .limit(30),
     )
   } else {
     searchPromises.push(Promise.resolve({ data: [] }))
@@ -59,32 +54,32 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   if (type === "all" || type === "tv-shows") {
     searchPromises.push(
-      supabase.from("tv_shows").select("*").eq("status", "active").ilike("name", `%${query}%`).limit(20),
+      supabase
+        .from("tv_shows")
+        .select("*")
+        .eq("status", "active")
+        .ilike("name", `%${query}%`)
+        .order("vote_average", { ascending: false })
+        .limit(30),
     )
   } else {
     searchPromises.push(Promise.resolve({ data: [] }))
   }
 
   const [{ data: movies }, { data: tvShows }] = await Promise.all(searchPromises)
-
   const totalResults = (movies?.length || 0) + (tvShows?.length || 0)
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <div className="min-h-screen bg-black">
 
-      <main className="pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Search</h1>
-            <p className="text-muted-foreground mb-6">Find movies and TV shows</p>
-            <SearchBar initialQuery={query} />
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Search Results</h2>
-            <p className="text-muted-foreground">
-              {totalResults} result{totalResults !== 1 ? "s" : ""} for "{query}"
+      <main className="pt-32">
+        <div className="container mx-auto px-6 py-8">
+          <div className="mb-12 border-b border-white/5 pb-8">
+            <h1 className="text-3xl md:text-5xl font-black text-white mb-2 uppercase tracking-tighter">
+              Results for: <span className="text-[#0071eb] underline decoration-4 underline-offset-8">{query}</span>
+            </h1>
+            <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">
+              {totalResults} matching item{totalResults !== 1 ? "s" : ""} found
             </p>
           </div>
 

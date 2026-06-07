@@ -1,5 +1,4 @@
 import { Metadata } from "next"
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,7 +46,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       
       <main className="pt-16">
         {/* Hero Section */}

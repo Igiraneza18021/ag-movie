@@ -1,14 +1,12 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Home, Search, Film, Tv, ArrowLeft } from "lucide-react"
 
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       
       <main className="pt-16">
         <div className="container mx-auto px-4 py-16">
@@ -34,7 +32,7 @@ export default function NotFound() {
                 {/* Quick Actions */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button asChild size="lg">
-                    <Link href="/">
+                    <Link href="/browse">
                       <Home className="h-5 w-5 mr-2" />
                       Go Home
                     </Link>

@@ -1,0 +1,29 @@
+<script type="text/javascript">
+    aclib.runAutoTag({
+        zoneId: 'dxsgcf7hdf',
+    });
+</script>
+
+
+In-stream Video
+|
+11401318
+Settings
+More about this ad format
+Step 1: Copy Your VAST Tag URL
+https://youradexchange.com/video/select.php?r=11401318
+This is the unique link that delivers your video ad.
+
+Make sure to copy the full URL — you’ll need it in the second step.
+
+Step 2: Plug It Into Your VAST-Compatible Video Player
+Use any video player that supports VAST (like VideoJS, JW Player, Fluid player, etc.)
+
+Here’s an example using VideoJS with the videojs-ima plugin for VAST/IMA support:
+
+<script>
+    const player = videojs("my-video");
+    player.ima({
+        adTagUrl: "https://youradexchange.com/video/select.php?r=11401318",
+    });
+</script>

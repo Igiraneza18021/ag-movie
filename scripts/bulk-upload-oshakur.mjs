@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url"
 
 const APPLY_FLAG = "--apply"
 const DRY_RUN_FLAG = "--dry-run"
+const SUPABASE_PAGE_SIZE = 1000
 
 await loadEnvFile(".env")
 
@@ -20,6 +21,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 let auditFile = process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
 let dryRunMode = true
 let supabase = null
+let currentAuditRunId = null
+let pendingChangeLogs = []
+const MAX_PREVIEW_CHANGES = 12
 
 function parseScalar(raw) {
   if (raw == null) return null
@@ -211,28 +215,36 @@ async function parseAuditFile(path) {
 }
 
 async function loadLiveDb() {
-  const [
-    moviesResult,
-    showsResult,
-    seasonsResult,
-    episodesResult,
-  ] = await Promise.all([
-    supabase.from("movies").select("*"),
-    supabase.from("tv_shows").select("*"),
-    supabase.from("seasons").select("*"),
-    supabase.from("episodes").select("*"),
+  const [movies, tvShows, seasons, episodes] = await Promise.all([
+    fetchAllRows("movies"),
+    fetchAllRows("tv_shows"),
+    fetchAllRows("seasons"),
+    fetchAllRows("episodes"),
   ])
 
-  for (const result of [moviesResult, showsResult, seasonsResult, episodesResult]) {
-    if (result.error) throw new Error(result.error.message)
+  return {
+    movies,
+    tvShows,
+    seasons,
+    episodes,
+  }
+}
+
+async function fetchAllRows(table) {
+  const rows = []
+  let from = 0
+
+  while (true) {
+    const to = from + SUPABASE_PAGE_SIZE - 1
+    const { data, error } = await supabase.from(table).select("*").range(from, to)
+    if (error) throw new Error(`${table} select failed: ${error.message}`)
+    if (!data || data.length === 0) break
+    rows.push(...data)
+    if (data.length < SUPABASE_PAGE_SIZE) break
+    from += SUPABASE_PAGE_SIZE
   }
 
-  return {
-    movies: moviesResult.data || [],
-    tvShows: showsResult.data || [],
-    seasons: seasonsResult.data || [],
-    episodes: episodesResult.data || [],
-  }
+  return rows
 }
 
 function isBlank(value) {
@@ -250,6 +262,109 @@ function mergeMissingFields(existing, desired, allowedFields) {
     if (isBlank(existing[field])) patch[field] = nextValue
   }
   return patch
+}
+
+function pushPreviewChange(summary, change) {
+  if (summary.recentChanges.length < MAX_PREVIEW_CHANGES) {
+    summary.recentChanges.push(change)
+  }
+}
+
+function recordQueuedChange(summary, change) {
+  pendingChangeLogs.push(change)
+  pushPreviewChange(summary, change)
+}
+
+function mergeReplaceableLinkFields(existing, desired, allowedFields, context, summary) {
+  const patch = {}
+
+  for (const field of allowedFields) {
+    const nextValue = desired[field]
+    if (isBlank(nextValue)) continue
+
+    const currentValue = existing[field]
+    if (currentValue === nextValue) continue
+
+    patch[field] = nextValue
+
+    if (!isBlank(currentValue)) {
+      summary.linkOverwrites += 1
+      const change = {
+        audit_run_id: currentAuditRunId,
+        table_name: context.tableName,
+        row_id: context.rowId,
+        field_name: field,
+        match_key: context.matchKey,
+        old_value: String(currentValue),
+        new_value: String(nextValue),
+        reason: "link_overwritten_from_audit",
+        source_page_url: context.sourcePageUrl ?? null,
+      }
+      recordQueuedChange(summary, change)
+    }
+  }
+
+  return patch
+}
+
+function recordAmbiguousConflict(summary, conflict) {
+  summary.ambiguousConflicts += 1
+  const change = {
+    audit_run_id: currentAuditRunId,
+    table_name: conflict.tableName,
+    row_id: conflict.rowId,
+    field_name: conflict.fieldName,
+    match_key: conflict.matchKey,
+    old_value: conflict.oldValue ?? null,
+    new_value: conflict.newValue ?? null,
+    reason: "ambiguous_link_conflict",
+    source_page_url: conflict.sourcePageUrl ?? null,
+  }
+  if (conflict.rowId) {
+    pendingChangeLogs.push(change)
+  }
+  pushPreviewChange(summary, change)
+}
+
+async function flushChangeLogs(summary) {
+  if (dryRunMode || !currentAuditRunId || pendingChangeLogs.length === 0) return
+  const { error } = await supabase.from("audit_change_log").insert(pendingChangeLogs)
+  if (error) {
+    recordError(summary, "audit_change_log", error)
+  }
+}
+
+function dedupeNonBlank(values) {
+  return [...new Set(values.filter((value) => !isBlank(value)))]
+}
+
+function buildEpisodeCandidateGroups(episodes) {
+  const groups = new Map()
+  for (const episode of episodes) {
+    const key = `${episode.season_number}:${episode.episode_number}`
+    if (!groups.has(key)) {
+      groups.set(key, [])
+    }
+    groups.get(key).push(episode)
+  }
+  return [...groups.entries()].map(([key, rows]) => ({ key, rows }))
+}
+
+function findEpisodeMatches(liveEpisodes, showId, seasonNumber, episodeNumber) {
+  return liveEpisodes.filter((row) =>
+    row.tv_show_id === showId
+    && Number(row.season_number) === seasonNumber
+    && Number(row.episode_number) === episodeNumber
+  )
+}
+
+function chooseBestEpisodeMatch(matches, targetSeasonId) {
+  if (matches.length === 0) return null
+  return (
+    matches.find((row) => row.season_id === targetSeasonId)
+    || matches.find((row) => !isBlank(row.season_id))
+    || matches[0]
+  )
 }
 
 function makeMoviePayload(entity, part) {
@@ -335,7 +450,10 @@ function createSummary() {
     newEpisodes: 0,
     patchedEpisodes: 0,
     reconnectedEpisodes: 0,
+    linkOverwrites: 0,
+    ambiguousConflicts: 0,
     skippedRows: 0,
+    recentChanges: [],
     errors: [],
   }
 }
@@ -383,11 +501,21 @@ async function reconcileMovies(auditMovies, liveDb, summary) {
           summary.newMovies += 1
         }
       } else {
-        const patch = mergeMissingFields(parentMovie, parentPayload, [
+        const patch = {
+          ...mergeMissingFields(parentMovie, parentPayload, [
           "overview", "poster_path", "backdrop_path", "release_date", "runtime",
-          "vote_average", "vote_count", "genres", "trailer_url", "download_url",
-          "narrator", "embed_url", "status", "scheduled_release",
-        ])
+          "vote_average", "vote_count", "genres", "trailer_url",
+          "narrator", "status", "scheduled_release",
+          ]),
+          ...mergeReplaceableLinkFields(parentMovie, parentPayload, [
+            "download_url", "embed_url",
+          ], {
+            tableName: "movies",
+            rowId: parentMovie.id,
+            matchKey: `movie:${entity.realTmdbId}:part:1`,
+            sourcePageUrl: parentPart.sourcePageUrl,
+          }, summary),
+        }
         if (Object.keys(patch).length > 0) {
           if (!dryRunMode) {
             parentMovie = await updateRow("movies", parentMovie.id, patch)
@@ -418,11 +546,21 @@ async function reconcileMovies(auditMovies, liveDb, summary) {
           continue
         }
 
-        const patch = mergeMissingFields(existingPart, partPayload, [
+        const patch = {
+          ...mergeMissingFields(existingPart, partPayload, [
           "overview", "poster_path", "backdrop_path", "release_date", "runtime",
-          "vote_average", "vote_count", "genres", "trailer_url", "download_url",
-          "narrator", "embed_url", "status", "scheduled_release", "parent_movie_id",
-        ])
+          "vote_average", "vote_count", "genres", "trailer_url",
+          "narrator", "status", "scheduled_release", "parent_movie_id",
+          ]),
+          ...mergeReplaceableLinkFields(existingPart, partPayload, [
+            "download_url", "embed_url",
+          ], {
+            tableName: "movies",
+            rowId: existingPart.id,
+            matchKey: `movie:${entity.realTmdbId}:part:${part.partNumber}`,
+            sourcePageUrl: part.sourcePageUrl,
+          }, summary),
+        }
         if (Object.keys(patch).length > 0) {
           if (!dryRunMode) {
             const updated = await updateRow("movies", existingPart.id, patch)
@@ -456,11 +594,22 @@ async function reconcileTvShows(auditShows, liveDb, summary) {
           summary.newTvShows += 1
         }
       } else {
-        const patch = mergeMissingFields(show, showPayload, [
+        const firstEpisodeSourcePageUrl = entity.seasons.flatMap((season) => season.episodes).find((episode) => episode.source_page_url)?.source_page_url ?? null
+        const patch = {
+          ...mergeMissingFields(show, showPayload, [
           "overview", "poster_path", "backdrop_path", "first_air_date", "last_air_date",
           "number_of_seasons", "number_of_episodes", "vote_average", "vote_count",
-          "genres", "trailer_url", "download_url", "narrator", "status", "scheduled_release",
-        ])
+          "genres", "trailer_url", "narrator", "status", "scheduled_release",
+          ]),
+          ...mergeReplaceableLinkFields(show, showPayload, [
+            "download_url",
+          ], {
+            tableName: "tv_shows",
+            rowId: show.id,
+            matchKey: `tv_show:${entity.realTmdbId}`,
+            sourcePageUrl: firstEpisodeSourcePageUrl,
+          }, summary),
+        }
         if (Object.keys(patch).length > 0) {
           if (!dryRunMode) {
             show = await updateRow("tv_shows", show.id, patch)
@@ -501,13 +650,58 @@ async function reconcileTvShows(auditShows, liveDb, summary) {
           }
         }
 
-        for (const episode of season.episodes) {
-          let existingEpisode = liveDb.episodes.find((row) =>
-            row.tv_show_id === show.id
-            && Number(row.season_number) === episode.season_number
+        for (const candidateGroup of buildEpisodeCandidateGroups(season.episodes)) {
+          const representative = candidateGroup.rows[0]
+          const episodeMatches = findEpisodeMatches(
+            liveDb.episodes,
+            show.id,
+            representative.season_number,
+            representative.episode_number,
+          )
+          let existingEpisode = chooseBestEpisodeMatch(episodeMatches, existingSeason.id)
+          const uniqueEmbedUrls = dedupeNonBlank(candidateGroup.rows.map((row) => row.embed_url))
+          const uniqueDownloadUrls = dedupeNonBlank(candidateGroup.rows.map((row) => row.download_url))
+
+          if (uniqueEmbedUrls.length > 1 || uniqueDownloadUrls.length > 1) {
+            const matchKey = `episode:${entity.realTmdbId}:season:${representative.season_number}:episode:${representative.episode_number}`
+            if (uniqueEmbedUrls.length > 1) {
+              recordAmbiguousConflict(summary, {
+                tableName: "episodes",
+                rowId: existingEpisode?.id ?? null,
+                fieldName: "embed_url",
+                matchKey,
+                oldValue: existingEpisode?.embed_url ?? null,
+                newValue: uniqueEmbedUrls.join(" | "),
+                sourcePageUrl: representative.source_page_url,
+              })
+            }
+            if (uniqueDownloadUrls.length > 1) {
+              recordAmbiguousConflict(summary, {
+                tableName: "episodes",
+                rowId: existingEpisode?.id ?? null,
+                fieldName: "download_url",
+                matchKey,
+                oldValue: existingEpisode?.download_url ?? null,
+                newValue: uniqueDownloadUrls.join(" | "),
+                sourcePageUrl: representative.source_page_url,
+              })
+            }
+            summary.skippedRows += 1
+            continue
+          }
+
+          const episode = {
+            ...representative,
+            embed_url: uniqueEmbedUrls[0] ?? representative.embed_url,
+            download_url: uniqueDownloadUrls[0] ?? representative.download_url,
+          }
+          const episodePayload = makeEpisodePayload(show.id, existingSeason.id, episode)
+
+          const conflictingSeasonEpisode = episodeMatches.find((row) =>
+            row.id !== existingEpisode?.id
+            && row.season_id === existingSeason.id
             && Number(row.episode_number) === episode.episode_number
           ) || null
-          const episodePayload = makeEpisodePayload(show.id, existingSeason.id, episode)
 
           if (!existingEpisode) {
             if (dryRunMode) {
@@ -520,9 +714,25 @@ async function reconcileTvShows(auditShows, liveDb, summary) {
             continue
           }
 
-          const episodePatch = mergeMissingFields(existingEpisode, episodePayload, [
-            "tmdb_id", "name", "embed_url", "download_url", "season_id",
-          ])
+          const episodeMissingFields = ["tmdb_id", "name"]
+          if (
+            isBlank(existingEpisode.season_id)
+            && !conflictingSeasonEpisode
+          ) {
+            episodeMissingFields.push("season_id")
+          }
+
+          const episodePatch = {
+            ...mergeMissingFields(existingEpisode, episodePayload, episodeMissingFields),
+            ...mergeReplaceableLinkFields(existingEpisode, episodePayload, [
+              "embed_url", "download_url",
+            ], {
+              tableName: "episodes",
+              rowId: existingEpisode.id,
+              matchKey: `episode:${entity.realTmdbId}:season:${episode.season_number}:episode:${episode.episode_number}`,
+              sourcePageUrl: episode.source_page_url,
+            }, summary),
+          }
           if (Object.keys(episodePatch).length > 0) {
             if (!dryRunMode) {
               existingEpisode = await updateRow("episodes", existingEpisode.id, episodePatch)
@@ -551,6 +761,8 @@ function printSummary(summary) {
   console.log(`- episodes to create: ${summary.newEpisodes}`)
   console.log(`- existing episodes with missing fields to fill: ${summary.patchedEpisodes}`)
   console.log(`- existing episodes reconnected to seasons: ${summary.reconnectedEpisodes}`)
+  console.log(`- link overwrites: ${summary.linkOverwrites}`)
+  console.log(`- ambiguous conflicts skipped: ${summary.ambiguousConflicts}`)
   console.log(`- skipped rows: ${summary.skippedRows}`)
   console.log(`- item-level errors: ${summary.errors.length}`)
   if (summary.errors.length > 0) {
@@ -566,12 +778,14 @@ export async function main(options = {}) {
   const applyMode = typeof options.applyMode === "boolean" ? options.applyMode : args.has(APPLY_FLAG)
   dryRunMode = applyMode ? false : true
   auditFile = options.auditFile?.trim() || process.env.OSHAKUR_AUDIT_FILE?.trim() || "oshakur-links-audit.md"
+  currentAuditRunId = options.auditRunId ?? null
+  pendingChangeLogs = []
 
   if (applyMode && !SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for --apply. Use --dry-run to compare without writing.")
   }
 
-  supabase = createClient(
+  supabase = options.supabaseClient || createClient(
     SUPABASE_URL,
     applyMode ? SUPABASE_SERVICE_ROLE_KEY : SUPABASE_ANON_KEY,
     { auth: { persistSession: false, autoRefreshToken: false } },
@@ -588,11 +802,14 @@ export async function main(options = {}) {
   const summary = createSummary()
   await reconcileMovies(audit.movies, liveDb, summary)
   await reconcileTvShows(audit.tvShows, liveDb, summary)
+  await flushChangeLogs(summary)
 
   printSummary(summary)
 
   if (summary.errors.length > 0) {
-    throw new Error(`Bulk reconciliation finished with ${summary.errors.length} item-level error(s).`)
+    const error = new Error(`Bulk reconciliation finished with ${summary.errors.length} item-level error(s).`)
+    error.summary = summary
+    throw error
   }
 
   return summary

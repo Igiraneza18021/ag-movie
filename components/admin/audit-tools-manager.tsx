@@ -14,6 +14,7 @@ type JobStatus = "running" | "completed" | "failed"
 
 interface AuditJob {
   id: string
+  auditRunId: string
   commandKey: AuditCommandKey
   label: string
   status: JobStatus
@@ -22,6 +23,41 @@ interface AuditJob {
   exitCode: number | null
   logs: string[]
   logCount: number
+  summaryJson?: {
+    artifact?: {
+      totalSitemapUrls?: number | null
+      totalSourcePages?: number | null
+      movieGroups?: number | null
+      tvGroups?: number | null
+      failedPages?: number | null
+      missingDownloads?: number | null
+    } | null
+    upload?: {
+      newMovies?: number
+      newMovieParts?: number
+      patchedMovies?: number
+      newTvShows?: number
+      patchedTvShows?: number
+      newSeasons?: number
+      patchedSeasons?: number
+      newEpisodes?: number
+      patchedEpisodes?: number
+      reconnectedEpisodes?: number
+      linkOverwrites?: number
+      ambiguousConflicts?: number
+      skippedRows?: number
+      errors?: string[]
+      recentChanges?: Array<{
+        table_name?: string
+        field_name?: string
+        old_value?: string | null
+        new_value?: string | null
+        reason?: string
+        source_page_url?: string | null
+      }>
+    } | null
+  } | null
+  artifactMarkdown?: string | null
 }
 
 interface AuditStatusResponse {
@@ -34,6 +70,7 @@ interface AuditStatusResponse {
       path: string
       updatedAt: string | null
       sizeBytes: number
+      source: string
     }
     commands: {
       key: AuditCommandKey
@@ -166,6 +203,7 @@ export function AuditToolsManager() {
               </div>
               <div className="text-right text-xs text-muted-foreground">
                 <p>{data?.capabilities.auditFile.exists ? "Ready" : "Missing"}</p>
+                <p className="uppercase">{data?.capabilities.auditFile.source || "runtime"}</p>
                 <p>{data?.capabilities.auditFile.updatedAt ? new Date(data.capabilities.auditFile.updatedAt).toLocaleString() : "Not generated yet"}</p>
               </div>
             </div>
@@ -241,6 +279,12 @@ export function AuditToolsManager() {
                     {job.logCount} log line{job.logCount === 1 ? "" : "s"}
                     {job.exitCode !== null ? ` • exit ${job.exitCode}` : ""}
                   </p>
+                  {job.summaryJson?.upload && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {job.summaryJson.upload.linkOverwrites || 0} link replacements
+                      {` • ${job.summaryJson.upload.ambiguousConflicts || 0} conflicts`}
+                    </p>
+                  )}
                 </button>
               ))
             ) : (
@@ -283,7 +327,90 @@ export function AuditToolsManager() {
                   </div>
                 </div>
 
+                {(selectedJob.summaryJson?.artifact || selectedJob.summaryJson?.upload) && (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {selectedJob.summaryJson?.artifact && (
+                      <>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Watch URLs</p>
+                          <p className="text-sm font-medium">{selectedJob.summaryJson.artifact.totalSitemapUrls ?? 0}</p>
+                        </div>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Matched movies</p>
+                          <p className="text-sm font-medium">{selectedJob.summaryJson.artifact.movieGroups ?? 0}</p>
+                        </div>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Matched TV shows</p>
+                          <p className="text-sm font-medium">{selectedJob.summaryJson.artifact.tvGroups ?? 0}</p>
+                        </div>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Fetch failures</p>
+                          <p className="text-sm font-medium">{selectedJob.summaryJson.artifact.failedPages ?? 0}</p>
+                        </div>
+                      </>
+                    )}
+                    {selectedJob.summaryJson?.upload && (
+                      <>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Link replacements</p>
+                          <p className="text-sm font-medium">{selectedJob.summaryJson.upload.linkOverwrites ?? 0}</p>
+                        </div>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Ambiguous conflicts</p>
+                          <p className="text-sm font-medium">{selectedJob.summaryJson.upload.ambiguousConflicts ?? 0}</p>
+                        </div>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Inserted rows</p>
+                          <p className="text-sm font-medium">
+                            {(selectedJob.summaryJson.upload.newMovies ?? 0)
+                              + (selectedJob.summaryJson.upload.newMovieParts ?? 0)
+                              + (selectedJob.summaryJson.upload.newTvShows ?? 0)
+                              + (selectedJob.summaryJson.upload.newSeasons ?? 0)
+                              + (selectedJob.summaryJson.upload.newEpisodes ?? 0)}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border p-3">
+                          <p className="text-xs text-muted-foreground">Patched rows</p>
+                          <p className="text-sm font-medium">
+                            {(selectedJob.summaryJson.upload.patchedMovies ?? 0)
+                              + (selectedJob.summaryJson.upload.patchedTvShows ?? 0)
+                              + (selectedJob.summaryJson.upload.patchedSeasons ?? 0)
+                              + (selectedJob.summaryJson.upload.patchedEpisodes ?? 0)}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <Separator />
+
+                {selectedJob.summaryJson?.upload?.recentChanges?.length ? (
+                  <div className="rounded-lg border p-4">
+                    <p className="mb-3 text-sm font-semibold">Recent Link Changes</p>
+                    <div className="space-y-2">
+                      {selectedJob.summaryJson.upload.recentChanges.slice(0, 6).map((change, index) => (
+                        <div key={`${change.table_name}-${change.field_name}-${index}`} className="rounded-md bg-muted/50 p-3 text-xs">
+                          <p className="font-medium">{change.table_name}.{change.field_name}</p>
+                          <p className="text-muted-foreground">{change.reason}</p>
+                          <p className="truncate">Old: {change.old_value || "empty"}</p>
+                          <p className="truncate">New: {change.new_value || "empty"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {selectedJob.artifactMarkdown ? (
+                  <div className="rounded-lg border p-4">
+                    <p className="mb-3 text-sm font-semibold">Saved Audit Artifact Preview</p>
+                    <ScrollArea className="h-48 rounded-md border bg-muted/40 p-3">
+                      <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-5">
+                        {selectedJob.artifactMarkdown.slice(0, 4000)}
+                      </pre>
+                    </ScrollArea>
+                  </div>
+                ) : null}
 
                 <ScrollArea className="h-[520px] rounded-lg border bg-muted/40 p-4">
                   <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-5">

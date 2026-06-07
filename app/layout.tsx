@@ -5,38 +5,38 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
 import { ContentRefreshProvider } from "@/components/content-refresh-provider"
+import { Navigation } from "@/components/navigation"
 import { Suspense } from "react"
 import "@/lib/disable-debug"
 import "./globals.css"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ag.micorp.pro"),
-  title: "Agasobanuye Movies - Stream Movies & TV Shows Online",
-  description: "Agasobanuye Movies - Your premier destination for streaming the latest movies and TV shows online in HD quality. Watch thousands of movies and TV series anytime, anywhere.",
+  title: {
+    default: "Agasobanuye Movies - Watch Agasobanuye Films & TV Shows Online",
+    template: "%s | Agasobanuye Movies",
+  },
+  description: "Experience the best of Agasobanuye movies and TV shows. Stream your favorite translated films, action movies, and trending series in HD quality. The ultimate destination for the Agasobanuye community.",
   keywords: [
+    "Agasobanuye",
     "Agasobanuye Movies",
-    "agasobanuye",
-    "agasobanuye movies",
-    "watch movies online",
-    "stream movies",
-    "HD movies",
-    "TV shows online",
-    "stream TV series",
-    "free movies",
-    "online movie streaming",
-    "movie streaming platform",
-    "watch TV shows",
-    "HD streaming",
-    "movies streaming",
-    "entertainment",
-    "cinema",
-    "film streaming",
-    "video streaming",
-    "watch online free",
-    "movie website",
-    "TV series streaming",
+    "Agasobanuye TV Shows",
+    "Filme Agasobanuye",
+    "Agasobanuye Action Movies",
+    "Kinyarwanda Translated Movies",
+    "Translated Films Rwanda",
+    "Watch Movies Online HD",
+    "Stream Agasobanuye",
+    "Agasobanuye Community",
+    "Best Agasobanuye Films",
+    "Agasobanuye Series",
+    "Trending Agasobanuye",
+    "New Agasobanuye 2026",
+    "Agasobanuye Cinema",
+    "Entertainment Rwanda",
+    "Movie Streaming Rwanda",
   ],
-  authors: [{ name: "Agasobanuye Movies" }],
+  authors: [{ name: "Agasobanuye Movies Team" }],
   creator: "Agasobanuye Movies",
   publisher: "Agasobanuye Movies",
   generator: "Next.js",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
       { url: "/image.png", sizes: "180x180", type: "image/png" },
     ],
     other: [
-      { rel: "mask-icon", url: "/safari-pinned-tab.svg", color: "#5bbad5" },
+      { rel: "mask-icon", url: "/safari-pinned-tab.svg", color: "#0071eb" },
     ],
   },
   manifest: "/site.webmanifest",
@@ -72,22 +72,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://ag.micorp.pro",
     siteName: "Agasobanuye Movies",
-    title: "Agasobanuye Movies - Stream Movies & TV Shows Online",
-    description: "Agasobanuye Movies - Your premier destination for streaming the latest movies and TV shows online in HD quality. Watch thousands of movies and TV series anytime, anywhere.",
+    title: "Agasobanuye Movies - Stream Your Favorite Translated Films Online",
+    description: "Join thousands of fans streaming the latest Agasobanuye movies and TV shows. High-quality translated entertainment at your fingertips.",
     images: [
       {
-        url: "/placeholder.jpg",
+        url: "/image.png",
         width: 1200,
         height: 630,
-        alt: "Agasobanuye Movies - Stream Movies & TV Shows Online",
+        alt: "Agasobanuye Movies - The Best Translated Films",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agasobanuye Movies - Stream Movies & TV Shows Online",
-    description: "Agasobanuye Movies - Your premier destination for streaming the latest movies and TV shows online in HD quality. Watch thousands of movies and TV series anytime, anywhere.",
-    images: ["/placeholder.jpg"],
+    title: "Agasobanuye Movies - Best Translated Films & Series",
+    description: "Stream the latest Agasobanuye movies and TV shows in HD. Watch translated action, drama, and comedy anytime.",
+    images: ["/image.png"],
     creator: "@agmovies",
   },
   verification: {
@@ -112,8 +112,28 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Agasobanuye Movies",
+              "url": "https://ag.micorp.pro",
+              "description": "Stream the best Agasobanuye movies and TV shows online.",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://ag.micorp.pro/search?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
+      </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ContentRefreshProvider />
+        <Navigation />
         <Suspense fallback={null}>
           {children}
           <Toaster />

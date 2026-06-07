@@ -189,6 +189,56 @@ function hostOf(url) {
   }
 }
 
+function normalizeGoogleDriveFileUrl(url) {
+  try {
+    const parsed = new URL(url)
+    if (parsed.host.toLowerCase() !== "drive.google.com") return null
+    const match = parsed.pathname.match(/^\/file\/d\/([^/]+)(?:\/.*)?$/i)
+    if (!match) return null
+    return `https://drive.google.com/file/d/${match[1]}/preview`
+  } catch {
+    return null
+  }
+}
+
+function normalizeWatchUrl(url) {
+  const googleDriveUrl = normalizeGoogleDriveFileUrl(url)
+  if (googleDriveUrl) return googleDriveUrl
+
+  try {
+    const parsed = new URL(url)
+    const segments = parsed.pathname.split("/").filter(Boolean)
+    if (segments.length === 2 && segments[0].toLowerCase() === "e" && segments[1]) {
+      parsed.pathname = `/e/${segments[1]}`
+      parsed.search = ""
+      parsed.hash = ""
+      return parsed.toString()
+    }
+    if (segments.length !== 1 || !segments[0]) return url
+    const candidateId = segments[0]
+    if (!/^[a-z0-9_-]{6,}$/i.test(candidateId)) return url
+    parsed.pathname = `/e/${candidateId}`
+    parsed.search = ""
+    parsed.hash = ""
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
+
+function normalizeDownloadUrl(url) {
+  return normalizeGoogleDriveFileUrl(url) ?? url
+}
+
+function createNormalizedLink(url, label, type) {
+  const normalizedUrl = type === "watch" ? normalizeWatchUrl(url) : normalizeDownloadUrl(url)
+  return {
+    label,
+    url: normalizedUrl,
+    host: hostOf(normalizedUrl),
+  }
+}
+
 function slugFromUrl(url) {
   const { pathname } = new URL(url)
   return pathname.split("/").filter(Boolean).at(-1) ?? ""
@@ -360,20 +410,12 @@ function parsePage(html, url) {
   }
 
   const pageWatchLinks = dedupeBy(
-    anchors.filter((anchor) => isWatchLabel(anchor.text)).map((anchor) => ({
-      label: anchor.text || "Watch",
-      url: anchor.href,
-      host: anchor.host,
-    })),
+    anchors.filter((anchor) => isWatchLabel(anchor.text)).map((anchor) => createNormalizedLink(anchor.href, anchor.text || "Watch", "watch")),
     (item) => `${item.label}|${item.url}`,
   )
 
   const pageDownloadLinks = dedupeBy(
-    anchors.filter((anchor) => isDownloadLabel(anchor.text)).map((anchor) => ({
-      label: anchor.text || "Download",
-      url: anchor.href,
-      host: anchor.host,
-    })),
+    anchors.filter((anchor) => isDownloadLabel(anchor.text)).map((anchor) => createNormalizedLink(anchor.href, anchor.text || "Download", "download")),
     (item) => `${item.label}|${item.url}`,
   )
 
@@ -397,8 +439,8 @@ function parsePage(html, url) {
     const label = chooseEntryLabel(spans, entryIndex, title)
     entries.push({
       label,
-      watchLinks: dedupeBy(watchLinks.map((anchor) => ({ url: anchor.href, host: anchor.host })), (item) => item.url),
-      downloadLinks: dedupeBy(downloadLinks.map((anchor) => ({ url: anchor.href, host: anchor.host })), (item) => item.url),
+      watchLinks: dedupeBy(watchLinks.map((anchor) => createNormalizedLink(anchor.href, anchor.text || "Watch", "watch")), (item) => item.url),
+      downloadLinks: dedupeBy(downloadLinks.map((anchor) => createNormalizedLink(anchor.href, anchor.text || "Download", "download")), (item) => item.url),
     })
     entryIndex += 1
   }
@@ -1269,9 +1311,16 @@ export async function main(options = {}) {
   const lines = [buildIntro(summary)]
   lines.push(...movieSections)
   lines.push(...tvSections)
+  const markdown = lines.join("\n")
 
-  await writeFile(outputFile, lines.join("\n"), "utf8")
+  await writeFile(outputFile, markdown, "utf8")
   console.log(`Wrote ${outputFile} with ${enrichedMovies.length + mergedTvGroups.length} grouped content entities.`)
+
+  return {
+    outputFile,
+    markdown,
+    summary,
+  }
 }
 
 function isDirectRun() {
