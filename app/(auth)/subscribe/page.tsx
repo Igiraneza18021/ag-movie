@@ -23,6 +23,9 @@ export default function SubscribePage() {
 
   const router = useRouter()
   const supabase = createClient()
+  
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true"
+  const subscriptionPrice = isDevMode ? 20 : 2000
 
   useEffect(() => {
     if (!transactionRef || !isWaiting) return
@@ -106,7 +109,7 @@ export default function SubscribePage() {
       const response = await fetch("/api/subscriptions/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber, amount: 2000 })
+        body: JSON.stringify({ phoneNumber, amount: subscriptionPrice })
       })
 
       const data = await response.json()
@@ -194,7 +197,7 @@ export default function SubscribePage() {
                 Waiting for <span className="text-[#0071eb]">Confirmation</span>
               </h2>
               <p className="text-zinc-400 font-bold text-lg">
-                Please check your phone and enter your Mobile Money PIN to authorize the payment of <span className="text-white">2,000 RWF</span>.
+                Please check your phone and enter your Mobile Money PIN to authorize the payment of <span className="text-white">{subscriptionPrice.toLocaleString()} RWF</span>.
               </p>
               <div className="flex items-center justify-center gap-2 text-[#0071eb] text-sm font-black uppercase tracking-widest bg-[#0071eb]/10 py-2 px-4 rounded-full border border-[#0071eb]/20">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -267,7 +270,7 @@ export default function SubscribePage() {
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-black text-white uppercase tracking-tight">Subscribe</h2>
                 <div className="flex items-center justify-center gap-2">
-                  <span className="text-4xl font-black text-white">2,000</span>
+                  <span className="text-4xl font-black text-white">{subscriptionPrice.toLocaleString()}</span>
                   <span className="text-zinc-500 font-black uppercase tracking-widest text-sm">RWF / Month</span>
                 </div>
               </div>
