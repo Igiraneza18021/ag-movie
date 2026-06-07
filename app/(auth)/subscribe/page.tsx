@@ -65,29 +65,20 @@ export default function SubscribePage() {
 
     setIsLoading(true)
     
-    // Simulate Paypack integration for now as requested
     try {
-      // In a real integration, we would call an API route that:
-      // 1. Authenticates with Paypack agents/authorize
-      // 2. Initiates a cashin request
-      // 3. Stores the 'ref' and 'pending' status in paypack_transactions table
-      
-      const { data, error } = await supabase
-        .from("paypack_transactions")
-        .insert({
-          user_id: user.id,
-          paypack_ref: `sim_${Math.random().toString(36).substring(7)}`,
-          amount: 2000,
-          client_phone: phoneNumber,
-          status: 'pending',
-          kind: 'CASHIN'
-        })
+      const response = await fetch("/api/subscriptions/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber, amount: 2000 })
+      })
 
-      if (error) throw error
+      const data = await response.json()
+
+      if (!response.ok) throw new Error(data.error || "Failed to initiate subscription")
 
       toast.success("Payment request sent! Please check your phone to confirm.")
       
-      // Since all features are free for now, we just redirect or show success
+      // We can redirect or wait for status
       setTimeout(() => {
         router.push("/browse")
       }, 3000)
