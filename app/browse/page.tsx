@@ -148,7 +148,24 @@ export default function HomePage() {
         isLoading={spotlightLoading} 
       />
       {/* TOP 10 SECTION */}
-      <Top10Section items={top10Items} />
+      <div className="pt-8 md:pt-12 mb-10 overflow-visible">
+        <div className="px-4 sm:px-6 md:px-12 mb-6 flex items-center gap-4 md:gap-6">
+          <h2
+            className="text-6xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#0071eb] via-[#0071eb]/90 to-[#0071eb] tracking-tighter leading-none"
+            style={{
+              WebkitTextStroke: "2px rgba(0, 113, 235, 0.4)",
+              textShadow: "0 0 50px rgba(0, 113, 235, 0.2)",
+            }}
+          >
+            TOP 10
+          </h2>
+          <div className="flex flex-col justify-center pt-2">
+            <span className="text-white text-base md:text-2xl font-black tracking-[0.3em] uppercase opacity-90 leading-tight">Content</span>
+            <span className="text-white text-base md:text-2xl font-black tracking-[0.3em] uppercase opacity-90 leading-tight">Today</span>
+          </div>
+        </div>
+        <Top10Section items={top10Items} />
+      </div>
 
       <div className="px-2 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 space-y-6 sm:space-y-8">
         {/* Continue Watching */}
