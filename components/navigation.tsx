@@ -122,7 +122,7 @@ export function Navigation() {
     ...headerIcons,
   ]
 
-  if (pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password" || pathname === "/verify" || pathname === "/complete-profile" || pathname === "/subscribe") return null
+  if (pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password" || pathname === "/verify" || pathname === "/complete-profile" || pathname === "/subscribe" || pathname === "/profile" || pathname === "/user-watchlist" || pathname === "/continue-watching") return null
 
   return (
     <>
@@ -147,7 +147,7 @@ export function Navigation() {
             <Search className="w-5 h-5" />
           </Link>
           <Link
-            href="/watchlist"
+            href="/user-watchlist"
             className="relative w-10 h-10 rounded-2xl bg-zinc-900/80 backdrop-blur-md border border-white/10 text-zinc-300 flex items-center justify-center shadow-xl active:scale-95 transition-all"
           >
             <Bookmark className="w-5 h-5" />
@@ -362,7 +362,7 @@ export function Navigation() {
             <div className="grid grid-cols-2 gap-3">
               {moreItems.map(({ href, label, icon: Icon }, idx) => {
                 const isActive = pathname === href
-                const isWatch = href === "/watchlist"
+                const isWatch = href === "/user-watchlist"
                 const showBadge = isWatch && watchCount > 0
 
                 return (
