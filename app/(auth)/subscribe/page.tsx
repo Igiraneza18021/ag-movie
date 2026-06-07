@@ -12,6 +12,8 @@ import { Loader2, Home as HomeIcon, CheckCircle2, ShieldCheck, Zap, Info } from 
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
 
+const SUBSCRIPTION_PRICE_RWF = 2000
+
 export default function SubscribePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -24,8 +26,23 @@ export default function SubscribePage() {
   const router = useRouter()
   const supabase = createClient()
   
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true"
-  const subscriptionPrice = isDevMode ? 100 : 2000
+  const subscriptionPrice = SUBSCRIPTION_PRICE_RWF
+
+  const handleTerminalStatus = (status: string) => {
+    if (status === "successful") {
+      toast.success("Payment confirmed! Welcome to Premium.")
+      setIsWaiting(false)
+      router.push("/browse")
+      router.refresh()
+      return
+    }
+
+    if (status === "failed") {
+      toast.error("Payment failed or was cancelled.")
+      setIsWaiting(false)
+      setTransactionRef(null)
+    }
+  }
 
   useEffect(() => {
     if (!transactionRef || !isWaiting) return
@@ -38,15 +55,8 @@ export default function SubscribePage() {
         .eq('paypack_ref', transactionRef)
         .single()
       
-      if (!error && data?.status === 'successful') {
-        toast.success("Payment confirmed! Welcome to Premium.")
-        setIsWaiting(false)
-        router.push("/browse")
-        router.refresh()
-      } else if (!error && data?.status === 'failed') {
-        toast.error("Payment failed or was cancelled.")
-        setIsWaiting(false)
-        setTransactionRef(null)
+      if (!error && data?.status) {
+        handleTerminalStatus(data.status)
       }
     }
     
@@ -65,21 +75,35 @@ export default function SubscribePage() {
         },
         (payload) => {
           const status = payload.new.status
-          if (status === 'successful') {
-            toast.success("Payment confirmed! Welcome to Premium.")
-            setIsWaiting(false)
-            router.push("/browse")
-            router.refresh()
-          } else if (status === 'failed') {
-            toast.error("Payment failed or was cancelled.")
-            setIsWaiting(false)
-            setTransactionRef(null)
+          if (status === 'successful' || status === 'failed') {
+            handleTerminalStatus(status)
           }
         }
       )
       .subscribe()
 
+    const pollInterval = window.setInterval(async () => {
+      try {
+        const response = await fetch(`/api/subscriptions/status?ref=${encodeURIComponent(transactionRef)}`, {
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          return
+        }
+
+        const data = await response.json()
+
+        if (data?.status === "successful" || data?.status === "failed") {
+          handleTerminalStatus(data.status)
+        }
+      } catch (error) {
+        console.error("Payment reconciliation error:", error)
+      }
+    }, 5000)
+
     return () => {
+      window.clearInterval(pollInterval)
       supabase.removeChannel(channel)
     }
   }, [transactionRef, isWaiting, router, supabase])

@@ -6,11 +6,20 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, Mail, Calendar, LogOut, Bookmark } from "lucide-react"
+import { Mail, Calendar, LogOut, Bookmark, BadgeCheck, Clock3 } from "lucide-react"
 import Link from "next/link"
+import { isSubscriptionActive } from "@/lib/subscription-access"
+
+interface SubscriptionDetails {
+  status: string
+  plan_id: string
+  current_period_start: string
+  current_period_end: string
+}
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
+  const [subscription, setSubscription] = useState<SubscriptionDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
@@ -22,7 +31,15 @@ export default function ProfilePage() {
         router.push("/login")
         return
       }
+
+      const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("status, plan_id, current_period_start, current_period_end")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
       setUser(user)
+      setSubscription(subscription)
       setLoading(false)
     }
     getUser()
@@ -41,6 +58,8 @@ export default function ProfilePage() {
       </div>
     )
   }
+
+  const activeSubscription = isSubscriptionActive(subscription)
 
   return (
     <div className="min-h-screen bg-black pt-32 pb-20 px-4">
@@ -113,12 +132,47 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="pt-8 border-t border-white/5">
-                  <h3 className="text-lg font-black text-white uppercase tracking-tight mb-4">Community Status</h3>
-                  <div className="bg-[#0071eb]/10 border border-[#0071eb]/20 p-4 rounded-2xl">
-                    <p className="text-[#0071eb] text-sm font-bold">
-                      You are a valued member of the Agasobanuye community. Enjoy unlimited access to our translated films and TV shows!
-                    </p>
-                  </div>
+                  <h3 className="text-lg font-black text-white uppercase tracking-tight mb-4">Subscription</h3>
+                  {subscription ? (
+                    <div className="space-y-4">
+                      <div className="bg-[#0071eb]/10 border border-[#0071eb]/20 p-4 rounded-2xl">
+                        <div className="flex items-center gap-2 text-white font-bold">
+                          <BadgeCheck className="h-4 w-4 text-[#0071eb]" />
+                          {activeSubscription ? "Premium Active" : "Subscription Inactive"}
+                        </div>
+                        <p className="mt-2 text-sm text-zinc-300">
+                          Plan: {subscription.plan_id.replaceAll("_", " ")}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-1">
+                          <p className="text-zinc-500 text-[10px] uppercase font-black tracking-widest">Term Start</p>
+                          <div className="flex items-center gap-2 text-white font-bold">
+                            <Clock3 className="h-4 w-4 text-[#0071eb]" />
+                            {new Date(subscription.current_period_start).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-zinc-500 text-[10px] uppercase font-black tracking-widest">Term End</p>
+                          <div className="flex items-center gap-2 text-white font-bold">
+                            <Clock3 className="h-4 w-4 text-[#0071eb]" />
+                            {new Date(subscription.current_period_end).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-zinc-500 text-[10px] uppercase font-black tracking-widest">Status</p>
+                          <div className="text-white font-bold capitalize">{subscription.status}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                      <p className="text-zinc-300 text-sm font-bold">
+                        No active subscription found yet. Subscribe to see your current premium term here.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

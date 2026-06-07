@@ -1,4 +1,27 @@
+import crypto from "crypto"
+
 const PAYPACK_BASE_URL = "https://payments.paypack.rw/api"
+const PAYPACK_WEBHOOK_MODE: PaypackWebhookMode = "production"
+
+export type PaypackWebhookMode = "development" | "production"
+
+export interface PaypackTransactionResult {
+  ref: string
+  amount?: number
+  kind?: string
+  status?: string
+  client?: string
+  provider?: string
+  created_at?: string
+  processed_at?: string
+  fee?: number
+  merchant?: string
+  timestamp?: string
+}
+
+export function getPaypackWebhookMode(): PaypackWebhookMode {
+  return PAYPACK_WEBHOOK_MODE
+}
 
 export async function getPaypackAccessToken() {
   const clientId = process.env.PAYPACK_APPLICATION_ID
@@ -39,6 +62,8 @@ export async function getPaypackAccessToken() {
 
 export async function initiateCashin(amount: number, phoneNumber: string) {
   const token = await getPaypackAccessToken()
+  const webhookMode = getPaypackWebhookMode()
+  const idempotencyKey = crypto.randomUUID().replace(/-/g, "").slice(0, 32)
 
   const response = await fetch(`${PAYPACK_BASE_URL}/transactions/cashin`, {
     method: "POST",
@@ -46,6 +71,8 @@ export async function initiateCashin(amount: number, phoneNumber: string) {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": `Bearer ${token}`,
+      "X-Webhook-Mode": webhookMode,
+      "Idempotency-Key": idempotencyKey,
     },
     body: JSON.stringify({
       amount,
@@ -70,13 +97,16 @@ export async function initiateCashin(amount: number, phoneNumber: string) {
 
 export async function findTransaction(ref: string) {
   const token = await getPaypackAccessToken()
+  const webhookMode = getPaypackWebhookMode()
 
   const response = await fetch(`${PAYPACK_BASE_URL}/transactions/find/${ref}`, {
     method: "GET",
+    cache: "no-store",
     headers: {
       "Accept": "application/json",
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
+      "X-Webhook-Mode": webhookMode,
     },
   })
 
