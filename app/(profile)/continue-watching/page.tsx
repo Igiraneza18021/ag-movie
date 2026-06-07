@@ -5,20 +5,25 @@ import { PlayCircle } from "lucide-react"
 
 export default function ContinueWatchingPage() {
   return (
-    <Card className="bg-zinc-900/40 border-white/5 backdrop-blur-xl rounded-[2.5rem] p-4 md:p-8 shadow-2xl">
-      <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-3xl font-black text-white uppercase tracking-tight">Continue Watching</CardTitle>
-        <CardDescription className="text-zinc-500 font-medium text-lg">Pick up where you left off</CardDescription>
-      </CardHeader>
-      <CardContent className="px-0 pt-8">
-        <div className="bg-white/5 border border-white/5 p-12 rounded-[2rem] text-center border-dashed">
-          <div className="w-16 h-16 bg-[#0071eb]/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <PlayCircle className="w-8 h-8 text-[#0071eb]" />
-          </div>
-          <p className="text-zinc-400 font-bold text-lg mb-2">No history found</p>
-          <p className="text-zinc-500 text-sm">Your watch progress will appear here once you start streaming.</p>
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="space-y-2">
+        <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-tight">Continue Watching</h2>
+        <p className="text-zinc-500 font-bold text-lg">Pick up where you left off</p>
+      </div>
+
+      <div className="bg-white/5 border border-white/5 p-16 rounded-[3rem] text-center border-dashed">
+        <div className="w-20 h-20 bg-[#0071eb]/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl">
+          <PlayCircle className="w-10 h-10 text-[#0071eb]" />
         </div>
-      </CardContent>
-    </Card>
+        <p className="text-zinc-300 font-black text-2xl uppercase tracking-tight mb-3">No history found</p>
+        <p className="text-zinc-500 text-lg font-bold max-w-md mx-auto">Your watch progress will appear here once you start streaming.</p>
+        
+        <Link href="/browse" className="inline-block mt-10">
+          <button className="h-14 px-10 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all active:scale-95 shadow-lg shadow-[#0071eb]/20">
+            Start Watching
+          </button>
+        </Link>
+      </div>
+    </div>
   )
 }

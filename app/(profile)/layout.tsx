@@ -52,55 +52,56 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   return (
     <div className="min-h-screen bg-black pt-32 pb-20 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Sidebar */}
-          <div className="space-y-6">
-            <Card className="bg-zinc-900/40 border-white/5 backdrop-blur-xl rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <CardContent className="pt-10 pb-8 flex flex-col items-center">
-                <div className="relative group mb-6">
-                  <div className="absolute -inset-4 bg-gradient-to-tr from-[#0071eb] to-[#0071eb]/20 rounded-full blur-2xl opacity-40" />
-                  <Avatar className="w-24 h-24 border-4 border-[#0071eb]/30 relative z-10">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback className="bg-[#0071eb] text-white text-3xl font-black">
-                      {user.email?.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <h2 className="text-xl font-black text-white uppercase tracking-tight text-center leading-tight">
+          <div className="space-y-10">
+            {/* Profile Info - No Card */}
+            <div className="flex flex-col items-center md:items-start gap-6 px-2">
+              <div className="relative group">
+                <Avatar className="w-20 h-24 md:w-24 md:h-24 border-2 border-[#0071eb]/30 rounded-2xl relative z-10 transition-transform duration-500 group-hover:scale-105">
+                  <AvatarImage src={user.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-[#0071eb] text-white text-3xl font-black rounded-2xl">
+                    {user.email?.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <div className="space-y-1 text-center md:text-left">
+                <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">
                   {user.user_metadata?.full_name || user.email?.split("@")[0]}
                 </h2>
-                <p className="text-zinc-500 text-sm font-medium mt-1 truncate w-full text-center">{user.email}</p>
-              </CardContent>
-            </Card>
+                <p className="text-zinc-500 text-sm font-bold truncate w-full">{user.email}</p>
+              </div>
+            </div>
 
-            <nav className="flex flex-col gap-2 bg-zinc-900/20 p-2 rounded-[2rem] border border-white/5">
+            {/* Navigation - Minimal Links */}
+            <nav className="flex flex-col gap-1">
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
                   <Link key={item.href} href={item.href}>
                     <Button 
                       variant="ghost" 
-                      className={`w-full justify-start h-14 rounded-2xl font-black uppercase text-xs tracking-widest transition-all ${
+                      className={`w-full justify-start h-12 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] transition-all ${
                         isActive 
-                          ? "bg-[#0071eb] text-white shadow-[0_10px_20px_rgba(0,113,235,0.3)] hover:bg-[#0071eb]" 
+                          ? "bg-[#0071eb] text-white shadow-[0_10px_20px_rgba(0,113,235,0.2)] hover:bg-[#0071eb]" 
                           : "text-zinc-500 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-white" : "text-[#0071eb]"}`} />
+                      <item.icon className={`mr-4 h-4 w-4 ${isActive ? "text-white" : "text-[#0071eb]"}`} />
                       {item.label}
                     </Button>
                   </Link>
                 )
               })}
               
-              <div className="h-px bg-white/5 my-2 mx-4" />
+              <div className="h-px bg-white/5 my-4 mx-2" />
               
               <Button 
                 variant="ghost" 
-                className="w-full justify-start h-14 rounded-2xl text-red-500 hover:text-red-500 hover:bg-red-500/10 font-black uppercase text-xs tracking-widest"
+                className="w-full justify-start h-12 rounded-xl text-red-500/60 hover:text-red-500 hover:bg-red-500/10 font-black uppercase text-[10px] tracking-[0.2em]"
                 onClick={handleSignOut}
               >
-                <LogOut className="mr-3 h-5 w-5" />
+                <LogOut className="mr-4 h-4 w-4" />
                 Sign Out
               </Button>
             </nav>
