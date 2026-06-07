@@ -7,10 +7,15 @@ interface StructuredDataProps {
 
 export function StructuredData({ type, data }: StructuredDataProps) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ag.micorp.pro'
+
+  const buildAgasobanuyeLabel = (title: string, narrator?: string) => {
+    const narratorLabel = String(narrator ?? '').trim()
+    return narratorLabel ? `${title} Agasobanuye by ${narratorLabel}` : `${title} Agasobanuye`
+  }
   
   if (type === 'movie') {
     const movie = data as Movie
-    const agasobanuyeTitle = `${movie.title} Agasobanuye`
+    const agasobanuyeTitle = buildAgasobanuyeLabel(movie.title, movie.narrator)
     const movieStructuredData = {
       "@context": "https://schema.org",
       "@type": "Movie",
@@ -24,9 +29,11 @@ export function StructuredData({ type, data }: StructuredDataProps) {
         movie.title,
         agasobanuyeTitle,
         `${movie.title} agasobanuye`,
+        movie.narrator ? `${movie.title} agasobanuye by ${movie.narrator}` : null,
+        movie.narrator ? `${movie.narrator} agasobanuye` : null,
         "Agasobanuye Movies",
         "agasobanuye",
-      ],
+      ].filter(Boolean),
       "aggregateRating": movie.vote_average ? {
         "@type": "AggregateRating",
         "ratingValue": movie.vote_average,
@@ -56,7 +63,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
 
   if (type === 'tvshow') {
     const tvShow = data as TVShow
-    const agasobanuyeTitle = `${tvShow.name} Agasobanuye`
+    const agasobanuyeTitle = buildAgasobanuyeLabel(tvShow.name, tvShow.narrator)
     const tvShowStructuredData = {
       "@context": "https://schema.org",
       "@type": "TVSeries",
@@ -72,9 +79,11 @@ export function StructuredData({ type, data }: StructuredDataProps) {
         tvShow.name,
         agasobanuyeTitle,
         `${tvShow.name} agasobanuye`,
+        tvShow.narrator ? `${tvShow.name} agasobanuye by ${tvShow.narrator}` : null,
+        tvShow.narrator ? `${tvShow.narrator} agasobanuye` : null,
         "Agasobanuye Movies",
         "agasobanuye",
-      ],
+      ].filter(Boolean),
       "aggregateRating": tvShow.vote_average ? {
         "@type": "AggregateRating",
         "ratingValue": tvShow.vote_average,

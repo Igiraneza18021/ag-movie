@@ -8,8 +8,13 @@ function dedupeKeywords(values: Array<string | undefined | null>) {
   return [...new Set(values.map((value) => String(value ?? '').trim()).filter(Boolean))]
 }
 
+function buildAgasobanuyeLabel(title: string, narrator?: string) {
+  const narratorLabel = String(narrator ?? '').trim()
+  return narratorLabel ? `${title} Agasobanuye by ${narratorLabel}` : `${title} Agasobanuye`
+}
+
 export function generateMovieMetadata(movie: Movie): Metadata {
-  const agasobanuyeTitle = `${movie.title} Agasobanuye`
+  const agasobanuyeTitle = buildAgasobanuyeLabel(movie.title, movie.narrator)
   const title = `${agasobanuyeTitle} - Watch Online | ${siteName}`
   const description = movie.overview 
     ? `${movie.overview.substring(0, 155)}... Watch ${agasobanuyeTitle} online on ${siteName}.`
@@ -22,6 +27,9 @@ export function generateMovieMetadata(movie: Movie): Metadata {
     movie.title,
     agasobanuyeTitle,
     `${movie.title} agasobanuye`,
+    movie.narrator ? `${movie.title} agasobanuye by ${movie.narrator}` : null,
+    movie.narrator ? `${movie.title} by ${movie.narrator}` : null,
+    movie.narrator ? `${movie.narrator} agasobanuye` : null,
     `${movie.title} agasobanuye movie`,
     `${movie.title} watch online`,
     `${movie.title} streaming`,
@@ -73,7 +81,7 @@ export function generateMovieMetadata(movie: Movie): Metadata {
 }
 
 export function generateTVShowMetadata(tvShow: TVShow): Metadata {
-  const agasobanuyeTitle = `${tvShow.name} Agasobanuye`
+  const agasobanuyeTitle = buildAgasobanuyeLabel(tvShow.name, tvShow.narrator)
   const title = `${agasobanuyeTitle} - Watch Online | ${siteName}`
   const description = tvShow.overview 
     ? `${tvShow.overview.substring(0, 155)}... Watch ${agasobanuyeTitle} online on ${siteName}.`
@@ -86,6 +94,9 @@ export function generateTVShowMetadata(tvShow: TVShow): Metadata {
     tvShow.name,
     agasobanuyeTitle,
     `${tvShow.name} agasobanuye`,
+    tvShow.narrator ? `${tvShow.name} agasobanuye by ${tvShow.narrator}` : null,
+    tvShow.narrator ? `${tvShow.name} by ${tvShow.narrator}` : null,
+    tvShow.narrator ? `${tvShow.narrator} agasobanuye` : null,
     `${tvShow.name} agasobanuye series`,
     `${tvShow.name} watch online`,
     `${tvShow.name} streaming`,
