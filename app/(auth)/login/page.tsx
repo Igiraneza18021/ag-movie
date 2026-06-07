@@ -193,6 +193,14 @@ export default function LoginPage() {
                           className="h-14 bg-white/10 border-white/10 backdrop-blur-md rounded-2xl focus:border-[#0071eb] focus:bg-white/15 transition-all text-lg"
                         />
                       </FormControl>
+                      <div className="flex justify-end px-1">
+                        <Link 
+                          href="/forgot-password" 
+                          className="text-xs font-bold text-zinc-500 hover:text-[#0071eb] transition-colors uppercase tracking-widest"
+                        >
+                          Forgot Password?
+                        </Link>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
