@@ -183,12 +183,12 @@ export default function LandingPage() {
                 </div>
               </div>
               
-              <div className="flex-shrink-0 w-full md:w-2/5 flex justify-center md:justify-end">
+              <div className="flex-shrink-0 w-full md:w-2/5 flex justify-center items-center">
                 <div className="relative group">
                   <img 
                     src="/image.png" 
                     alt="Premium" 
-                    className="w-48 h-48 md:w-64 md:h-64 object-contain relative z-20 drop-shadow-[0_0_50px_rgba(0,113,235,0.3)] group-hover:scale-110 transition-transform duration-700" 
+                    className="w-48 h-48 md:w-72 md:h-72 object-contain relative z-20 drop-shadow-[0_0_50px_rgba(0,113,235,0.3)] group-hover:scale-110 transition-transform duration-700" 
                   />
                 </div>
               </div>
