@@ -78,12 +78,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
-                  <Link key={item.href} href={item.href}>
+                  <Link key={item.href} href={item.href} className="cursor-pointer block">
                     <Button 
                       variant="ghost" 
-                      className={`w-full justify-start h-12 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] transition-all ${
+                      className={`w-full justify-start h-12 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] transition-all cursor-pointer ${
                         isActive 
-                          ? "bg-[#0071eb] text-white shadow-[0_10px_20px_rgba(0,113,235,0.2)] hover:bg-[#0071eb]" 
+                          ? "bg-[#0071eb] text-white shadow-[0_10px_20px_rgba(0,113,235,0.2)]" 
                           : "text-zinc-500 hover:text-white hover:bg-white/5"
                       }`}
                     >
@@ -98,7 +98,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
               
               <Button 
                 variant="ghost" 
-                className="w-full justify-start h-12 rounded-xl text-red-500/60 hover:text-red-500 hover:bg-red-500/10 font-black uppercase text-[10px] tracking-[0.2em]"
+                className="w-full justify-start h-12 rounded-xl text-red-500/60 hover:text-red-500 hover:bg-red-500/10 font-black uppercase text-[10px] tracking-[0.2em] cursor-pointer"
                 onClick={handleSignOut}
               >
                 <LogOut className="mr-4 h-4 w-4" />
