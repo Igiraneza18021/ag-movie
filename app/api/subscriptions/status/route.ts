@@ -1,4 +1,4 @@
-import { findTransaction } from "@/lib/paypack"
+import { findProcessedTransactionEvent } from "@/lib/paypack"
 import { applyPaypackTransactionResult } from "@/lib/paypack-subscriptions"
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
@@ -23,10 +23,16 @@ export async function GET(request: Request) {
 
     const { data: localTransaction, error: localTransactionError } = await supabase
       .from("paypack_transactions")
-      .select("status, paypack_ref, processed_at")
+      .select("status, paypack_ref, processed_at, kind, client_phone")
       .eq("paypack_ref", ref)
       .eq("user_id", user.id)
-      .maybeSingle<{ status: string; paypack_ref: string; processed_at: string | null }>()
+      .maybeSingle<{
+        status: string
+        paypack_ref: string
+        processed_at: string | null
+        kind: string | null
+        client_phone: string | null
+      }>()
 
     if (localTransactionError) {
       return NextResponse.json({ error: localTransactionError.message }, { status: 500 })
@@ -44,30 +50,48 @@ export async function GET(request: Request) {
       })
     }
 
-    const providerTransaction = await findTransaction(ref)
+    const processedEvent = await findProcessedTransactionEvent({
+      ref,
+      kind: localTransaction.kind,
+      client: localTransaction.client_phone,
+    })
 
-    if (!providerTransaction?.status || providerTransaction.status === "pending") {
+    if (!processedEvent) {
+      console.log("[paypack.status_pending]", {
+        ref,
+        source: "events",
+      })
+
       return NextResponse.json({
         ref,
         status: "pending",
-        source: "paypack",
+        source: "paypack_events",
+        reason: "not_yet_visible_upstream",
       })
     }
 
     const result = await applyPaypackTransactionResult({
       ref,
-      status: providerTransaction.status,
-      amount: providerTransaction.amount,
-      kind: providerTransaction.kind,
-      client: providerTransaction.client,
-      processed_at: providerTransaction.processed_at ?? providerTransaction.timestamp,
-      created_at: providerTransaction.created_at ?? providerTransaction.timestamp,
+      status: processedEvent.data.status ?? "pending",
+      amount: processedEvent.data.amount,
+      kind: processedEvent.data.kind,
+      client: processedEvent.data.client,
+      provider: processedEvent.data.provider,
+      processed_at: processedEvent.data.processed_at ?? processedEvent.created_at,
+      created_at: processedEvent.data.created_at ?? processedEvent.created_at,
+    })
+
+    console.log("[paypack.status_reconciled]", {
+      ref,
+      source: "events",
+      eventId: processedEvent.event_id,
+      status: result.status,
     })
 
     return NextResponse.json({
       ref,
       status: result.status,
-      source: "paypack",
+      source: "paypack_events",
       result,
     })
   } catch (error: any) {
