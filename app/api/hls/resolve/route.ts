@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
+const PROVIDER_ALIAS_HOSTS: Record<string, string[]> = {
+  "hgcloud.to": ["hanerix.com"],
+  "hglink.to": ["hanerix.com"],
+  "cybervynx.com": ["medixiru.com"],
+  "medixiru.com": ["cybervynx.com"],
+  "dhcplay.com": ["vibuxer.com"],
+  "vibuxer.com": ["dhcplay.com"],
+}
+
 function decodePossiblyEscaped(value: string) {
   return value
     .replace(/\\\//g, "/")
@@ -82,24 +91,61 @@ function findHlsUrl(source: string, baseUrl: string) {
   return null
 }
 
-function getFallbackEmbedUrls(embedUrl: string) {
-  const url = new URL(embedUrl)
+function toAbsoluteUrl(value: string, baseUrl: string) {
+  try {
+    return new URL(decodePossiblyEscaped(value), baseUrl).toString()
+  } catch {
+    return null
+  }
+}
 
-  if (url.hostname === "hgcloud.to" || url.hostname === "hglink.to") {
-    return [`https://hanerix.com${url.pathname}${url.search}`]
+function extractEmbedRedirectUrls(source: string, baseUrl: string) {
+  const decodedSource = decodePossiblyEscaped(source)
+  const searchableSource = `${decodedSource}\n${unpackPackerScripts(decodedSource)}`
+  const patterns = [
+    /window\.location(?:\.href)?\s*=\s*["']([^"']+)["']/gi,
+    /location\.href\s*=\s*["']([^"']+)["']/gi,
+    /location\.replace\(\s*["']([^"']+)["']\s*\)/gi,
+    /location\.assign\(\s*["']([^"']+)["']\s*\)/gi,
+    /<meta[^>]+http-equiv=["']refresh["'][^>]+content=["'][^"']*url=([^"'>\s]+)[^"']*["']/gi,
+  ]
+  const redirects: string[] = []
+  const seen = new Set<string>()
+
+  for (const pattern of patterns) {
+    for (const match of searchableSource.matchAll(pattern)) {
+      const redirectUrl = toAbsoluteUrl(match[1], baseUrl)
+      if (!redirectUrl || seen.has(redirectUrl) || isBlockedUrl(redirectUrl)) continue
+      seen.add(redirectUrl)
+      redirects.push(redirectUrl)
+    }
   }
 
-  return []
+  return redirects
+}
+
+function isLoadingShellPage(source: string) {
+  const decodedSource = decodePossiblyEscaped(source)
+  return /<title>\s*loading\.\.\.\s*<\/title>/i.test(decodedSource)
+    || /page is loading,\s*please wait/i.test(decodedSource)
+}
+
+function getFallbackEmbedUrls(embedUrl: string) {
+  const url = new URL(embedUrl)
+  const hostnames = PROVIDER_ALIAS_HOSTS[url.hostname.toLowerCase()] ?? []
+
+  return hostnames.map((hostname) => `https://${hostname}${url.pathname}${url.search}`)
 }
 
 function getResolveAttempts(embedUrl: string) {
-  const fallbacks = getFallbackEmbedUrls(embedUrl)
+  const seen = new Set<string>()
+  const attempts = [embedUrl, ...getFallbackEmbedUrls(embedUrl)].filter((value) => {
+    if (seen.has(value)) return false
+    seen.add(value)
+    return true
+  })
 
-  if (fallbacks.length > 0) {
-    return fallbacks
-  }
-
-  return [embedUrl]
+  return attempts
 }
 
 async function fetchEmbedPage(embedUrl: string) {
@@ -134,11 +180,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ hlsUrl: embedUrl, referer: embedUrl })
     }
 
-    const attempts = getResolveAttempts(embedUrl)
+    const attempts = [...getResolveAttempts(embedUrl)]
+    const attemptedUrls = new Set<string>()
     let lastStatus = 500
 
-    for (const attemptUrl of attempts) {
+    for (let index = 0; index < attempts.length; index += 1) {
+      const attemptUrl = attempts[index]
       if (isBlockedUrl(attemptUrl)) continue
+      if (attemptedUrls.has(attemptUrl)) continue
+      attemptedUrls.add(attemptUrl)
 
       let result: Awaited<ReturnType<typeof fetchEmbedPage>>
 
@@ -159,6 +209,17 @@ export async function POST(request: NextRequest) {
 
       if (hlsUrl) {
         return NextResponse.json({ hlsUrl, referer: finalUrl })
+      }
+
+      const redirectAttempts = extractEmbedRedirectUrls(html, finalUrl)
+      const aliasAttempts = getFallbackEmbedUrls(finalUrl)
+      const queuedAttempts = isLoadingShellPage(html)
+        ? [...aliasAttempts, ...redirectAttempts]
+        : [...redirectAttempts, ...aliasAttempts]
+
+      for (const nextAttempt of queuedAttempts) {
+        if (attemptedUrls.has(nextAttempt) || attempts.includes(nextAttempt) || isBlockedUrl(nextAttempt)) continue
+        attempts.push(nextAttempt)
       }
     }
 
