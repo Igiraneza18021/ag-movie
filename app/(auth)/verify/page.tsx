@@ -64,7 +64,7 @@ function VerifyContent() {
       if (error) throw error
       
       toast.success("Verification successful!")
-      router.push("/browse")
+      router.push(type === "signup" ? "/complete-profile" : "/browse")
       router.refresh()
     } catch (error: any) {
       toast.error(error.message || "Invalid or expired code")
