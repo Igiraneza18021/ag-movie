@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Calendar, Star, Bookmark, Heart, Pencil } from "lucide-react"
+import { Trash2, Calendar, Star, Bookmark, Heart, Pencil, Clock3, RotateCcw, CheckCircle2 } from "lucide-react"
 import { useWatchlist } from "@/hooks/use-watchlist"
 import Link from "next/link"
 import Image from "next/image"
@@ -74,7 +74,11 @@ export default function WatchlistPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {watchlist.map((entry) => (
+          {watchlist.map((entry) => {
+            const liveProgress = entry.live_progress
+            const isShowProgress = Boolean(liveProgress && "completed_episode_count" in liveProgress)
+
+            return (
             <div key={entry.id} className="group relative">
               <Link href={entry.item_type === "movie" ? `/movie/${entry.media.id}` : `/tv/${entry.media.id}`}>
                 <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/5 shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:border-[#0071eb]/50">
@@ -126,16 +130,46 @@ export default function WatchlistPage() {
                   <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
                     {entry.watch_status.replaceAll("_", " ")}
                   </Badge>
-                  <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
-                    Progress {entry.progress}
-                    {entry.media.type === "tv" && entry.media.number_of_episodes ? `/${entry.media.number_of_episodes}` : ""}
-                  </Badge>
+                  {liveProgress ? (
+                    <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
+                      {isShowProgress
+                        ? `${liveProgress.completed_episode_count}/${liveProgress.total_episode_count_snapshot} episodes`
+                        : `${Math.round(liveProgress.progress_percent ?? 0)}% watched`}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
+                      Progress {entry.progress}
+                      {entry.media.type === "tv" && entry.media.number_of_episodes ? `/${entry.media.number_of_episodes}` : ""}
+                    </Badge>
+                  )}
                   {entry.score != null ? (
                     <Badge variant="outline" className="border-white/10 bg-white/5 text-[10px] uppercase tracking-wider text-zinc-300">
                       Score {entry.score}/10
                     </Badge>
                   ) : null}
+                  {liveProgress?.is_completed ? (
+                    <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-[10px] uppercase tracking-wider text-emerald-300">
+                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                      Completed
+                    </Badge>
+                  ) : null}
                 </div>
+
+                {liveProgress ? (
+                  <div className="grid grid-cols-1 gap-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 sm:grid-cols-2">
+                    <div className="flex items-center gap-1.5">
+                      <Clock3 className="h-3 w-3 text-[#0071eb]" />
+                      Started{" "}
+                      {liveProgress.started_at
+                        ? new Date(liveProgress.started_at).toLocaleDateString()
+                        : "Not yet"}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <RotateCcw className="h-3 w-3 text-fuchsia-400" />
+                      Rewatches {liveProgress.rewatch_count}
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="flex items-center justify-between">
                    <div className="flex items-center text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
@@ -163,7 +197,7 @@ export default function WatchlistPage() {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 

@@ -14,7 +14,11 @@ export default function ContinueWatchingPage() {
   useEffect(() => {
     const fetchProgress = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        setProgress([])
+        setIsLoading(false)
+        return
+      }
 
       const { data, error } = await supabase
         .from("watch_progress_entries")
@@ -76,7 +80,7 @@ export default function ContinueWatchingPage() {
             const imagePath = isMovie ? entry.movies?.backdrop_path : entry.tv_shows?.backdrop_path
             const watchUrl = isMovie 
               ? `/watch/movie/${entry.movie_id}` 
-              : `/watch/tv/${entry.tv_show_id}/${entry.season_id}/${entry.episode_id}`
+              : `/watch/tv/${entry.tv_show_id}?season=${entry.episodes?.seasons?.season_number ?? 1}&episode=${entry.episodes?.episode_number ?? 1}`
 
             return (
               <div key={entry.id} className="group relative">
