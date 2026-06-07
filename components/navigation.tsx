@@ -160,7 +160,7 @@ export function Navigation() {
     ...(showIOSInstall ? [{ href: "/ios", label: "Install", icon: InstallIcon }] : []),
   ]
 
-  if (pathname === "/") return null
+  if (pathname === "/" || pathname === "/login" || pathname === "/signup") return null
 
   return (
     <>
