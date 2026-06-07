@@ -17,7 +17,19 @@ import {
   Plus,
   MoreHorizontal,
   X,
+  User,
+  LogOut,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const navItems = [
   { href: "/browse", label: "Home", icon: Home },
@@ -44,6 +56,8 @@ export function Navigation() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   
   const pathname = usePathname()
   const router = useRouter()
@@ -51,8 +65,25 @@ export function Navigation() {
   const moreMenuRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const { watchlist } = useWatchlist()
+  const supabase = createClient()
 
   const watchCount = watchlist?.length || 0
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
 
   useEffect(() => {
     const q = searchParams.get("q")
@@ -99,6 +130,12 @@ export function Navigation() {
     } else if (pathname === "/search") {
       router.push("/browse")
     }
+  }
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push("/")
+    router.refresh()
   }
 
   const isIOS = typeof window !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent || navigator.vendor || "")
@@ -158,6 +195,26 @@ export function Navigation() {
               </span>
             )}
           </Link>
+          {user ? (
+             <button
+              onClick={() => router.push("/profile")}
+              className="w-10 h-10 rounded-2xl bg-zinc-900/80 backdrop-blur-md border border-white/10 text-zinc-300 flex items-center justify-center shadow-xl overflow-hidden"
+            >
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={user.user_metadata?.avatar_url} />
+                <AvatarFallback className="bg-[#0071eb] text-white text-[10px] font-bold">
+                  {user.email?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="w-10 h-10 rounded-2xl bg-[#0071eb] text-white flex items-center justify-center shadow-xl active:scale-95 transition-all"
+            >
+              <User className="w-5 h-5" />
+            </Link>
+          )}
         </div>
       </div>
 
@@ -259,6 +316,49 @@ export function Navigation() {
               <PWAInstallGuide />
             </div>
           )}
+
+          {/* User Auth Section */}
+          <div className="ml-2">
+            {!loading && (
+              user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 outline-none">
+                      <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-transparent hover:ring-[#0071eb] transition-all">
+                        <AvatarImage src={user.user_metadata?.avatar_url} />
+                        <AvatarFallback className="bg-[#0071eb] text-white font-black">
+                          {user.email?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-white/10 rounded-2xl p-2 shadow-2xl backdrop-blur-xl">
+                    <DropdownMenuLabel className="px-3 py-2">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-black text-white leading-none">Account</p>
+                        <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/5" />
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 text-zinc-300 hover:bg-[#0071eb] hover:text-white cursor-pointer transition-colors font-bold" onClick={() => router.push("/profile")}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 text-red-500 hover:bg-red-500/20 cursor-pointer transition-colors font-bold" onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/login">
+                  <button className="h-10 px-6 bg-[#0071eb] hover:bg-[#0071eb]/90 text-white text-sm font-black uppercase tracking-wide rounded-2xl shadow-[0_0_20px_rgba(0,113,235,0.3)] transition-all active:scale-95">
+                    Sign In
+                  </button>
+                </Link>
+              )
+            )}
+          </div>
         </div>
       </header>
 
