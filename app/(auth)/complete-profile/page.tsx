@@ -105,10 +105,14 @@ export default function CompleteProfilePage() {
 
     setIsLoading(true)
     try {
+      const avatarUrl = `https://api.dicebear.com/9.x/${selectedStyleId}/svg?seed=${encodeURIComponent(fullName || user?.email)}`
+      
       const { error } = await supabase.auth.updateUser({
         data: {
           full_name: fullName,
-          avatar_url: selectedAvatarUri,
+          avatar_url: avatarUrl,
+          avatar_style: selectedStyleId,
+          avatar_seed: fullName || user?.email,
           profile_completed: true,
         },
       })
