@@ -18,6 +18,30 @@ export interface PaypackTransactionResult {
   timestamp?: string
 }
 
+export interface PaypackTransactionEventData {
+  ref: string
+  kind?: string
+  amount?: number
+  client?: string
+  provider?: string
+  status?: string
+  created_at?: string
+  processed_at?: string
+  merchant?: string
+  metadata?: Record<string, unknown> | null
+}
+
+export interface PaypackTransactionEvent {
+  event_id: string
+  event_kind: string
+  created_at: string
+  data: PaypackTransactionEventData
+}
+
+interface PaypackTransactionEventsResponse {
+  transactions?: PaypackTransactionEvent[]
+}
+
 export function getPaypackWebhookMode(): PaypackWebhookMode {
   const isDevMode = process.env.DEV_MODE === "true" || process.env.NEXT_PUBLIC_DEV_MODE === "true"
   return isDevMode ? "development" : "production"
@@ -115,4 +139,48 @@ export async function findTransaction(ref: string) {
   }
 
   return response.json()
+}
+
+export async function findProcessedTransactionEvent(input: {
+  ref: string
+  kind?: string | null
+  client?: string | null
+}) {
+  const token = await getPaypackAccessToken()
+  const params = new URLSearchParams({ ref: input.ref })
+
+  if (input.kind) {
+    params.set("kind", input.kind)
+  }
+
+  if (input.client) {
+    params.set("client", input.client)
+  }
+
+  const response = await fetch(`${PAYPACK_BASE_URL}/events/transactions?${params.toString()}`, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    console.error("[paypack.events_lookup_failed]", {
+      ref: input.ref,
+      status: response.status,
+    })
+    return null
+  }
+
+  const payload = (await response.json()) as PaypackTransactionEventsResponse
+  const transactions = payload.transactions ?? []
+
+  const processedEvents = transactions
+    .filter((transaction) => transaction.event_kind === "transaction:processed" && transaction.data?.status)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  return processedEvents[0] ?? null
 }
