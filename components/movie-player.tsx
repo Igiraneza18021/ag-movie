@@ -10,6 +10,7 @@ import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
 import { Play, X, Volume2, VolumeX, ChevronRight, Settings, RotateCcw, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 interface MoviePlayerProps {
   movie: Movie
@@ -22,12 +23,60 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [initialProgress, setInitialProgress] = useState(0)
+  const [loadingProgress, setLoadingProgress] = useState(true)
   const [showNextMovie, setShowNextMovie] = useState(false)
   const [autoNextEnabled, setAutoNextEnabled] = useState(false) // Disabled by default
   const [nextMovieTimer, setNextMovieTimer] = useState(10)
   const [videoEnded, setVideoEnded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const lastSavedTimeRef = useRef<number>(0)
+  const supabase = createClient()
   const router = useRouter()
+
+  useEffect(() => {
+    const fetchInitialProgress = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from("watch_progress_entries")
+          .select("progress_seconds")
+          .eq("user_id", user.id)
+          .eq("movie_id", movie.id)
+          .maybeSingle()
+        
+        if (data) {
+          setInitialProgress(data.progress_seconds)
+          lastSavedTimeRef.current = data.progress_seconds
+        }
+      }
+      setLoadingProgress(false)
+    }
+    fetchInitialProgress()
+  }, [movie.id, supabase])
+
+  const handleProgress = async ({ time, duration }: { time: number; duration: number }) => {
+    // Save progress every 10 seconds
+    const now = Math.floor(time)
+    if (now > 0 && now % 10 === 0 && now !== lastSavedTimeRef.current) {
+      lastSavedTimeRef.current = now
+      
+      try {
+        await fetch("/api/watch-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content_type: "movie",
+            movie_id: movie.id,
+            progress_seconds: now,
+            duration_seconds: Math.floor(duration)
+          })
+        })
+      } catch (err) {
+        console.error("Failed to save watch progress:", err)
+      }
+    }
+  }
 
   const backdropUrl = getTMDBImageUrl(movie.backdrop_path || "", "original")
   const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : ""
@@ -132,7 +181,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
     console.log("Liked movie:", movie.title)
   }
 
-  if (!mounted) {
+  if (!mounted || loadingProgress) {
     return (
       <div className="relative h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
@@ -228,6 +277,8 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
               poster={backdropUrl}
               autoPlay={autoPlay}
               muted={isMuted}
+              initialTime={initialProgress}
+              onProgress={handleProgress}
               onEnded={() => setVideoEnded(true)}
             />
           </div>

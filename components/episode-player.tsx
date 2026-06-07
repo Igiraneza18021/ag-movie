@@ -9,6 +9,7 @@ import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Episode, TVShow } from "@/lib/types"
 import { Play, X, Volume2, VolumeX, ArrowLeft, Calendar, Clock, Download } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 
 interface EpisodePlayerProps {
   episode: Episode
@@ -23,11 +24,62 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [initialProgress, setInitialProgress] = useState(0)
+  const [loadingProgress, setLoadingProgress] = useState(true)
   const [showNextEpisode, setShowNextEpisode] = useState(false)
   const [autoNextEnabled, setAutoNextEnabled] = useState(false) // Disabled by default
   const [nextEpisodeTimer, setNextEpisodeTimer] = useState(10)
   const [videoEnded, setVideoEnded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const lastSavedTimeRef = useRef<number>(0)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const fetchInitialProgress = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from("watch_progress_entries")
+          .select("progress_seconds")
+          .eq("user_id", user.id)
+          .eq("episode_id", episode.id)
+          .maybeSingle()
+        
+        if (data) {
+          setInitialProgress(data.progress_seconds)
+          lastSavedTimeRef.current = data.progress_seconds
+        }
+      }
+      setLoadingProgress(false)
+    }
+    fetchInitialProgress()
+  }, [episode.id, supabase])
+
+  const handleProgress = async ({ time, duration }: { time: number; duration: number }) => {
+    // Save progress every 10 seconds
+    const now = Math.floor(time)
+    if (now > 0 && now % 10 === 0 && now !== lastSavedTimeRef.current) {
+      lastSavedTimeRef.current = now
+      
+      try {
+        await fetch("/api/watch-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content_type: "episode",
+            tv_show_id: tvShow.id,
+            season_id: episode.season_id,
+            episode_id: episode.id,
+            progress_seconds: now,
+            duration_seconds: Math.floor(duration)
+          })
+        })
+      } catch (err) {
+        console.error("Failed to save watch progress:", err)
+      }
+    }
+  }
+
   const playerPlaylistItems = useMemo(() => {
     const orderedEpisodes = episodes.length ? episodes : [episode]
     const currentIndex = Math.max(
@@ -237,7 +289,7 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  if (!mounted) {
+  if (!mounted || loadingProgress) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
@@ -414,6 +466,8 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
               playlistItems={playerPlaylistItems}
               autoPlay={autoPlay}
               muted={isMuted}
+              initialTime={initialProgress}
+              onProgress={handleProgress}
               onEnded={() => setVideoEnded(true)}
             />
           </div>

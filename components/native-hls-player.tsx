@@ -20,6 +20,8 @@ interface NativeHlsPlayerProps {
   playlistItems?: NativeHlsPlaylistItem[]
   autoPlay?: boolean
   muted?: boolean
+  initialTime?: number
+  onProgress?: (progress: { time: number; duration: number }) => void
   onEnded?: () => void
 }
 
@@ -52,6 +54,8 @@ export function NativeHlsPlayer({
   playlistItems = EMPTY_PLAYLIST,
   autoPlay = true,
   muted = false,
+  initialTime = 0,
+  onProgress,
   onEnded,
 }: NativeHlsPlayerProps) {
   const reactId = useId()
@@ -205,8 +209,19 @@ export function NativeHlsPlayer({
 
     const previousEvents = window.PlayerjsEvents
     window.PlayerjsEvents = (event, id, info) => {
-      if (id === playerId && event === "end") {
-        onEnded?.()
+      if (id === playerId) {
+        if (event === "end") {
+          onEnded?.()
+        }
+
+        if (event === "time" || event === "duration") {
+          const time = Number(playerRef.current?.api?.("time") || 0)
+          const duration = Number(playerRef.current?.api?.("duration") || 0)
+          
+          if (duration > 0) {
+            onProgress?.({ time, duration })
+          }
+        }
       }
 
       previousEvents?.(event, id, info)
@@ -219,6 +234,7 @@ export function NativeHlsPlayer({
       poster,
       autoplay: autoPlay ? 1 : 0,
       mute: muted ? 1 : 0,
+      start: initialTime > 0 ? initialTime : undefined,
     })
 
     if (pendingPlaylistEntriesRef.current.length > 0) {
