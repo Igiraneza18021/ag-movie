@@ -51,7 +51,7 @@ function VerifyContent() {
   }, [supabase])
 
   const handleVerify = async (code: string) => {
-    if (code.length !== 8) return
+    if (code.length !== 6) return
     
     setIsLoading(true)
     try {
@@ -148,41 +148,39 @@ function VerifyContent() {
               Verify Your Account
             </h2>
             <p className="text-zinc-400 font-bold text-lg max-w-md mx-auto">
-              We've sent an 8-digit code to <span className="text-white">{email || "your email"}</span>. Enter it below to continue.
+              We've sent a 6-digit code to <span className="text-white">{email || "your email"}</span>. Enter it below to continue.
             </p>
           </div>
 
           <div className="grid gap-8 w-full max-w-md">
             <div className="flex justify-center scale-110 md:scale-125 my-4">
               <InputOTP 
-                maxLength={8} 
+                maxLength={6} 
                 value={otp} 
                 onChange={(val) => {
                   setOtp(val)
-                  if (val.length === 8) handleVerify(val)
+                  if (val.length === 6) handleVerify(val)
                 }}
                 disabled={isLoading}
               >
                 <InputOTPGroup>
                   <InputOTPSlot index={0} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white rounded-l-2xl" />
                   <InputOTPSlot index={1} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white" />
-                  <InputOTPSlot index={2} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white" />
-                  <InputOTPSlot index={3} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white rounded-r-2xl md:rounded-r-none" />
+                  <InputOTPSlot index={2} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white rounded-r-2xl md:rounded-r-none" />
                 </InputOTPGroup>
                 <InputOTPSeparator className="hidden md:flex text-[#0071eb]" />
                 <InputOTPGroup>
-                  <InputOTPSlot index={4} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white rounded-l-2xl md:rounded-l-none" />
-                  <InputOTPSlot index={5} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white" />
-                  <InputOTPSlot index={6} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white" />
-                  <InputOTPSlot index={7} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white rounded-r-2xl" />
+                  <InputOTPSlot index={3} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white rounded-l-2xl md:rounded-l-none" />
+                  <InputOTPSlot index={4} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white" />
+                  <InputOTPSlot index={5} className="h-14 w-10 md:h-16 md:w-12 bg-white/10 border-white/10 text-xl md:text-2xl font-black text-white rounded-r-2xl" />
                 </InputOTPGroup>
               </InputOTP>
             </div>
 
             <Button 
               onClick={() => handleVerify(otp)}
-              className="w-full h-14 bg-[#0071eb] hover:bg-[#0071eb]/90 text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_10px_30px_rgba(0,113,235,0.4)] transition-all active:scale-95 disabled:opacity-70 text-lg"
-              disabled={isLoading || otp.length !== 8}
+              className="w-full h-14 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_10px_30px_rgba(0,113,235,0.4)] transition-all active:scale-95 disabled:opacity-70 text-lg"
+              disabled={isLoading || otp.length !== 6}
             >
               {isLoading ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
