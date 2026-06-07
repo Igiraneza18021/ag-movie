@@ -123,6 +123,10 @@ export default function SignUpPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black" />
       </div>
 
+      {/* Decorative Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#0071eb]/20 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#0071eb]/10 rounded-full blur-[120px] pointer-events-none z-0" />
+
       <div className="w-full max-w-md z-10">
         <div className="flex justify-center mb-12">
           <Link href="/" className="flex flex-col items-center gap-2">
