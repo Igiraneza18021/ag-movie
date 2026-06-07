@@ -76,7 +76,7 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
           Watch anywhere. Cancel anytime.
         </p>
         <div className="w-full max-w-2xl mt-8 flex justify-center">
-          <Link href="/login" className="w-full max-w-xl cursor-pointer">
+          <Link href="/browse" className="w-full max-w-xl cursor-pointer">
             <Button size="lg" className="w-full h-14 md:h-18 text-xl md:text-3xl font-black bg-[#0071eb] hover:bg-[#005bb5] text-white px-16 rounded-full flex items-center justify-center gap-4 group transition-all shadow-2xl hover:scale-105 active:scale-95 cursor-pointer">
               Get Started
               <ChevronRight className="w-8 h-8 md:w-10 md:h-10 group-hover:translate-x-2 transition-transform" />

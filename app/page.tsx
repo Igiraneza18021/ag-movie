@@ -177,7 +177,9 @@ export default function LandingPage() {
                     </Button>
                   </Link>
                   <div className="flex flex-col">
-                    <p className="text-white text-xl font-black uppercase tracking-tight">Starting at 2,000 RWF/mo</p>
+                    <p className="text-white text-xl font-black uppercase tracking-tight">
+                      Starting at {process.env.NEXT_PUBLIC_DEV_MODE === "true" ? "100" : "2,000"} RWF/mo
+                    </p>
                     <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Cancel anytime. No commitments.</p>
                   </div>
                 </div>

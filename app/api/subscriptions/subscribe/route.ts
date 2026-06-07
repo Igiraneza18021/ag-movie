@@ -11,7 +11,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { phoneNumber, amount = 2000 } = await request.json()
+    const { phoneNumber } = await request.json()
+    
+    const isDevMode = process.env.DEV_MODE === "true" || process.env.NEXT_PUBLIC_DEV_MODE === "true"
+    const amount = isDevMode ? 100 : 2000
 
     if (!phoneNumber) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
