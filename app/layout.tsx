@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
+import { AntiAdblockGate } from "@/components/anti-adblock-gate"
 import { Toaster } from "@/components/ui/toaster"
 import { ContentRefreshProvider } from "@/components/content-refresh-provider"
 import { Navigation } from "@/components/navigation"
@@ -134,6 +135,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ContentRefreshProvider />
         <Suspense fallback={null}>
+          <AntiAdblockGate />
           <Navigation />
         </Suspense>
         <Suspense fallback={null}>
