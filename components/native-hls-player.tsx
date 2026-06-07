@@ -63,6 +63,7 @@ export function NativeHlsPlayer({
   const [playerSource, setPlayerSource] = useState<PlayerSource>("")
   const [error, setError] = useState("")
   const [isSubscribed, setIsSubscribed] = useState(false)
+  const [subscriptionResolved, setSubscriptionResolved] = useState(false)
   const shouldEmbedGoogleDrive = isGoogleDriveEmbed(embedUrl)
   const supabase = createClient()
 
@@ -80,11 +81,19 @@ export function NativeHlsPlayer({
       } else {
         setIsSubscribed(false)
       }
+
+      setSubscriptionResolved(true)
     }
     checkSubscription()
   }, [supabase])
 
   const playerScript = isSubscribed ? "/playerjs_no_ads.js" : "/playerjs.js"
+
+  useEffect(() => {
+    setScriptReady(false)
+    playerRef.current?.api?.("stop")
+    playerRef.current = null
+  }, [playerScript])
 
   useEffect(() => {
     if (shouldEmbedGoogleDrive) {
@@ -236,10 +245,15 @@ export function NativeHlsPlayer({
     )
   }
 
-  if (state === "resolving" || state === "idle") {
+  if (!subscriptionResolved || state === "resolving" || state === "idle") {
     return (
       <>
-        <Script src={playerScript} strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+        <Script
+          key={playerScript}
+          src={playerScript}
+          strategy="afterInteractive"
+          onReady={() => setScriptReady(true)}
+        />
         <div className="absolute inset-0 flex items-center justify-center bg-black text-white">
           <div className="text-center space-y-4">
             <LoadingSpinner size="lg" className="text-white" />
@@ -253,7 +267,12 @@ export function NativeHlsPlayer({
   if (state === "error") {
     return (
       <>
-        <Script src={playerScript} strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+        <Script
+          key={playerScript}
+          src={playerScript}
+          strategy="afterInteractive"
+          onReady={() => setScriptReady(true)}
+        />
         <div className="absolute inset-0 flex items-center justify-center bg-black px-6 text-white">
           <div className="max-w-md text-center">
             <h2 className="text-xl font-semibold">Stream unavailable</h2>
@@ -266,7 +285,12 @@ export function NativeHlsPlayer({
 
   return (
     <>
-      <Script src={playerScript} strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+      <Script
+        key={playerScript}
+        src={playerScript}
+        strategy="afterInteractive"
+        onReady={() => setScriptReady(true)}
+      />
       <div id={playerId} className="absolute inset-0 h-full w-full bg-black" />
       {!scriptReady && (
         <div className="absolute inset-0 flex items-center justify-center bg-black text-white">
