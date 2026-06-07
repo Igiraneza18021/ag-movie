@@ -6,103 +6,118 @@ import { AlertTriangle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-const ADCASH_SCRIPT_ID = "adcash-anti-adblock-script"
-const ADCASH_SCRIPT_SRC = "/api/adcash-lib"
-const ADCASH_ZONE_ID = process.env.NEXT_PUBLIC_ADCASH_ZONE_ID || "dxsgcf7hdf"
 const EXCLUDED_PREFIXES = (process.env.NEXT_PUBLIC_ADCASH_EXCLUDED_PREFIXES || "/admin")
   .split(",")
   .map((value) => value.trim())
   .filter(Boolean)
 
 type GateState = "loading" | "blocked" | "ready"
+type ProbeWindow = Window & { __agAdsProbeLoaded?: boolean }
 
-let adcashScriptPromise: Promise<void> | null = null
-let autotagStarted = false
+const BAIT_SELECTORS = [
+  "ad",
+  "ads",
+  "adsbox",
+  "ad-banner",
+  "ad-unit",
+  "banner-ad",
+  "sponsored-content",
+  "advertisement",
+]
 
-function loadAdcashScript() {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("Window is unavailable"))
-  }
-
-  if (window.aclib) {
-    return Promise.resolve()
-  }
-
-  if (adcashScriptPromise) {
-    return adcashScriptPromise
-  }
-
-  adcashScriptPromise = new Promise<void>((resolve, reject) => {
-    const existingScript = document.getElementById(ADCASH_SCRIPT_ID) as HTMLScriptElement | null
-
-    const handleLoad = () => resolve()
-    const handleError = () => reject(new Error("Failed to load Adcash library"))
-
-    if (existingScript) {
-      existingScript.addEventListener("load", handleLoad, { once: true })
-      existingScript.addEventListener("error", handleError, { once: true })
-
-      if (window.aclib) {
-        resolve()
-      }
-
-      return
-    }
-
-    const script = document.createElement("script")
-    script.id = ADCASH_SCRIPT_ID
-    script.src = ADCASH_SCRIPT_SRC
-    script.async = true
-    script.type = "text/javascript"
-    script.addEventListener("load", handleLoad, { once: true })
-    script.addEventListener("error", handleError, { once: true })
-    document.head.appendChild(script)
-  }).catch((error) => {
-    adcashScriptPromise = null
-    throw error
-  })
-
-  return adcashScriptPromise
-}
-
-function checkBaitElement() {
+function createBaitElement(selector: string) {
   const bait = document.createElement("div")
-  bait.className = "ad ads adsbox banner-ad ad-banner ad-unit text-ad"
+  bait.className = `${selector} text-ad promoted-box`
+  bait.id = `${selector.replace(/[^a-z0-9-]/gi, "-")}-slot`
   bait.setAttribute("aria-hidden", "true")
   bait.style.position = "absolute"
   bait.style.left = "-9999px"
   bait.style.top = "-9999px"
-  bait.style.width = "1px"
-  bait.style.height = "1px"
+  bait.style.width = "120px"
+  bait.style.height = "120px"
+  bait.style.minWidth = "120px"
+  bait.style.minHeight = "120px"
   bait.style.pointerEvents = "none"
-  bait.style.opacity = "0"
+  bait.style.opacity = "0.01"
+  bait.style.zIndex = "-1"
+  bait.style.overflow = "hidden"
+  return bait
+}
 
-  document.body.appendChild(bait)
+function elementLooksBlocked(element: HTMLElement) {
+  const computed = window.getComputedStyle(element)
 
-  const computed = window.getComputedStyle(bait)
-  const blocked =
-    !bait.isConnected ||
-    bait.offsetParent === null ||
-    bait.offsetHeight === 0 ||
-    bait.offsetWidth === 0 ||
+  return (
+    !element.isConnected ||
+    element.offsetHeight === 0 ||
+    element.offsetWidth === 0 ||
+    element.clientHeight === 0 ||
+    element.clientWidth === 0 ||
     computed.display === "none" ||
-    computed.visibility === "hidden"
-
-  bait.remove()
-  return !blocked
+    computed.visibility === "hidden" ||
+    computed.height === "0px" ||
+    computed.width === "0px"
+  )
 }
 
-function hasWorkingAdcashLibrary() {
-  return typeof window !== "undefined" && typeof window.aclib?.runAutoTag === "function"
+async function detectBlockedByBaitElements() {
+  const elements = BAIT_SELECTORS.map(createBaitElement)
+
+  elements.forEach((element) => {
+    document.body.appendChild(element)
+  })
+
+  await new Promise((resolve) => window.setTimeout(resolve, 150))
+
+  const blocked = elements.some((element) => elementLooksBlocked(element))
+
+  elements.forEach((element) => element.remove())
+
+  return blocked
 }
 
-function startAutotag() {
-  if (!hasWorkingAdcashLibrary() || autotagStarted) {
-    return
-  }
+async function detectBlockedByScriptProbe() {
+  return new Promise<boolean>((resolve) => {
+    const probeWindow = window as ProbeWindow
 
-  window.aclib.runAutoTag({ zoneId: ADCASH_ZONE_ID })
-  autotagStarted = true
+    const cleanup = (script: HTMLScriptElement, timeoutId: number) => {
+      window.clearTimeout(timeoutId)
+      script.remove()
+      delete probeWindow.__agAdsProbeLoaded
+    }
+
+    const script = document.createElement("script")
+    const timeoutId = window.setTimeout(() => {
+      cleanup(script, timeoutId)
+      resolve(true)
+    }, 1500)
+
+    probeWindow.__agAdsProbeLoaded = false
+    script.async = true
+    script.src = `/ads/prebid/ads.js?ts=${Date.now()}`
+
+    script.onload = () => {
+      const blocked = probeWindow.__agAdsProbeLoaded !== true
+      cleanup(script, timeoutId)
+      resolve(blocked)
+    }
+
+    script.onerror = () => {
+      cleanup(script, timeoutId)
+      resolve(true)
+    }
+
+    document.head.appendChild(script)
+  })
+}
+
+async function detectAdBlocker() {
+  const [baitBlocked, scriptBlocked] = await Promise.all([
+    detectBlockedByBaitElements(),
+    detectBlockedByScriptProbe(),
+  ])
+
+  return baitBlocked || scriptBlocked
 }
 
 function isExcludedPath(pathname: string | null) {
@@ -145,22 +160,19 @@ export function AntiAdblockGate() {
       setIsChecking(true)
 
       try {
-        await loadAdcashScript()
-        startAutotag()
-
-        const passed = hasWorkingAdcashLibrary() && checkBaitElement()
+        const blocked = await detectAdBlocker()
 
         if (!cancelled && mountedRef.current) {
-          setGateState(passed ? "ready" : "blocked")
+          setGateState(blocked ? "blocked" : "ready")
         }
 
-        return passed
+        return !blocked
       } catch {
         if (!cancelled && mountedRef.current) {
-          setGateState("blocked")
+          setGateState("ready")
         }
 
-        return false
+        return true
       } finally {
         if (!cancelled && mountedRef.current) {
           setIsChecking(false)
@@ -223,16 +235,17 @@ export function AntiAdblockGate() {
 
           <DialogHeader className="space-y-3 text-left">
             <DialogTitle className="text-2xl font-black tracking-tight text-white">
-              Disable AdBlock To Continue
+              Please Disable Your Ad Blocker
             </DialogTitle>
             <DialogDescription className="text-base leading-7 text-white/70">
-              This site requires ads to stay enabled. Please disable your ad blocker or allow ads for this site,
-              then check again. The page will unlock automatically once the blocker is off.
+              We do not use destructive or abusive ads. Advertising is currently the main source of income that
+              helps us run and manage this project, so please allow ads on this site to continue.
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/65">
-            If you use an extension, open its menu and allow ads on this site, then come back here.
+            If you need an ad-free option, please contact us. We can consider a subscription-based alternative
+            instead of relying on ads.
           </div>
 
           <div className="mt-6 flex items-center justify-end">
