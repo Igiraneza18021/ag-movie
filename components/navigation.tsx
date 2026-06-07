@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { PWAInstallGuide } from "@/components/pwa-install-guide"
 import { useWatchlist } from "@/hooks/use-watchlist"
 import {
   Search,
@@ -17,7 +16,19 @@ import {
   Plus,
   MoreHorizontal,
   X,
+  User,
+  LogOut,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const navItems = [
   { href: "/browse", label: "Home", icon: Home },
@@ -32,18 +43,12 @@ const headerIcons = [
   { href: "/watchlist", label: "Watchlist", icon: Bookmark },
 ]
 
-const InstallIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.81.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-  </svg>
-)
-
 export function Navigation() {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
-  const [isInstalled, setIsInstalled] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   
   const pathname = usePathname()
   const router = useRouter()
@@ -51,26 +56,30 @@ export function Navigation() {
   const moreMenuRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const { watchlist } = useWatchlist()
+  const supabase = createClient()
 
   const watchCount = watchlist?.length || 0
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
 
   useEffect(() => {
     const q = searchParams.get("q")
     if (q) setSearchQuery(q)
   }, [searchParams])
-
-  useEffect(() => {
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
-      return
-    }
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-    }
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -101,29 +110,19 @@ export function Navigation() {
     }
   }
 
-  const isIOS = typeof window !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent || navigator.vendor || "")
-  const isPWA = typeof window !== 'undefined' && (window.navigator as any).standalone
-  const showIOSInstall = isIOS && !isPWA
-
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
-      if (outcome === 'accepted') {
-        setDeferredPrompt(null)
-        setIsInstalled(true)
-      }
-    }
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push("/")
+    router.refresh()
   }
 
   const visibleItems = navItems.slice(0, 4)
   const moreItems = [
     ...navItems.slice(4),
     ...headerIcons,
-    ...(showIOSInstall ? [{ href: "/ios", label: "Install", icon: InstallIcon }] : []),
   ]
 
-  if (pathname === "/") return null
+  if (pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password" || pathname === "/verify" || pathname === "/complete-profile" || pathname === "/subscribe") return null
 
   return (
     <>
@@ -158,6 +157,26 @@ export function Navigation() {
               </span>
             )}
           </Link>
+          {user ? (
+             <button
+              onClick={() => router.push("/profile")}
+              className="w-10 h-10 rounded-2xl bg-zinc-900/80 backdrop-blur-md border border-white/10 text-zinc-300 flex items-center justify-center shadow-xl overflow-hidden"
+            >
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={user.user_metadata?.avatar_url} />
+                <AvatarFallback className="bg-[#0071eb] text-white text-[10px] font-bold">
+                  {user.email?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="w-10 h-10 rounded-2xl bg-[#0071eb] text-white flex items-center justify-center shadow-xl active:scale-95 transition-all"
+            >
+              <User className="w-5 h-5" />
+            </Link>
+          )}
         </div>
       </div>
 
@@ -254,11 +273,48 @@ export function Navigation() {
             )
           })}
 
-          {!isInstalled && (
-            <div className="ml-2">
-              <PWAInstallGuide />
-            </div>
-          )}
+          {/* User Auth Section */}
+          <div className="ml-2">
+            {!loading && (
+              user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 outline-none">
+                      <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-transparent hover:ring-[#0071eb] transition-all">
+                        <AvatarImage src={user.user_metadata?.avatar_url} />
+                        <AvatarFallback className="bg-[#0071eb] text-white font-black">
+                          {user.email?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-white/10 rounded-2xl p-2 shadow-2xl backdrop-blur-xl">
+                    <DropdownMenuLabel className="px-3 py-2">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-black text-white leading-none">Account</p>
+                        <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/5" />
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 text-zinc-300 hover:bg-[#0071eb] hover:text-white cursor-pointer transition-colors font-bold" onClick={() => router.push("/profile")}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 text-red-500 hover:bg-red-500/20 cursor-pointer transition-colors font-bold" onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/login">
+                  <button className="h-10 px-6 bg-[#0071eb] hover:bg-[#0071eb]/90 text-white text-sm font-black uppercase tracking-wide rounded-2xl shadow-[0_0_20px_rgba(0,113,235,0.3)] transition-all active:scale-95">
+                    Sign In
+                  </button>
+                </Link>
+              )
+            )}
+          </div>
         </div>
       </header>
 

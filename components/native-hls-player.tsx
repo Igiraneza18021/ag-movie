@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react"
 import Script from "next/script"
 import { LoadingSpinner } from "@/components/ui/loading"
+import { createClient } from "@/lib/supabase/client"
 
 export interface NativeHlsPlaylistItem {
   id: string
@@ -60,7 +61,27 @@ export function NativeHlsPlayer({
   const [scriptReady, setScriptReady] = useState(false)
   const [playerSource, setPlayerSource] = useState<PlayerSource>("")
   const [error, setError] = useState("")
+  const [isSubscribed, setIsSubscribed] = useState(false)
   const shouldEmbedGoogleDrive = isGoogleDriveEmbed(embedUrl)
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function checkSubscription() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_subscribed")
+          .eq("id", user.id)
+          .single()
+        
+        setIsSubscribed(!!profile?.is_subscribed)
+      }
+    }
+    checkSubscription()
+  }, [supabase])
+
+  const playerScript = isSubscribed ? "/playerjs_no_ads.js" : "/playerjs.js"
 
   useEffect(() => {
     if (shouldEmbedGoogleDrive) {
@@ -215,7 +236,7 @@ export function NativeHlsPlayer({
   if (state === "resolving" || state === "idle") {
     return (
       <>
-        <Script src="/playerjs.js" strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+        <Script src={playerScript} strategy="afterInteractive" onReady={() => setScriptReady(true)} />
         <div className="absolute inset-0 flex items-center justify-center bg-black text-white">
           <div className="text-center space-y-4">
             <LoadingSpinner size="lg" className="text-white" />
@@ -229,7 +250,7 @@ export function NativeHlsPlayer({
   if (state === "error") {
     return (
       <>
-        <Script src="/playerjs.js" strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+        <Script src={playerScript} strategy="afterInteractive" onReady={() => setScriptReady(true)} />
         <div className="absolute inset-0 flex items-center justify-center bg-black px-6 text-white">
           <div className="max-w-md text-center">
             <h2 className="text-xl font-semibold">Stream unavailable</h2>
@@ -242,7 +263,7 @@ export function NativeHlsPlayer({
 
   return (
     <>
-      <Script src="/playerjs.js" strategy="afterInteractive" onReady={() => setScriptReady(true)} />
+      <Script src={playerScript} strategy="afterInteractive" onReady={() => setScriptReady(true)} />
       <div id={playerId} className="absolute inset-0 h-full w-full bg-black" />
       {!scriptReady && (
         <div className="absolute inset-0 flex items-center justify-center bg-black text-white">
