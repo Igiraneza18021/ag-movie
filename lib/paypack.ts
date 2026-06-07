@@ -22,8 +22,15 @@ export async function getPaypackAccessToken() {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || "Failed to authorize with Paypack")
+    let errorMessage = "Failed to authorize with Paypack"
+    try {
+      const errorData = await response.json()
+      errorMessage = errorData.message || errorData.description || errorMessage
+      console.error("Paypack Auth Error:", { status: response.status, errorData })
+    } catch (e) {
+      console.error("Paypack Auth Error (non-JSON):", { status: response.status })
+    }
+    throw new Error(errorMessage)
   }
 
   const data = await response.json()
@@ -47,8 +54,15 @@ export async function initiateCashin(amount: number, phoneNumber: string) {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || "Failed to initiate Cashin")
+    let errorMessage = "Failed to initiate Cashin"
+    try {
+      const errorData = await response.json()
+      errorMessage = errorData.message || errorData.description || errorMessage
+      console.error("Paypack Cashin Error:", { status: response.status, errorData })
+    } catch (e) {
+      console.error("Paypack Cashin Error (non-JSON):", { status: response.status })
+    }
+    throw new Error(errorMessage)
   }
 
   return response.json()
