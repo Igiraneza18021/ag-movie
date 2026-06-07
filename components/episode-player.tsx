@@ -32,6 +32,7 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
   const [videoEnded, setVideoEnded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const lastSavedTimeRef = useRef<number>(0)
+  const latestProgressRef = useRef<{ time: number; duration: number }>({ time: 0, duration: 0 })
   const supabase = createClient()
 
   useEffect(() => {
@@ -55,30 +56,57 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
     fetchInitialProgress()
   }, [episode.id, supabase])
 
-  const handleProgress = async ({ time, duration }: { time: number; duration: number }) => {
-    // Save progress every 10 seconds
+  const persistProgress = async (
+    { time, duration }: { time: number; duration: number },
+    options?: { force?: boolean },
+  ) => {
     const now = Math.floor(time)
-    if (now > 0 && now % 10 === 0 && now !== lastSavedTimeRef.current) {
-      lastSavedTimeRef.current = now
-      
-      try {
-        await fetch("/api/watch-progress", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content_type: "episode",
-            tv_show_id: tvShow.id,
-            season_id: episode.season_id,
-            episode_id: episode.id,
-            progress_seconds: now,
-            duration_seconds: Math.floor(duration)
-          })
-        })
-      } catch (err) {
-        console.error("Failed to save watch progress:", err)
-      }
+    const roundedDuration = Math.floor(duration)
+
+    if (now <= 0 || roundedDuration <= 0) return
+    if (!options?.force && (now % 10 !== 0 || now === lastSavedTimeRef.current)) return
+
+    lastSavedTimeRef.current = now
+
+    try {
+      await fetch("/api/watch-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content_type: "episode",
+          tv_show_id: tvShow.id,
+          season_id: episode.season_id,
+          episode_id: episode.id,
+          progress_seconds: now,
+          duration_seconds: roundedDuration,
+        }),
+      })
+    } catch (err) {
+      console.error("Failed to save watch progress:", err)
     }
   }
+
+  const handleProgress = async ({ time, duration }: { time: number; duration: number }) => {
+    latestProgressRef.current = { time, duration }
+    await persistProgress({ time, duration })
+  }
+
+  useEffect(() => {
+    const flushProgress = () => {
+      const { time, duration } = latestProgressRef.current
+      if (time > 0 && duration > 0) {
+        void persistProgress({ time, duration }, { force: true })
+      }
+    }
+
+    window.addEventListener("pagehide", flushProgress)
+    window.addEventListener("beforeunload", flushProgress)
+
+    return () => {
+      window.removeEventListener("pagehide", flushProgress)
+      window.removeEventListener("beforeunload", flushProgress)
+    }
+  }, [episode.id, tvShow.id])
 
   const playerPlaylistItems = useMemo(() => {
     const orderedEpisodes = episodes.length ? episodes : [episode]
@@ -468,7 +496,20 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
               muted={isMuted}
               initialTime={initialProgress}
               onProgress={handleProgress}
-              onEnded={() => setVideoEnded(true)}
+              onPlayerEvent={({ type, time, duration }) => {
+                latestProgressRef.current = { time, duration }
+
+                if (type === "pause" || type === "seek" || type === "seeked") {
+                  void persistProgress({ time, duration }, { force: true })
+                }
+              }}
+              onEnded={() => {
+                const duration = latestProgressRef.current.duration
+                if (duration > 0) {
+                  void persistProgress({ time: duration, duration }, { force: true })
+                }
+                setVideoEnded(true)
+              }}
             />
           </div>
         </div>

@@ -22,6 +22,7 @@ interface NativeHlsPlayerProps {
   muted?: boolean
   initialTime?: number
   onProgress?: (progress: { time: number; duration: number }) => void
+  onPlayerEvent?: (event: { type: string; time: number; duration: number }) => void
   onEnded?: () => void
 }
 
@@ -44,6 +45,15 @@ declare global {
       api?: (command: string, value?: unknown) => unknown
     }
     PlayerjsEvents?: (event: string, id: string, info?: unknown) => void
+    __PLAYERJS_PROGRESS_BRIDGE__?: {
+      attach: (
+        player: { api?: (command: string, value?: unknown) => unknown },
+        id: string,
+      ) => {
+        dispose: () => void
+        emit: (type: string) => void
+      }
+    }
   }
 }
 
@@ -56,11 +66,13 @@ export function NativeHlsPlayer({
   muted = false,
   initialTime = 0,
   onProgress,
+  onPlayerEvent,
   onEnded,
 }: NativeHlsPlayerProps) {
   const reactId = useId()
   const playerId = `playerjs-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`
   const playerRef = useRef<InstanceType<NonNullable<typeof window.Playerjs>> | null>(null)
+  const bridgeRef = useRef<{ dispose: () => void; emit: (type: string) => void } | null>(null)
   const pendingPlaylistEntriesRef = useRef<PlayerPlaylistEntry[]>([])
   const [state, setState] = useState<ResolveState>("idle")
   const [scriptReady, setScriptReady] = useState(false)
@@ -208,20 +220,26 @@ export function NativeHlsPlayer({
     if (!scriptReady || !playerSource || !window.Playerjs) return
 
     const previousEvents = window.PlayerjsEvents
+    const getSnapshot = () => ({
+      time: Number(playerRef.current?.api?.("time") || 0),
+      duration: Number(playerRef.current?.api?.("duration") || 0),
+    })
+
     window.PlayerjsEvents = (event, id, info) => {
       if (id === playerId) {
+        const snapshot = getSnapshot()
+
         if (event === "end") {
           onEnded?.()
         }
 
         if (event === "time" || event === "duration") {
-          const time = Number(playerRef.current?.api?.("time") || 0)
-          const duration = Number(playerRef.current?.api?.("duration") || 0)
-          
-          if (duration > 0) {
-            onProgress?.({ time, duration })
+          if (snapshot.duration > 0) {
+            onProgress?.(snapshot)
           }
         }
+
+        onPlayerEvent?.({ type: event, ...snapshot })
       }
 
       previousEvents?.(event, id, info)
@@ -237,17 +255,28 @@ export function NativeHlsPlayer({
       start: initialTime > 0 ? initialTime : undefined,
     })
 
+    bridgeRef.current?.dispose()
+    bridgeRef.current = window.__PLAYERJS_PROGRESS_BRIDGE__?.attach(playerRef.current, playerId) ?? null
+
+    if (initialTime > 0) {
+      window.setTimeout(() => {
+        playerRef.current?.api?.("seek", initialTime)
+      }, 400)
+    }
+
     if (pendingPlaylistEntriesRef.current.length > 0) {
       playerRef.current.api?.("push", pendingPlaylistEntriesRef.current)
       pendingPlaylistEntriesRef.current = []
     }
 
     return () => {
+      bridgeRef.current?.dispose()
+      bridgeRef.current = null
       playerRef.current?.api?.("stop")
       playerRef.current = null
       window.PlayerjsEvents = previousEvents
     }
-  }, [autoPlay, muted, onEnded, playerSource, playerId, poster, scriptReady, title])
+  }, [autoPlay, initialTime, muted, onEnded, onPlayerEvent, onProgress, playerSource, playerId, poster, scriptReady, title])
 
   if (shouldEmbedGoogleDrive) {
     return (
