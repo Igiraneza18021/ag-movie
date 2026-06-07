@@ -45,7 +45,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   const navItems = [
     { href: "/profile", label: "Account", icon: UserIcon },
-    { href: "/watchlist", label: "Watchlist", icon: Bookmark },
+    { href: "/user-watchlist", label: "Watchlist", icon: Bookmark },
     { href: "/continue-watching", label: "Continue Watching", icon: PlayCircle },
   ]
 
