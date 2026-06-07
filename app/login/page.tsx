@@ -155,18 +155,19 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <Card className="bg-zinc-900/40 backdrop-blur-2xl border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-[2.5rem] overflow-hidden">
-          <CardHeader className="space-y-1 pb-6 pt-8 text-center">
-            <CardTitle className="text-3xl font-black text-white uppercase tracking-tight">
+        <div className="space-y-8">
+          <div className="space-y-2 text-center">
+            <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">
               {isSignUp ? "Create Account" : "Welcome Back"}
-            </CardTitle>
-            <CardDescription className="text-zinc-400 font-medium">
+            </h2>
+            <p className="text-zinc-400 font-bold text-lg">
               {isSignUp 
                 ? "Join the ultimate Agasobanuye community today" 
                 : "Sign in to access your watchlist and favorites"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 px-8">
+            </p>
+          </div>
+
+          <div className="grid gap-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -179,7 +180,7 @@ export default function LoginPage() {
                         <Input 
                           placeholder="name@example.com" 
                           {...field} 
-                          className="h-12 bg-white/5 border-white/10 rounded-2xl focus:border-[#0071eb] transition-all"
+                          className="h-14 bg-white/10 border-white/10 backdrop-blur-md rounded-2xl focus:border-[#0071eb] focus:bg-white/15 transition-all text-lg"
                         />
                       </FormControl>
                       <FormMessage />
@@ -197,7 +198,7 @@ export default function LoginPage() {
                           type="password" 
                           placeholder="••••••••" 
                           {...field} 
-                          className="h-12 bg-white/5 border-white/10 rounded-2xl focus:border-[#0071eb] transition-all"
+                          className="h-14 bg-white/10 border-white/10 backdrop-blur-md rounded-2xl focus:border-[#0071eb] focus:bg-white/15 transition-all text-lg"
                         />
                       </FormControl>
                       <FormMessage />
@@ -206,11 +207,11 @@ export default function LoginPage() {
                 />
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-[#0071eb] hover:bg-[#0071eb]/90 text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_0_20px_rgba(0,113,235,0.3)] transition-all active:scale-95 disabled:opacity-70"
+                  className="w-full h-14 bg-[#0071eb] hover:bg-[#0071eb]/90 text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_10px_30px_rgba(0,113,235,0.4)] transition-all active:scale-95 disabled:opacity-70 text-lg"
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   ) : isSignUp ? (
                     "Create Account"
                   ) : (
@@ -220,19 +221,19 @@ export default function LoginPage() {
               </form>
             </Form>
 
-            <div className="relative">
+            <div className="relative py-4">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/5" />
+                <span className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black">
-                <span className="bg-transparent px-2 text-zinc-500">Or continue with</span>
+                <span className="bg-black/50 backdrop-blur-sm px-4 py-1 rounded-full text-zinc-400 border border-white/5">Or continue with</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Button 
                 variant="outline" 
-                className="h-12 bg-white/5 border-white/10 rounded-2xl hover:bg-white/10 hover:text-white transition-all font-bold"
+                className="h-14 bg-white/5 border-white/10 backdrop-blur-md rounded-2xl hover:bg-white/15 hover:text-white transition-all font-black uppercase text-xs tracking-widest"
                 onClick={() => handleOAuthSignIn("github")}
                 disabled={isLoading}
               >
@@ -241,7 +242,7 @@ export default function LoginPage() {
               </Button>
               <Button 
                 variant="outline" 
-                className="h-12 bg-white/5 border-white/10 rounded-2xl hover:bg-white/10 hover:text-white transition-all font-bold"
+                className="h-14 bg-white/5 border-white/10 backdrop-blur-md rounded-2xl hover:bg-white/15 hover:text-white transition-all font-black uppercase text-xs tracking-widest"
                 onClick={() => handleOAuthSignIn("google")}
                 disabled={isLoading}
               >
@@ -266,19 +267,20 @@ export default function LoginPage() {
                 Google
               </Button>
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4 pb-8 pt-2">
-            <p className="text-zinc-500 text-sm font-medium">
-              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-              <button 
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-[#0071eb] hover:underline font-bold"
-              >
-                {isSignUp ? "Sign In" : "Sign Up"}
-              </button>
-            </p>
-          </CardFooter>
-        </Card>
+
+            <div className="text-center pt-4">
+              <p className="text-zinc-400 text-lg font-bold">
+                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                <button 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-[#0071eb] hover:underline font-black uppercase tracking-tight"
+                >
+                  {isSignUp ? "Sign In" : "Sign Up"}
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
 
         <p className="mt-8 text-center text-zinc-600 text-[10px] uppercase tracking-[0.2em] font-black pointer-events-none">
           &copy; {new Date().getFullYear()} Agasobanuye Movies &bull; All Rights Reserved
