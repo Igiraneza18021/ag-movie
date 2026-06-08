@@ -212,26 +212,28 @@ export default function HomePage() {
         <Top10Section items={top10Items} />
       </div>
 
-      <div className="px-2 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 space-y-6 sm:space-y-8">
+      <div className="py-4 sm:py-6 md:py-8 space-y-12">
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (
           <ContinueWatchingRow items={continueWatchingItems} />
         )}
 
-        {/* Provider Series Section */}
-        <ProviderSeriesSection movies={allMovies} tvShows={allTVShows} />
+        <div className="px-2 sm:px-4 md:px-8 space-y-12">
+          {/* Provider Series Section */}
+          <ProviderSeriesSection movies={allMovies} tvShows={allTVShows} />
 
-        {/* Portrait categories */}
-        {Object.keys(categoryData).map((title, index) => {
-          const items = categoryData[title] || []
-          if (items.length === 0) return null
-          const delay = (continueWatchingItems.length > 0) ? (index + 1) * 160 : index * 160
-          return (
-            <div key={title} className="animate-stagger" style={{ animationDelay: `${delay}ms` }}>
-              <PortraitCategoryRow title={title} items={items} />
-            </div>
-          )
-        })}
+          {/* Portrait categories */}
+          {Object.keys(categoryData).map((title, index) => {
+            const items = categoryData[title] || []
+            if (items.length === 0) return null
+            const delay = (continueWatchingItems.length > 0) ? (index + 1) * 160 : index * 160
+            return (
+              <div key={title} className="animate-stagger" style={{ animationDelay: `${delay}ms` }}>
+                <PortraitCategoryRow title={title} items={items} />
+              </div>
+            )
+          })}
+        </div>
 
         {!isLoading && !hasContent(categoryData) && (
           <div className="px-4 md:px-8 py-10 text-center text-white/60">
