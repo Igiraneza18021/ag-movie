@@ -71,12 +71,42 @@ export default function HomePage() {
           .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 20)
 
+        // Generate Genre Categories
+        const genreMap: Record<string, (Movie | TVShow)[]> = {}
+        const allItems = [...movies, ...tvShows]
+        
+        allItems.forEach(item => {
+          if (item.genres && Array.isArray(item.genres)) {
+            item.genres.forEach((genre: any) => {
+              if (genre && genre.name) {
+                if (!genreMap[genre.name]) {
+                  genreMap[genre.name] = []
+                }
+                genreMap[genre.name].push(item)
+              }
+            })
+          }
+        })
+        
+        // Filter and sort genre categories
+        const genreCategories: Record<string, (Movie | TVShow)[]> = {}
+        Object.entries(genreMap)
+          .filter(([_, items]) => items.length >= 4) // Only show genres with at least 4 items
+          .sort((a, b) => b[1].length - a[1].length) // Sort genres by number of items descending
+          .forEach(([genreName, items]) => {
+            // Sort items in each genre by rating
+            genreCategories[`${genreName} Movies & TV`] = items
+              .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+              .slice(0, 20)
+          })
+
         // Set category data
-        const nextCategoryData = {
+        const nextCategoryData: Record<string, (Movie | TVShow)[]> = {
           "Newly Added Movies": newlyAddedMovies,
           "Newly Added TV Shows": newlyAddedTVShows,
           "Trending Movies": trendingMovies,
           "Popular TV Shows": trendingTVShows,
+          ...genreCategories
         }
 
         setCategoryData(nextCategoryData)
