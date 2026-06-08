@@ -78,11 +78,18 @@ export default function HomePage() {
         allItems.forEach(item => {
           if (item.genres && Array.isArray(item.genres)) {
             item.genres.forEach((genre: any) => {
-              if (genre && genre.name) {
-                if (!genreMap[genre.name]) {
-                  genreMap[genre.name] = []
+              let genreName = ""
+              if (typeof genre === 'string') {
+                genreName = genre
+              } else if (genre && genre.name) {
+                genreName = genre.name
+              }
+              
+              if (genreName) {
+                if (!genreMap[genreName]) {
+                  genreMap[genreName] = []
                 }
-                genreMap[genre.name].push(item)
+                genreMap[genreName].push(item)
               }
             })
           }
@@ -91,11 +98,11 @@ export default function HomePage() {
         // Filter and sort genre categories
         const genreCategories: Record<string, (Movie | TVShow)[]> = {}
         Object.entries(genreMap)
-          .filter(([_, items]) => items.length >= 4) // Only show genres with at least 4 items
+          .filter(([_, items]) => items.length >= 1) // Show genres even if they have only 1 item for now
           .sort((a, b) => b[1].length - a[1].length) // Sort genres by number of items descending
           .forEach(([genreName, items]) => {
             // Sort items in each genre by rating
-            genreCategories[`${genreName} Movies & TV`] = items
+            genreCategories[`${genreName} Agasobanuye`] = items
               .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
               .slice(0, 20)
           })
