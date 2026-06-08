@@ -116,12 +116,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         <Script id="aclib" strategy="beforeInteractive" src="//acscdn.com/script/aclib.js" />
-        <Script
-          src="https://quge5.com/88/tag.min.js"
-          data-zone="247696"
-          data-cfasync="false"
-          strategy="afterInteractive"
-        />
+        <script src="https://quge5.com/88/tag.min.js" data-zone="247696" async data-cfasync="false"></script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
