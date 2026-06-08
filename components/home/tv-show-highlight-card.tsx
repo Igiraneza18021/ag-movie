@@ -30,23 +30,26 @@ export function TvShowHighlightCard({ show }: TvShowHighlightCardProps) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 hidden md:block" />
 
       {/* Content */}
-      <div className="relative z-20 h-full flex flex-col justify-end md:justify-center px-6 sm:px-8 md:px-16 pb-8 md:pb-0 max-w-2xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0071eb]/20 border border-[#0071eb]/30 text-[#0071eb] text-[10px] font-black uppercase tracking-widest mb-4 w-fit">
-          Newly Added Series
+      <div className="relative z-20 h-full flex flex-col justify-end md:justify-center px-6 sm:px-8 md:px-16 pb-10 md:pb-0 max-w-3xl">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0071eb]/20 border border-[#0071eb]/30 text-[#0071eb] text-[10px] font-black uppercase tracking-widest w-fit">
+            Newly Added Series
+          </div>
+
+          {show.narrator && (
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest hidden sm:inline">Narrated by:</span>
+              <span className="px-2.5 py-1 bg-[#0071eb] text-white text-[10px] font-black uppercase tracking-widest rounded shadow-[0_0_20px_rgba(0,113,235,0.5)] border border-white/20">
+                {show.narrator}
+              </span>
+            </div>
+          )}
         </div>
 
-        {show.narrator && (
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Narrated by:</span>
-            <span className="px-3 py-1 bg-[#0071eb] text-white text-[10px] font-black uppercase tracking-widest rounded shadow-[0_0_15px_rgba(0,113,235,0.4)] border border-white/10">
-              {show.narrator}
-            </span>
-          </div>
-        )}
-        
-        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4 drop-shadow-lg">
+        <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-4 drop-shadow-2xl leading-none">
           {show.name}
         </h2>
+
         
         <p className="text-zinc-300 text-sm md:text-lg font-medium line-clamp-2 mb-8 max-w-lg drop-shadow">
           {show.overview}
