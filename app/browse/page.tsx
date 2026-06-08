@@ -9,6 +9,7 @@ import { SpotlightSection } from "@/components/home/spotlight-section"
 import { PortraitCategoryRow } from "@/components/home/portrait-category-row"
 import { Top10Section } from "@/components/home/top10-section"
 import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
+import { TvShowHighlightCard } from "@/components/home/tv-show-highlight-card"
 
 // Detect if user is on Mac
 const isMac = () => {
@@ -215,6 +216,13 @@ export default function HomePage() {
         {/* Continue Watching */}
         {continueWatchingItems.length > 0 && (
           <ContinueWatchingRow items={continueWatchingItems} />
+        )}
+
+        {/* TV Show Highlight Card */}
+        {allTVShows.length > 0 && (
+          <div className="px-2 sm:px-4 md:px-8">
+            <TvShowHighlightCard show={allTVShows[0]} />
+          </div>
         )}
 
         <div className="px-2 sm:px-4 md:px-8 space-y-12">
