@@ -57,6 +57,18 @@ declare global {
   }
 }
 
+type PlayerBridgeEventDetail = {
+  id: string
+  type: string
+  time: number
+  duration: number
+}
+
+function toPlayerNumber(value: unknown) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 export function NativeHlsPlayer({
   embedUrl,
   title,
@@ -74,6 +86,9 @@ export function NativeHlsPlayer({
   const playerRef = useRef<InstanceType<NonNullable<typeof window.Playerjs>> | null>(null)
   const bridgeRef = useRef<{ dispose: () => void; emit: (type: string) => void } | null>(null)
   const pendingPlaylistEntriesRef = useRef<PlayerPlaylistEntry[]>([])
+  const currentTimeRef = useRef(0)
+  const currentDurationRef = useRef(0)
+  const initialSeekAppliedRef = useRef(false)
   const [state, setState] = useState<ResolveState>("idle")
   const [scriptReady, setScriptReady] = useState(false)
   const [playerSource, setPlayerSource] = useState<PlayerSource>("")
@@ -109,6 +124,9 @@ export function NativeHlsPlayer({
     setScriptReady(false)
     playerRef.current?.api?.("stop")
     playerRef.current = null
+    currentTimeRef.current = 0
+    currentDurationRef.current = 0
+    initialSeekAppliedRef.current = false
   }, [playerScript])
 
   useEffect(() => {
@@ -220,30 +238,70 @@ export function NativeHlsPlayer({
     if (!scriptReady || !playerSource || !window.Playerjs) return
 
     const previousEvents = window.PlayerjsEvents
-    const getSnapshot = () => ({
-      time: Number(playerRef.current?.api?.("time") || 0),
-      duration: Number(playerRef.current?.api?.("duration") || 0),
-    })
+    const readPlayerValue = (command: string) => toPlayerNumber(playerRef.current?.api?.(command))
+    const getSnapshot = () => {
+      if (currentDurationRef.current <= 0) {
+        currentDurationRef.current = readPlayerValue("duration")
+      }
+
+      return {
+        time: currentTimeRef.current,
+        duration: currentDurationRef.current,
+      }
+    }
+    const emitSnapshot = (event: string, time?: number, duration?: number) => {
+      if (typeof time === "number" && Number.isFinite(time)) {
+        currentTimeRef.current = Math.max(0, time)
+      }
+
+      if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
+        currentDurationRef.current = duration
+      }
+
+      const snapshot = getSnapshot()
+
+      if (event === "time" || event === "duration" || event === "seek" || event === "userseek" || event === "progress") {
+        if (snapshot.duration > 0) {
+          onProgress?.(snapshot)
+        }
+      }
+
+      onPlayerEvent?.({ type: event, ...snapshot })
+    }
 
     window.PlayerjsEvents = (event, id, info) => {
       if (id === playerId) {
-        const snapshot = getSnapshot()
+        if (event === "time") {
+          emitSnapshot(event, toPlayerNumber(info))
+        } else if (event === "duration") {
+          emitSnapshot(event, undefined, toPlayerNumber(info))
+        } else if (event === "seek" || event === "userseek") {
+          emitSnapshot(event, toPlayerNumber(info))
+        } else if (event === "metadata" && currentDurationRef.current <= 0) {
+          emitSnapshot(event, undefined, readPlayerValue("duration"))
+        } else {
+          emitSnapshot(event)
+        }
 
         if (event === "end") {
+          emitSnapshot("progress", currentDurationRef.current || currentTimeRef.current, currentDurationRef.current)
           onEnded?.()
         }
-
-        if (event === "time" || event === "duration") {
-          if (snapshot.duration > 0) {
-            onProgress?.(snapshot)
-          }
-        }
-
-        onPlayerEvent?.({ type: event, ...snapshot })
       }
 
       previousEvents?.(event, id, info)
     }
+
+    const handleBridgeEvent = (rawEvent: Event) => {
+      const bridgeEvent = rawEvent as CustomEvent<PlayerBridgeEventDetail>
+      const detail = bridgeEvent.detail
+
+      if (!detail || detail.id !== playerId) return
+
+      emitSnapshot(detail.type, detail.time, detail.duration)
+    }
+
+    window.addEventListener("playerjs-bridge", handleBridgeEvent as EventListener)
 
     playerRef.current = new window.Playerjs({
       id: playerId,
@@ -260,7 +318,11 @@ export function NativeHlsPlayer({
 
     if (initialTime > 0) {
       window.setTimeout(() => {
+        if (initialSeekAppliedRef.current) return
+
         playerRef.current?.api?.("seek", initialTime)
+        currentTimeRef.current = initialTime
+        initialSeekAppliedRef.current = true
       }, 400)
     }
 
@@ -270,10 +332,14 @@ export function NativeHlsPlayer({
     }
 
     return () => {
+      window.removeEventListener("playerjs-bridge", handleBridgeEvent as EventListener)
       bridgeRef.current?.dispose()
       bridgeRef.current = null
       playerRef.current?.api?.("stop")
       playerRef.current = null
+      currentTimeRef.current = 0
+      currentDurationRef.current = 0
+      initialSeekAppliedRef.current = false
       window.PlayerjsEvents = previousEvents
     }
   }, [autoPlay, initialTime, muted, onEnded, onPlayerEvent, onProgress, playerSource, playerId, poster, scriptReady, title])
