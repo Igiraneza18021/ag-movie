@@ -102,6 +102,16 @@ export default function LandingPage() {
           <Top10Section items={trendingContent} />
         </div>
 
+        {/* Ad Section */}
+        <div className="container mx-auto px-4 my-12 flex justify-center">
+          <div id="container-fe2f7c0bf802573cd9dc38fff5dcf974"></div>
+          <Script 
+            src="https://pl29683284.effectivecpmnetwork.com/fe2f7c0bf802573cd9dc38fff5dcf974/invoke.js" 
+            strategy="afterInteractive"
+            data-cfasync="false"
+          />
+        </div>
+
         <div className="container mx-auto px-4">
           {/* Featured Movies Section */}
           {featuredMovies.length > 0 && (

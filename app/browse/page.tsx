@@ -12,6 +12,7 @@ import { Top10Section } from "@/components/home/top10-section"
 import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
 import { TvShowHighlightCard } from "@/components/home/tv-show-highlight-card"
 import { AdBanner } from "@/components/ad-banner"
+import Script from "next/script"
 
 // Detect if user is on Mac
 const isMac = () => {
@@ -277,6 +278,16 @@ export default function HomePage() {
           </div>
         </div>
         <Top10Section items={top10Items} />
+      </div>
+
+      {/* Ad Section */}
+      <div className="container mx-auto px-4 my-8 flex justify-center">
+        <div id="container-fe2f7c0bf802573cd9dc38fff5dcf974"></div>
+        <Script 
+          src="https://pl29683284.effectivecpmnetwork.com/fe2f7c0bf802573cd9dc38fff5dcf974/invoke.js" 
+          strategy="afterInteractive"
+          data-cfasync="false"
+        />
       </div>
 
       <div className="py-4 sm:py-6 md:py-8 space-y-12">
