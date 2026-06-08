@@ -163,6 +163,25 @@ export function getTMDBImageUrl(path: string, size = "w500") {
   return `https://image.tmdb.org/t/p/${size}${path}`
 }
 
+export async function getTMDBItemMedia(id: number, type: "movie" | "tv") {
+  if (!TMDB_TOKEN) {
+    throw new Error("TMDB token not configured")
+  }
+
+  const response = await fetch(`${TMDB_BASE_URL}/${type}/${id}?append_to_response=images,videos&include_image_language=en,null`, {
+    headers: {
+      'Authorization': TMDB_TOKEN,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch media from TMDB")
+  }
+
+  return response.json()
+}
+
 export async function searchTMDBSearchMulti(query: string, page = 1) {
   if (!TMDB_TOKEN) {
     throw new Error("TMDB token not configured")

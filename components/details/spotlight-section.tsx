@@ -257,7 +257,6 @@ export function SpotlightSection({
   const [showVideo, setShowVideo] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [inView, setInView] = useState(true)
-  const [showDetails, setShowDetails] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
 
@@ -331,63 +330,6 @@ export function SpotlightSection({
       setShowVideo(false)
     }
   }, [inView, showVideo])
-
-  // Auto-hide details after 4 seconds of mouse inactivity
-  useEffect(() => {
-    let hideTimer: NodeJS.Timeout | null = null
-
-    const startHideTimer = () => {
-      if (hideTimer) clearTimeout(hideTimer)
-      hideTimer = setTimeout(() => {
-        setShowDetails(false)
-      }, 4000)
-    }
-
-    const handleMouseEnter = () => {
-      setShowDetails(true)
-      if (hideTimer) {
-        clearTimeout(hideTimer)
-        hideTimer = null
-      }
-    }
-
-    const handleMouseMove = () => {
-      setShowDetails(true)
-      startHideTimer()
-    }
-
-    const handleMouseLeave = () => {
-      startHideTimer()
-    }
-
-    startHideTimer()
-
-    const setupListeners = () => {
-      const heroElement = heroRef.current
-      if (heroElement) {
-        heroElement.addEventListener("mouseenter", handleMouseEnter)
-        heroElement.addEventListener("mousemove", handleMouseMove)
-        heroElement.addEventListener("mouseleave", handleMouseLeave)
-        return true
-      }
-      return false
-    }
-
-    const timeoutId = setTimeout(() => {
-      setupListeners()
-    }, 100)
-
-    return () => {
-      clearTimeout(timeoutId)
-      if (hideTimer) clearTimeout(hideTimer)
-      const heroElement = heroRef.current
-      if (heroElement) {
-        heroElement.removeEventListener("mouseenter", handleMouseEnter)
-        heroElement.removeEventListener("mousemove", handleMouseMove)
-        heroElement.removeEventListener("mouseleave", handleMouseLeave)
-      }
-    }
-  }, [item])
 
   // Update iframe src when mute state changes (Desktop only)
   useEffect(() => {
@@ -600,26 +542,18 @@ export function SpotlightSection({
 
       {/* Content container */}
       <div
-        className={`relative z-10 p-6 sm:p-8 md:p-12 w-full md:pr-0 text-center md:text-left ${
-          showDetails ? "pb-24 md:pb-8" : "pb-32 sm:pb-20 md:pb-16"
-        }`}
+        className="relative z-10 p-6 sm:p-8 md:p-12 w-full md:pr-0 text-center md:text-left pb-24 md:pb-8"
         style={{ zIndex: 15 }}
       >
         {/* Title */}
         <h1
-          className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white w-full md:w-[28rem] ${
-            showDetails ? "mb-4 sm:mb-6" : "mb-8 sm:mb-12"
-          }`}
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white w-full md:w-[28rem] mb-4 sm:mb-6"
         >
           {title}
         </h1>
 
-        {/* Details section - Hidden after mouse inactivity */}
-        <div
-          className={`${
-            showDetails ? "opacity-100 max-h-screen" : "opacity-0 max-h-0"
-          }`}
-        >
+        {/* Details section */}
+        <div className="opacity-100 max-h-screen">
           {/* Rating and info */}
           <div className="flex items-center gap-2 mb-3 sm:mb-4 justify-center md:justify-start flex-wrap">
             <div className="bg-gradient-to-r from-[#E50914] to-[#B20710] text-white px-2 py-1 rounded font-bold tracking-tight text-xs uppercase shadow-lg">
@@ -661,7 +595,6 @@ export function SpotlightSection({
               {item.genres.slice(0, 3).map((genre: any, index) => (
                 <span key={genre.id || index} className="flex items-center gap-2">
                   <span className="text-neutral-300">{genre.name}</span>
-                  {index < Math.min(item.genres.length - 1, 2) && <span>•</span>}
                 </span>
               ))}
             </div>
@@ -670,9 +603,7 @@ export function SpotlightSection({
 
         {/* Action buttons - Always visible */}
         <div
-          className={`flex flex-col md:flex-row w-full md:justify-between items-center gap-4 md:gap-6 ${
-            showDetails ? "mb-6" : "mb-8 sm:mb-12"
-          }`}
+          className="flex flex-col md:flex-row w-full md:justify-between items-center gap-4 md:gap-6 mb-6"
         >
           <div className="flex flex-wrap items-center gap-2 md:gap-3 justify-center md:justify-start w-full md:w-auto">
             {/* Play Button */}
@@ -683,25 +614,10 @@ export function SpotlightSection({
                   e.stopPropagation()
                   onWatchClick()
                 }}
-                className="bg-white text-black px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-gray-200 active:bg-gray-300 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+                className="bg-[#0071eb] text-white px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#005bb5] active:bg-[#004488] shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
               >
                 <Play className="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" />
                 <span className="hidden sm:inline">Play</span>
-              </button>
-            )}
-
-            {/* Trailer Button */}
-            {ytKey && onTrailerClick && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onTrailerClick()
-                }}
-                className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
-              >
-                <Play className="w-4 h-4 sm:w-5 sm:w-5" fill="currentColor" />
-                <span className="hidden sm:inline">Trailer</span>
               </button>
             )}
 
@@ -712,7 +628,7 @@ export function SpotlightSection({
                 e.stopPropagation()
                 handleDownloadClick()
               }}
-              className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+              className="bg-[#0071eb]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#0071eb] active:bg-[#0071eb]/60 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
             >
               <Download className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline">{showDownloads ? "Hide Downloads" : "Downloads"}</span>
