@@ -55,6 +55,9 @@ export default function HomePage() {
 
         // Process movies for different sections
         const featuredMovies = movies.slice(0, 10)
+        const newlyAddedMovies = [...movies]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 20)
         const trendingMovies = [...movies]
           .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 20)
@@ -64,6 +67,9 @@ export default function HomePage() {
 
         // Process TV shows
         const featuredTVShows = tvShows.slice(0, 10)
+        const newlyAddedTVShows = [...tvShows]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 20)
         const trendingTVShows = [...tvShows]
           .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 20)
@@ -73,9 +79,11 @@ export default function HomePage() {
 
         // Set category data
         const nextCategoryData = {
+          "Newly Added Movies": newlyAddedMovies,
+          "Newly Added TV Shows": newlyAddedTVShows,
           "Trending Movies": trendingMovies,
-          "Top Rated Movies": topRatedMovies,
           "Popular TV Shows": trendingTVShows,
+          "Top Rated Movies": topRatedMovies,
           "Top Rated TV Shows": topRatedTVShows,
         }
 
