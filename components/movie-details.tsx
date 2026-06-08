@@ -213,7 +213,7 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
                             }}
                           />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 bg-[#0071eb] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,113,235,0.4)] group-hover:scale-110 transition-transform">
                               <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
                             </div>
                           </div>
