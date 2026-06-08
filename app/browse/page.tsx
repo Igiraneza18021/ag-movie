@@ -61,9 +61,6 @@ export default function HomePage() {
         const trendingMovies = [...movies]
           .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 20)
-        const topRatedMovies = movies
-          .filter((movie) => (movie.vote_average || 0) >= 8.0)
-          .slice(0, 20)
 
         // Process TV shows
         const featuredTVShows = tvShows.slice(0, 10)
@@ -73,9 +70,6 @@ export default function HomePage() {
         const trendingTVShows = [...tvShows]
           .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 20)
-        const topRatedTVShows = tvShows
-          .filter((show) => (show.vote_average || 0) >= 8.0)
-          .slice(0, 20)
 
         // Set category data
         const nextCategoryData = {
@@ -83,8 +77,6 @@ export default function HomePage() {
           "Newly Added TV Shows": newlyAddedTVShows,
           "Trending Movies": trendingMovies,
           "Popular TV Shows": trendingTVShows,
-          "Top Rated Movies": topRatedMovies,
-          "Top Rated TV Shows": topRatedTVShows,
         }
 
         setCategoryData(nextCategoryData)
@@ -157,11 +149,11 @@ export default function HomePage() {
   const top10Items = useMemo(() => {
     const trendingMovies = categoryData["Trending Movies"] || []
     const trendingTV = categoryData["Popular TV Shows"] || []
-    const popularMovies = categoryData["Top Rated Movies"] || []
-    const popularTV = categoryData["Top Rated TV Shows"] || []
+    const newlyAddedMovies = categoryData["Newly Added Movies"] || []
+    const newlyAddedTV = categoryData["Newly Added TV Shows"] || []
 
-    // Combine all trending/popular items and take top 10
-    const allItems = [...trendingMovies, ...trendingTV, ...popularMovies, ...popularTV]
+    // Combine all relevant items and take top 10
+    const allItems = [...trendingMovies, ...trendingTV, ...newlyAddedMovies, ...newlyAddedTV]
 
     // Remove duplicates based on id
     const uniqueItems = allItems.filter(
