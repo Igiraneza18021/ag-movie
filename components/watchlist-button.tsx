@@ -96,11 +96,11 @@ export function WatchlistButton({
         )}
       >
         {inWatchlist ? (
-          <Check className={cn(iconSize, showText && !iconOnly && "mr-2")} />
+          <Check className={cn(iconSize, showText && !iconOnly && "sm:mr-2 mr-0")} />
         ) : (
-          <Plus className={cn(iconSize, showText && !iconOnly && "mr-2")} />
+          <Plus className={cn(iconSize, showText && !iconOnly && "sm:mr-2 mr-0")} />
         )}
-        {showText && !iconOnly ? (inWatchlist ? "In Watchlist" : "Add to List") : null}
+        {showText && !iconOnly ? <span className="hidden sm:inline">{inWatchlist ? "In Watchlist" : "Add to List"}</span> : null}
       </Button>
 
       <WatchlistEntryDialog

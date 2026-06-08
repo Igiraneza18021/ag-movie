@@ -652,10 +652,10 @@ export function SpotlightSection({
                 first_air_date={mediaType === "tv" ? (item as TVShow).first_air_date : undefined}
                 number_of_episodes={mediaType === "tv" ? (item as TVShow).number_of_episodes : undefined}
                 variant="ghost"
-                size="lg"
-                iconOnly
-                showText={false}
-                className="bg-white/10 text-white px-3 sm:px-5 py-2 sm:py-4 h-auto rounded-lg flex items-center justify-center hover:bg-white/20 shadow-lg border border-white/20 backdrop-blur-sm transition-all"
+                size="default"
+                iconOnly={false}
+                showText={true}
+                className="bg-white/10 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-white/20 shadow-lg border border-white/20 backdrop-blur-sm transition-all h-auto"
               />
             </div>
 
