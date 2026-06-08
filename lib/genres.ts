@@ -59,11 +59,18 @@ export function contentHasGenre(
 
   const normalizedName = normalizeGenreName(selectedGenreName)
   const parsedGenreId = selectedGenreId ? Number.parseInt(selectedGenreId, 10) : null
+  const normalizedSelectedId =
+    selectedGenreId && Number.isNaN(Number.parseInt(selectedGenreId, 10))
+      ? normalizeGenreName(selectedGenreId.replace(/^name:/, ""))
+      : ""
 
   return genres.some((genre) => {
     const tmdbId = toGenreTmdbId(genre)
     const matchesId = parsedGenreId !== null && Number.isFinite(parsedGenreId) && tmdbId === parsedGenreId
-    const matchesName = normalizedName.length > 0 && normalizeGenreName(getGenreName(genre)) === normalizedName
+    const genreName = normalizeGenreName(getGenreName(genre))
+    const matchesName =
+      (normalizedName.length > 0 && genreName === normalizedName) ||
+      (normalizedSelectedId.length > 0 && genreName === normalizedSelectedId)
     return matchesId || matchesName
   })
 }
@@ -99,7 +106,7 @@ export function buildGenreOptions(items: Array<{ genres?: Array<ContentGenreLike
       if (canonicalNames.has(normalizedName) || stringOnlyGenreMap.has(normalizedName)) continue
 
       stringOnlyGenreMap.set(normalizedName, {
-        id: normalizedName,
+        id: `name:${normalizedName}`,
         tmdb_id: -1,
         name,
         created_at: "",
@@ -119,6 +126,7 @@ export function findGenreByParams(
   const normalizedName = normalizeGenreName(selectedGenreName)
 
   return (
+    genres.find((genre) => genre.id === selectedGenreId) ||
     genres.find((genre) => parsedGenreId !== null && genre.tmdb_id === parsedGenreId) ||
     genres.find((genre) => normalizeGenreName(genre.name) === normalizedName) ||
     null

@@ -28,13 +28,13 @@ export function FilterSidebar({ genres, type }: FilterSidebarProps) {
   const currentRating = searchParams.get("rating") || "0"
   const currentType = searchParams.get("type")
   const selectedGenre = findGenreByParams(genres, currentGenreId, currentGenre)
-  const selectedGenreValue = selectedGenre ? selectedGenre.tmdb_id.toString() : "all"
+  const selectedGenreValue = selectedGenre ? selectedGenre.id : "all"
 
   const updateFilter = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString())
     if (key === "genreId") {
       if (value) {
-        const nextGenre = genres.find((genre) => genre.tmdb_id.toString() === value)
+        const nextGenre = genres.find((genre) => genre.id === value || genre.tmdb_id.toString() === value)
         params.set("genreId", value)
         if (nextGenre) {
           params.set("genre", nextGenre.name)
@@ -129,7 +129,7 @@ export function FilterSidebar({ genres, type }: FilterSidebarProps) {
                 <SelectContent>
                   <SelectItem value="all">All genres</SelectItem>
                   {genres.map((genre) => (
-                    <SelectItem key={genre.tmdb_id} value={genre.tmdb_id.toString()}>
+                    <SelectItem key={genre.id} value={genre.id}>
                       {genre.name}
                     </SelectItem>
                   ))}
