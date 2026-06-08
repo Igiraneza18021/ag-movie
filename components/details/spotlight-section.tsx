@@ -641,6 +641,14 @@ export function SpotlightSection({
             <span className="text-neutral-300 font-medium text-sm sm:text-base">
               {item.vote_average?.toFixed(1) || "8.0"}
             </span>
+            {item.narrator && (
+              <>
+                <span className="text-neutral-400">•</span>
+                <span className="bg-[#0071eb] text-white px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-[0_0_15px_rgba(0,113,235,0.4)] border border-white/10">
+                  {item.narrator}
+                </span>
+              </>
+            )}
             <span className="text-neutral-400">•</span>
             <span className="text-neutral-300 text-sm sm:text-base">{formatReleaseDate(releaseDate)}</span>
             <span className="text-neutral-400">•</span>
