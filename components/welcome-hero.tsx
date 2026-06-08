@@ -1,18 +1,55 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, Globe } from "lucide-react"
+import { ChevronRight, Globe, User, LogOut } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface WelcomeHeroProps {
   movies: Movie[]
 }
 
 export function WelcomeHero({ movies }: WelcomeHeroProps) {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.refresh()
+  }
+
   // Create a larger array of movies for the background grid
   const gridMovies = [...movies, ...movies, ...movies, ...movies, ...movies].slice(0, 60)
 
@@ -55,11 +92,46 @@ export function WelcomeHero({ movies }: WelcomeHeroProps) {
             <Globe className="w-4 h-4" />
             <span className="text-sm font-black uppercase tracking-wider">English</span>
           </div>
-          <Link href="/login">
-            <Button className="bg-[#0071eb] hover:bg-[#005bb5] text-white font-black px-6 py-2 text-sm rounded-lg transition-all shadow-lg active:scale-95">
-              Sign In
-            </Button>
-          </Link>
+          
+          {!loading && (
+            user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 outline-none">
+                    <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-transparent hover:ring-[#0071eb] transition-all">
+                      <AvatarImage src={user.user_metadata?.avatar_url} />
+                      <AvatarFallback className="bg-[#0071eb] text-white font-black">
+                        {user.email?.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-white/10 rounded-2xl p-2 shadow-2xl backdrop-blur-xl">
+                  <DropdownMenuLabel className="px-3 py-2">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-black text-white leading-none">Account</p>
+                      <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/5" />
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 text-zinc-300 hover:bg-[#0071eb] hover:text-white cursor-pointer transition-colors font-bold" onClick={() => router.push("/profile")}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 text-red-500 hover:bg-red-500/20 cursor-pointer transition-colors font-bold" onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/login">
+                <Button className="bg-[#0071eb] hover:bg-[#005bb5] text-white font-black px-6 py-2 text-sm rounded-lg transition-all shadow-lg active:scale-95">
+                  Sign In
+                </Button>
+              </Link>
+            )
+          )}
         </div>
       </header>
 
