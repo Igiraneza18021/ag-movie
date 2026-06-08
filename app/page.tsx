@@ -10,6 +10,7 @@ import { ArrowRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Footer } from "@/components/footer"
+import Script from "next/script"
 
 export default function LandingPage() {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([])
@@ -17,6 +18,7 @@ export default function LandingPage() {
   const [trendingContent, setTrendingContent] = useState<(Movie | TVShow)[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -30,6 +32,20 @@ export default function LandingPage() {
     const supabase = createClient()
     
     try {
+      // Check subscription status
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_subscribed")
+          .eq("id", user.id)
+          .single()
+        
+        if (profile?.is_subscribed) {
+          setIsSubscribed(true)
+        }
+      }
+
       const [moviesResult, tvShowsResult] = await Promise.all([
         supabase
           .from("movies")
@@ -101,6 +117,18 @@ export default function LandingPage() {
           <Top10Section items={trendingContent} />
         </div>
 
+        {/* Ad Section */}
+        {!isSubscribed && (
+          <div className="container mx-auto px-4 my-12 flex justify-center">
+            <div id="container-fe2f7c0bf802573cd9dc38fff5dcf974"></div>
+            <Script 
+              src="https://pl29683284.effectivecpmnetwork.com/fe2f7c0bf802573cd9dc38fff5dcf974/invoke.js" 
+              strategy="afterInteractive"
+              data-cfasync="false"
+            />
+          </div>
+        )}
+
         <div className="container mx-auto px-4">
           {/* Featured Movies Section */}
           {featuredMovies.length > 0 && (
@@ -154,6 +182,18 @@ export default function LandingPage() {
             </div>
           )}
         </div>
+
+        {/* Ad Section */}
+        {!isSubscribed && (
+          <div className="container mx-auto px-4 my-16 flex justify-center">
+            <div id="container-fe2f7c0bf802573cd9dc38fff5dcf974"></div>
+            <Script 
+              src="https://pl29683284.effectivecpmnetwork.com/fe2f7c0bf802573cd9dc38fff5dcf974/invoke.js" 
+              strategy="afterInteractive"
+              data-cfasync="false"
+            />
+          </div>
+        )}
 
         {/* Subscription Section relocated to bottom */}
         <section className="relative py-32 bg-black overflow-hidden mt-12">

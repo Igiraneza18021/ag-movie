@@ -12,6 +12,7 @@ import { Top10Section } from "@/components/home/top10-section"
 import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
 import { TvShowHighlightCard } from "@/components/home/tv-show-highlight-card"
 import { AdBanner } from "@/components/ad-banner"
+import Script from "next/script"
 
 // Detect if user is on Mac
 const isMac = () => {
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [spotlightLoading, setSpotlightLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSubscribed, setIsSubscribed] = useState(false)
 
   // Load categories and spotlight
   useEffect(() => {
@@ -45,6 +47,19 @@ export default function HomePage() {
         
         // Get auth user first
         const { data: { user } } = await supabase.auth.getUser()
+
+        // Check subscription status
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_subscribed")
+            .eq("id", user.id)
+            .single()
+          
+          if (profile?.is_subscribed) {
+            setIsSubscribed(true)
+          }
+        }
 
         // Fetch movies and TV shows
         const [movies, tvShows] = await Promise.all([
@@ -233,31 +248,33 @@ export default function HomePage() {
       />
       
       {/* Subscription Notification Banner */}
-      <div className="px-4 sm:px-6 md:px-12 mt-8 z-20 relative">
-        <div className="w-full bg-gradient-to-r from-[#004488] via-[#0071eb] to-[#004488] py-4 md:py-6 px-4 sm:px-8 relative overflow-hidden flex items-center justify-center rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,113,235,0.2)]">
-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
-          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between w-full gap-4 text-center lg:text-left">
-            <div className="flex items-center gap-4 flex-col lg:flex-row">
-              <div className="bg-white text-[#0071eb] px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-md flex-shrink-0">
-                Coming Soon
+      {!isSubscribed && (
+        <div className="px-4 sm:px-6 md:px-12 mt-8 z-20 relative">
+          <div className="w-full bg-gradient-to-r from-[#004488] via-[#0071eb] to-[#004488] py-4 md:py-6 px-4 sm:px-8 relative overflow-hidden flex items-center justify-center rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,113,235,0.2)]">
+            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between w-full gap-4 text-center lg:text-left">
+              <div className="flex items-center gap-4 flex-col lg:flex-row">
+                <div className="bg-white text-[#0071eb] px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-md flex-shrink-0">
+                  Coming Soon
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-white text-base md:text-lg font-bold tracking-wide">
+                    The ultimate <span className="text-yellow-300 font-black">ad-free</span> experience is almost here!
+                  </p>
+                  <p className="text-white/80 text-sm mt-1">
+                    We're building an uninterrupted viewing experience with exclusive premium features.
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <p className="text-white text-base md:text-lg font-bold tracking-wide">
-                  The ultimate <span className="text-yellow-300 font-black">ad-free</span> experience is almost here!
-                </p>
-                <p className="text-white/80 text-sm mt-1">
-                  We're building an uninterrupted viewing experience with exclusive premium features.
-                </p>
-              </div>
+              <Link href="/subscribe">
+                <button className="bg-white/10 hover:bg-white/20 text-white border border-white/30 transition-colors px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider backdrop-blur-sm whitespace-nowrap shadow-lg">
+                  View Pricing
+                </button>
+              </Link>
             </div>
-            <Link href="/subscribe">
-              <button className="bg-white/10 hover:bg-white/20 text-white border border-white/30 transition-colors px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider backdrop-blur-sm whitespace-nowrap shadow-lg">
-                View Pricing
-              </button>
-            </Link>
           </div>
         </div>
-      </div>
+      )}
 
       {/* TOP 10 SECTION */}
       <div className="pt-8 md:pt-12 mb-10 overflow-visible">
@@ -278,6 +295,18 @@ export default function HomePage() {
         </div>
         <Top10Section items={top10Items} />
       </div>
+
+      {/* Ad Section */}
+      {!isSubscribed && (
+        <div className="container mx-auto px-4 my-8 flex justify-center">
+          <div id="container-fe2f7c0bf802573cd9dc38fff5dcf974"></div>
+          <Script 
+            src="https://pl29683284.effectivecpmnetwork.com/fe2f7c0bf802573cd9dc38fff5dcf974/invoke.js" 
+            strategy="afterInteractive"
+            data-cfasync="false"
+          />
+        </div>
+      )}
 
       <div className="py-4 sm:py-6 md:py-8 space-y-12">
         {/* Continue Watching */}
@@ -300,7 +329,7 @@ export default function HomePage() {
             return (
               <div key={title}>
                 <PortraitCategoryRow title={title} items={items} />
-                {title === "Popular Agasobanuye TV Shows" && (
+                {title === "Popular Agasobanuye TV Shows" && !isSubscribed && (
                   <AdBanner zoneId="11407010" />
                 )}
               </div>
