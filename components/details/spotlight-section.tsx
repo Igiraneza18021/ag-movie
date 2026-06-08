@@ -556,7 +556,7 @@ export function SpotlightSection({
         <div className="opacity-100 max-h-screen">
           {/* Rating and info */}
           <div className="flex items-center gap-2 mb-3 sm:mb-4 justify-center md:justify-start flex-wrap">
-            <div className="bg-gradient-to-r from-[#E50914] to-[#B20710] text-white px-2 py-1 rounded font-bold tracking-tight text-xs uppercase shadow-lg">
+            <div className="bg-[#0071eb] text-white px-2 py-1 rounded font-bold tracking-tight text-xs uppercase shadow-[0_0_15px_rgba(0,113,235,0.3)] border border-[#0071eb]/50">
               Agasobanuye
             </div>
             <span className="text-neutral-300 font-medium text-sm sm:text-base">
@@ -614,7 +614,7 @@ export function SpotlightSection({
                   e.stopPropagation()
                   onWatchClick()
                 }}
-                className="bg-[#0071eb] text-white px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#005bb5] active:bg-[#004488] shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+                className="bg-white text-black px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-gray-200 active:bg-gray-300 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
               >
                 <Play className="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" />
                 <span className="hidden sm:inline">Play</span>
