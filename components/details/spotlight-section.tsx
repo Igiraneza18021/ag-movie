@@ -634,25 +634,6 @@ export function SpotlightSection({
               <span className="hidden sm:inline">{showDownloads ? "Hide Downloads" : "Downloads"}</span>
             </button>
 
-            {/* Share Button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                void handleShareClick()
-              }}
-              disabled={isSharing}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
-                isSharing
-                  ? "bg-white/5 border-white/10 text-white/70 cursor-wait"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white hover:border-white/30"
-              }`}
-              title="Share to Instagram, TikTok, or another app"
-            >
-              <Share2 className="w-4 h-4 flex-shrink-0" />
-              <span className="whitespace-nowrap hidden sm:inline">{isSharing ? "Preparing..." : "Share"}</span>
-            </button>
-
             {/* Watchlist Button */}
             <div
               onClick={(e) => {
@@ -671,12 +652,31 @@ export function SpotlightSection({
                 first_air_date={mediaType === "tv" ? (item as TVShow).first_air_date : undefined}
                 number_of_episodes={mediaType === "tv" ? (item as TVShow).number_of_episodes : undefined}
                 variant="ghost"
-                size="sm"
+                size="lg"
                 iconOnly
                 showText={false}
-                className="h-10 w-10 rounded-lg border border-white/20 bg-white/10 p-0 text-white shadow-lg backdrop-blur-sm hover:bg-white/20"
+                className="bg-white/10 text-white px-3 sm:px-5 py-2 sm:py-4 h-auto rounded-lg flex items-center justify-center hover:bg-white/20 shadow-lg border border-white/20 backdrop-blur-sm transition-all"
               />
             </div>
+
+            {/* Share Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                void handleShareClick()
+              }}
+              disabled={isSharing}
+              className={`flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
+                isSharing
+                  ? "bg-white/5 border-white/10 text-white/70 cursor-wait"
+                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white hover:border-white/30"
+              }`}
+              title="Share to Instagram, TikTok, or another app"
+            >
+              <Share2 className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span className="whitespace-nowrap hidden sm:inline">{isSharing ? "Preparing..." : "Share"}</span>
+            </button>
           </div>
 
           {/* Content Rating */}
