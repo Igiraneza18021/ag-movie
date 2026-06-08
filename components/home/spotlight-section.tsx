@@ -126,7 +126,7 @@ export function SpotlightSection({ item, isLoading }: SpotlightSectionProps) {
           {item.narrator && (
             <>
               <span className="text-neutral-500">•</span>
-              <span className="text-[#0071eb] text-sm sm:text-base font-black uppercase tracking-tight drop-shadow-[0_0_10px_rgba(0,113,235,0.3)]">
+              <span className="bg-[#0071eb] text-white px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-[0_0_15px_rgba(0,113,235,0.4)] border border-white/10">
                 {item.narrator}
               </span>
             </>

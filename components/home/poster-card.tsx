@@ -40,12 +40,9 @@ export function PosterCard({ item }: PosterCardProps) {
           <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
           {item.vote_average?.toFixed(1) || "0.0"}
           {item.narrator && (
-            <>
-              <span className="text-white/40 ml-1">•</span>
-              <span className="text-[#0071eb] font-black truncate max-w-[60px] uppercase tracking-tighter">
-                {item.narrator}
-              </span>
-            </>
+            <span className="ml-1.5 px-1.5 py-0.5 bg-[#0071eb] text-white font-black rounded-sm text-[8px] uppercase tracking-tighter shadow-sm">
+              {item.narrator}
+            </span>
           )}
         </div>
       </div>
@@ -58,15 +55,16 @@ export function PosterCard({ item }: PosterCardProps) {
           </p>
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                {year}
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                  {year}
+                </span>
                 {item.narrator && (
-                  <>
-                    <span className="text-white/40">•</span>
-                    <span className="text-[#0071eb] font-black truncate max-w-[80px]">{item.narrator}</span>
-                  </>
+                  <span className="px-1.5 py-0.5 bg-[#0071eb] text-white font-black rounded-sm text-[8px] uppercase tracking-tighter shadow-sm">
+                    {item.narrator}
+                  </span>
                 )}
-              </span>
+              </div>
               <div className="flex items-center gap-1 text-white text-xs font-black">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                 {item.vote_average?.toFixed(1) || "0.0"}
