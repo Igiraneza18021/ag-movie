@@ -73,7 +73,7 @@ export function FilterSidebar({ genres, type }: FilterSidebarProps) {
       </div>
 
       {/* Filter Sidebar */}
-      <div className={`lg:block ${isOpen ? "block" : "hidden"} w-full lg:w-64 space-y-4 lg:space-y-6`}>
+      <div className={`lg:block ${isOpen ? "block" : "hidden"} w-full lg:w-64 lg:self-start lg:sticky lg:top-24 space-y-4 lg:space-y-6`}>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">

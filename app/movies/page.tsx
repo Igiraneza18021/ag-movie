@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { BrowsePagination } from "@/components/browse-pagination"
 import { Footer } from "@/components/footer"
 import { MovieGrid } from "@/components/movie-grid"
 import { FilterSidebar } from "@/components/filter-sidebar"
@@ -10,6 +11,7 @@ interface MoviesPageProps {
   searchParams: Promise<{
     genre?: string
     genreId?: string
+    page?: string
     sort?: string
     year?: string
     rating?: string
@@ -25,8 +27,10 @@ export const metadata: Metadata = generatePageMetadata(
 
 export default async function MoviesPage({ searchParams }: MoviesPageProps) {
   const params = await searchParams
+  const currentPage = Math.max(1, Number.parseInt(params.page || "1", 10) || 1)
+  const pageSize = 36
 
-  const allMovies = await getMoviesServer(200)
+  const allMovies = await getMoviesServer(2000)
   let filteredMovies = allMovies
   const genres = buildGenreOptions(allMovies)
 
@@ -76,6 +80,14 @@ export default async function MoviesPage({ searchParams }: MoviesPageProps) {
       filteredMovies.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 
+  const totalMovies = filteredMovies.length
+  const totalPages = Math.max(1, Math.ceil(totalMovies / pageSize))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const startIndex = (safeCurrentPage - 1) * pageSize
+  const paginatedMovies = filteredMovies.slice(startIndex, startIndex + pageSize)
+  const visibleStart = totalMovies === 0 ? 0 : startIndex + 1
+  const visibleEnd = Math.min(startIndex + pageSize, totalMovies)
+
   return (
     <div className="min-h-screen bg-background">
 
@@ -83,13 +95,21 @@ export default async function MoviesPage({ searchParams }: MoviesPageProps) {
         <div className="container mx-auto px-4 py-4 md:py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">Movies</h1>
-            <p className="text-sm md:text-base text-muted-foreground">{filteredMovies.length} movies found</p>
+            <p className="text-sm md:text-base text-muted-foreground">
+              {totalMovies === 0 ? "0 movies found" : `${visibleStart}-${visibleEnd} of ${totalMovies} movies`}
+            </p>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
             <FilterSidebar genres={genres} type="movies" />
             <div className="flex-1">
-              <MovieGrid movies={filteredMovies} />
+              <MovieGrid movies={paginatedMovies} />
+              <BrowsePagination
+                basePath="/movies"
+                currentPage={safeCurrentPage}
+                totalPages={totalPages}
+                searchParams={params}
+              />
             </div>
           </div>
         </div>
