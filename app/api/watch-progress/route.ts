@@ -199,27 +199,32 @@ export async function POST(request: Request) {
       completed_at = null
     }
 
-    const { error } = await supabase
-      .from("watch_progress_entries")
-      .upsert({
-        user_id: user.id,
-        content_type,
-        movie_id: content_type === 'movie' ? movie_id : null,
-        tv_show_id: content_type === 'episode' ? tv_show_id : null,
-        season_id: content_type === 'episode' ? season_id : null,
-        episode_id: content_type === 'episode' ? episode_id : null,
-        progress_seconds: safeProgressSeconds,
-        duration_seconds: safeDurationSeconds,
-        progress_percent,
-        is_completed: final_is_completed,
-        started_at,
-        rewatch_count,
-        last_watched_at: now,
-        updated_at: now,
-        completed_at,
-      }, {
-        onConflict: content_type === 'movie' ? 'user_id,movie_id' : 'user_id,episode_id'
-      })
+    const progressPayload = {
+      user_id: user.id,
+      content_type,
+      movie_id: content_type === "movie" ? movie_id : null,
+      tv_show_id: content_type === "episode" ? tv_show_id : null,
+      season_id: content_type === "episode" ? season_id : null,
+      episode_id: content_type === "episode" ? episode_id : null,
+      progress_seconds: safeProgressSeconds,
+      duration_seconds: safeDurationSeconds,
+      progress_percent,
+      is_completed: final_is_completed,
+      started_at,
+      rewatch_count,
+      last_watched_at: now,
+      updated_at: now,
+      completed_at,
+    }
+
+    const { error } = existing?.id
+      ? await supabase
+          .from("watch_progress_entries")
+          .update(progressPayload)
+          .eq("id", existing.id)
+      : await supabase
+          .from("watch_progress_entries")
+          .insert(progressPayload)
 
     if (error) {
       console.error("Error saving watch progress:", error)
