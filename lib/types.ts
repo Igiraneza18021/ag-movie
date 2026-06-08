@@ -162,3 +162,96 @@ export interface RoomMessage {
   message: string
   timestamp: string
 }
+
+export type WatchlistItemType = "movie" | "tv"
+
+export type WatchStatus =
+  | "not_set"
+  | "watching"
+  | "planning"
+  | "completed"
+  | "re_watching"
+  | "paused"
+  | "dropped"
+
+export type WatchlistFilter = "all" | Exclude<WatchStatus, "not_set">
+
+export interface WatchlistMediaSummary {
+  id: string
+  type: WatchlistItemType
+  title: string
+  poster_path?: string | null
+  vote_average?: number | null
+  release_date?: string | null
+  first_air_date?: string | null
+  number_of_episodes?: number | null
+}
+
+export interface WatchlistEntry {
+  id: string
+  user_id: string
+  item_type: WatchlistItemType
+  movie_id?: string | null
+  tv_show_id?: string | null
+  watch_status: WatchStatus
+  progress: number
+  score: number | null
+  start_date: string | null
+  end_date: string | null
+  total_rewatched: number
+  notes: string | null
+  liked: boolean
+  created_at: string
+  updated_at: string
+  live_progress: WatchProgressEntry | TVShowProgressEntry | null
+  media: WatchlistMediaSummary
+}
+
+export interface WatchlistSaveInput {
+  entryId?: string
+  item: WatchlistMediaSummary
+  watch_status: WatchStatus
+  progress: number
+  score: number | null
+  start_date: string | null
+  end_date: string | null
+  total_rewatched: number
+  notes: string
+  liked: boolean
+}
+
+export interface WatchProgressEntry {
+  id?: string
+  user_id: string
+  content_type: "movie" | "episode"
+  movie_id?: string | null
+  tv_show_id?: string | null
+  season_id?: string | null
+  episode_id?: string | null
+  progress_seconds: number
+  duration_seconds: number | null
+  progress_percent: number | null
+  is_completed: boolean
+  started_at: string | null
+  last_watched_at: string
+  completed_at: string | null
+  rewatch_count: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface TVShowProgressEntry {
+  id?: string
+  user_id: string
+  tv_show_id: string
+  started_at: string | null
+  last_watched_at: string
+  completed_episode_count: number
+  total_episode_count_snapshot: number
+  progress_percent: number
+  is_completed: boolean
+  rewatch_count: number
+  completed_at: string | null
+  created_at?: string
+  updated_at?: string
+}

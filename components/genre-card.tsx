@@ -8,6 +8,7 @@ import Link from "next/link"
 interface GenreCardProps {
   genre: {
     id: string
+    tmdb_id: number
     name: string
     movieCount: number
     tvShowCount: number
@@ -16,9 +17,11 @@ interface GenreCardProps {
 }
 
 export function GenreCard({ genre }: GenreCardProps) {
+  const href = `/list?genreId=${genre.tmdb_id}&genre=${encodeURIComponent(genre.name)}`
+
   return (
     <Card className="group hover:bg-accent/50 transition-colors cursor-pointer">
-      <Link href={`/list?genre=${encodeURIComponent(genre.name)}`}>
+      <Link href={href}>
         <CardContent className="p-6">
           <div className="text-center">
             <h3 className="text-xl font-semibold text-foreground mb-4 group-hover:text-primary transition-colors">

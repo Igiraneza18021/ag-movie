@@ -114,8 +114,32 @@ export function Top10Section({ items }: Top10SectionProps) {
                         AG
                       </div>
                     </div>
+
+                    {/* Narrator Badge - Bottom Left (Default) */}
+                    {it.narrator && (
+                      <div className="absolute bottom-2 left-2 z-20 transition-opacity duration-300 group-hover:opacity-0">
+                        <div className="bg-[#0071eb] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20 uppercase tracking-tighter max-w-[60px] truncate">
+                          {it.narrator}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Narrator Badge - Near Number (Hover) */}
+                {it.narrator && (
+                  <div className="absolute left-0 bottom-0 z-40 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
+                    <div className="relative">
+                      {/* This invisible spacer helps position relative to the large number */}
+                      <div className="text-[100px] sm:text-[120px] md:text-[150px] lg:text-[180px] font-black leading-[0.8] opacity-0">
+                        {rank}
+                      </div>
+                      <div className="absolute bottom-2 -right-4 bg-[#0071eb] text-white text-[10px] md:text-xs font-black px-2 py-0.5 rounded shadow-[0_0_20px_rgba(0,113,235,0.6)] border border-white/20 uppercase tracking-wider whitespace-nowrap">
+                        {it.narrator}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}

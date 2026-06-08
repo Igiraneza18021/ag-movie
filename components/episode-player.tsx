@@ -9,6 +9,7 @@ import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Episode, TVShow } from "@/lib/types"
 import { Play, X, Volume2, VolumeX, ArrowLeft, Calendar, Clock, Download } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 
 interface EpisodePlayerProps {
   episode: Episode
@@ -23,11 +24,90 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [initialProgress, setInitialProgress] = useState(0)
+  const [loadingProgress, setLoadingProgress] = useState(true)
   const [showNextEpisode, setShowNextEpisode] = useState(false)
   const [autoNextEnabled, setAutoNextEnabled] = useState(false) // Disabled by default
   const [nextEpisodeTimer, setNextEpisodeTimer] = useState(10)
   const [videoEnded, setVideoEnded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const lastSavedTimeRef = useRef<number>(0)
+  const latestProgressRef = useRef<{ time: number; duration: number }>({ time: 0, duration: 0 })
+  const supabase = createClient()
+
+  useEffect(() => {
+    const fetchInitialProgress = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from("watch_progress_entries")
+          .select("progress_seconds")
+          .eq("user_id", user.id)
+          .eq("episode_id", episode.id)
+          .maybeSingle()
+        
+        if (data) {
+          setInitialProgress(data.progress_seconds)
+          lastSavedTimeRef.current = data.progress_seconds
+        }
+      }
+      setLoadingProgress(false)
+    }
+    fetchInitialProgress()
+  }, [episode.id, supabase])
+
+  const persistProgress = async (
+    { time, duration }: { time: number; duration: number },
+    options?: { force?: boolean },
+  ) => {
+    const now = Math.floor(time)
+    const roundedDuration = Math.floor(duration)
+
+    if (now <= 0 || roundedDuration <= 0) return
+    if (!options?.force && (now % 10 !== 0 || now === lastSavedTimeRef.current)) return
+
+    lastSavedTimeRef.current = now
+
+    try {
+      await fetch("/api/watch-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content_type: "episode",
+          tv_show_id: tvShow.id,
+          season_id: episode.season_id,
+          episode_id: episode.id,
+          progress_seconds: now,
+          duration_seconds: roundedDuration,
+        }),
+      })
+    } catch (err) {
+      console.error("Failed to save watch progress:", err)
+    }
+  }
+
+  const handleProgress = async ({ time, duration }: { time: number; duration: number }) => {
+    latestProgressRef.current = { time, duration }
+    await persistProgress({ time, duration })
+  }
+
+  useEffect(() => {
+    const flushProgress = () => {
+      const { time, duration } = latestProgressRef.current
+      if (time > 0 && duration > 0) {
+        void persistProgress({ time, duration }, { force: true })
+      }
+    }
+
+    window.addEventListener("pagehide", flushProgress)
+    window.addEventListener("beforeunload", flushProgress)
+
+    return () => {
+      window.removeEventListener("pagehide", flushProgress)
+      window.removeEventListener("beforeunload", flushProgress)
+    }
+  }, [episode.id, tvShow.id])
+
   const playerPlaylistItems = useMemo(() => {
     const orderedEpisodes = episodes.length ? episodes : [episode]
     const currentIndex = Math.max(
@@ -237,12 +317,12 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  if (!mounted) {
+  if (!mounted || loadingProgress) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" className="text-white" />
-          <div className="text-white text-lg animate-fade-in">Loading Episode...</div>
+          <LoadingSpinner size="lg" className="text-[#0071eb]" />
+          <div className="text-white text-lg font-medium">Resolving stream...</div>
         </div>
       </div>
     )
@@ -414,7 +494,22 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
               playlistItems={playerPlaylistItems}
               autoPlay={autoPlay}
               muted={isMuted}
-              onEnded={() => setVideoEnded(true)}
+              initialTime={initialProgress}
+              onProgress={handleProgress}
+              onPlayerEvent={({ type, time, duration }) => {
+                latestProgressRef.current = { time, duration }
+
+                if (type === "pause" || type === "seek" || type === "seeked") {
+                  void persistProgress({ time, duration }, { force: true })
+                }
+              }}
+              onEnded={() => {
+                const duration = latestProgressRef.current.duration
+                if (duration > 0) {
+                  void persistProgress({ time: duration, duration }, { force: true })
+                }
+                setVideoEnded(true)
+              }}
             />
           </div>
         </div>

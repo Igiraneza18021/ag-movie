@@ -24,8 +24,8 @@ export default function SubscribePage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true"
-  const subscriptionPrice = isDevMode ? 100 : 2000
+  const isSubscriptionEnabled = process.env.NEXT_PUBLIC_SUBSCRIPTION === "true"
+  const subscriptionPrice = parseInt(process.env.NEXT_PUBLIC_PLAN_PRICE || "2000", 10)
 
   const handleTerminalStatus = (status: string) => {
     if (status === "successful") {
@@ -328,18 +328,20 @@ export default function SubscribePage() {
                     placeholder="078XXXXXXX" 
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="h-14 bg-white/10 border-white/10 backdrop-blur-md rounded-2xl focus:border-[#0071eb] focus:bg-white/15 transition-all text-lg text-center font-black tracking-widest"
-                    disabled={isLoading}
+                    className="h-14 bg-white/10 border-white/10 backdrop-blur-md rounded-2xl focus:border-[#0071eb] focus:bg-white/15 transition-all text-lg text-center font-black tracking-widest disabled:opacity-50"
+                    disabled={isLoading || !isSubscriptionEnabled}
                   />
                   <p className="text-[10px] text-zinc-500 font-bold text-center uppercase tracking-tighter">Enter your MTN or Airtel number to pay via Paypack</p>
                 </div>
 
                 <Button 
                   type="submit"
-                  className="w-full h-16 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_10px_30px_rgba(0,113,235,0.4)] transition-all active:scale-95 text-lg"
-                  disabled={isLoading}
+                  className="w-full h-16 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_10px_30px_rgba(0,113,235,0.4)] transition-all active:scale-95 text-lg disabled:opacity-50"
+                  disabled={isLoading || !isSubscriptionEnabled}
                 >
-                  {isLoading ? (
+                  {!isSubscriptionEnabled ? (
+                    "Coming Soon"
+                  ) : isLoading ? (
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                   ) : (
                     "Pay with Mobile Money"

@@ -10,6 +10,7 @@ import { getTMDBImageUrl } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
 import { Play, X, Volume2, VolumeX, ChevronRight, Settings, RotateCcw, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 interface MoviePlayerProps {
   movie: Movie
@@ -22,12 +23,88 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isMuted, setIsMuted] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [initialProgress, setInitialProgress] = useState(0)
+  const [loadingProgress, setLoadingProgress] = useState(true)
   const [showNextMovie, setShowNextMovie] = useState(false)
   const [autoNextEnabled, setAutoNextEnabled] = useState(false) // Disabled by default
   const [nextMovieTimer, setNextMovieTimer] = useState(10)
   const [videoEnded, setVideoEnded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const lastSavedTimeRef = useRef<number>(0)
+  const latestProgressRef = useRef<{ time: number; duration: number }>({ time: 0, duration: 0 })
+  const supabase = createClient()
   const router = useRouter()
+
+  useEffect(() => {
+    const fetchInitialProgress = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from("watch_progress_entries")
+          .select("progress_seconds")
+          .eq("user_id", user.id)
+          .eq("movie_id", movie.id)
+          .maybeSingle()
+        
+        if (data) {
+          setInitialProgress(data.progress_seconds)
+          lastSavedTimeRef.current = data.progress_seconds
+        }
+      }
+      setLoadingProgress(false)
+    }
+    fetchInitialProgress()
+  }, [movie.id, supabase])
+
+  const persistProgress = async (
+    { time, duration }: { time: number; duration: number },
+    options?: { force?: boolean },
+  ) => {
+    const now = Math.floor(time)
+    const roundedDuration = Math.floor(duration)
+
+    if (now <= 0 || roundedDuration <= 0) return
+    if (!options?.force && (now % 10 !== 0 || now === lastSavedTimeRef.current)) return
+
+    lastSavedTimeRef.current = now
+
+    try {
+      await fetch("/api/watch-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content_type: "movie",
+          movie_id: movie.id,
+          progress_seconds: now,
+          duration_seconds: roundedDuration,
+        }),
+      })
+    } catch (err) {
+      console.error("Failed to save watch progress:", err)
+    }
+  }
+
+  const handleProgress = async ({ time, duration }: { time: number; duration: number }) => {
+    latestProgressRef.current = { time, duration }
+    await persistProgress({ time, duration })
+  }
+
+  useEffect(() => {
+    const flushProgress = () => {
+      const { time, duration } = latestProgressRef.current
+      if (time > 0 && duration > 0) {
+        void persistProgress({ time, duration }, { force: true })
+      }
+    }
+
+    window.addEventListener("pagehide", flushProgress)
+    window.addEventListener("beforeunload", flushProgress)
+
+    return () => {
+      window.removeEventListener("pagehide", flushProgress)
+      window.removeEventListener("beforeunload", flushProgress)
+    }
+  }, [movie.id])
 
   const backdropUrl = getTMDBImageUrl(movie.backdrop_path || "", "original")
   const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : ""
@@ -132,12 +209,12 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
     console.log("Liked movie:", movie.title)
   }
 
-  if (!mounted) {
+  if (!mounted || loadingProgress) {
     return (
       <div className="relative h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" className="text-white" />
-          <div className="text-white text-lg animate-fade-in">Loading Movie...</div>
+          <LoadingSpinner size="lg" className="text-[#0071eb]" />
+          <div className="text-white text-lg font-medium">Resolving stream...</div>
         </div>
       </div>
     )
@@ -150,7 +227,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
         <div className="relative h-screen flex items-center justify-center">
           {/* Background Image */}
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-fade-in"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${backdropUrl})`,
             }}
@@ -161,27 +238,27 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
 
           {/* Content */}
           <div className="relative z-10 text-center px-4">
-            <h1 className="text-3xl md:text-6xl font-bold text-white mb-4 animate-hero-text">
+            <h1 className="text-3xl md:text-6xl font-bold text-white mb-4">
               {movie.title}
             </h1>
-            <div className="flex items-center justify-center gap-4 mb-8 flex-wrap animate-stagger-2">
+            <div className="flex items-center justify-center gap-4 mb-8 flex-wrap">
               {movie.vote_average && (
-                <Badge variant="secondary" className="text-sm hover-scale">
+                <Badge variant="secondary" className="text-sm">
                   ★ {movie.vote_average.toFixed(1)}
                 </Badge>
               )}
               {releaseYear && (
-                <Badge variant="outline" className="text-sm hover-scale">
+                <Badge variant="outline" className="text-sm">
                   {releaseYear}
                 </Badge>
               )}
               {movie.runtime && (
-                <Badge variant="outline" className="text-sm hover-scale">
+                <Badge variant="outline" className="text-sm">
                   {movie.runtime}min
                 </Badge>
               )}
             </div>
-            <div className="animate-stagger-3">
+            <div>
               <MovieActionButtons 
                 movie={movie} 
                 onPlay={handlePlay}
@@ -193,7 +270,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
         </div>
       ) : (
         // Video Player
-        <div ref={containerRef} className="fixed inset-0 w-full h-full bg-black movie-player-enter">
+        <div ref={containerRef} className="fixed inset-0 w-full h-full bg-black">
           {/* Go Back Button - Always visible */}
           <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>
@@ -228,7 +305,22 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
               poster={backdropUrl}
               autoPlay={autoPlay}
               muted={isMuted}
-              onEnded={() => setVideoEnded(true)}
+              initialTime={initialProgress}
+              onProgress={handleProgress}
+              onPlayerEvent={({ type, time, duration }) => {
+                latestProgressRef.current = { time, duration }
+
+                if (type === "pause" || type === "seek" || type === "seeked") {
+                  void persistProgress({ time, duration }, { force: true })
+                }
+              }}
+              onEnded={() => {
+                const duration = latestProgressRef.current.duration || (movie.runtime ?? 0) * 60
+                if (duration > 0) {
+                  void persistProgress({ time: duration, duration }, { force: true })
+                }
+                setVideoEnded(true)
+              }}
             />
           </div>
         </div>

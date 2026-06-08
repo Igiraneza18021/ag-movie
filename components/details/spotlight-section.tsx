@@ -7,6 +7,7 @@ import { getShareCaption, getShareFileName, getShareImageUrl, getSharePromoLines
 import { Play, ThumbsUp, Plus, Eye, Download, Share2 } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { WatchlistButton } from "@/components/watchlist-button"
 
 interface SpotlightSectionProps {
   item: Movie | TVShow
@@ -250,14 +251,12 @@ export function SpotlightSection({
   onTrailerClick,
   showDownloads = false,
 }: SpotlightSectionProps) {
-  const [inWatchlist, setInWatchlist] = useState(false)
   const [watched, setWatched] = useState(false)
   const [liked, setLiked] = useState(false)
   const [heroImgLoaded, setHeroImgLoaded] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [inView, setInView] = useState(true)
-  const [showDetails, setShowDetails] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
 
@@ -325,82 +324,12 @@ export function SpotlightSection({
     return () => window.removeEventListener("scroll", handleScroll)
   }, [ytKey, showVideo])
 
-  // Start video after 3 seconds when image loaded and in view
-  useEffect(() => {
-    if (!item || !heroImgLoaded || !inView) return
-    if (!ytKey) return
-
-    startTimerRef.current = setTimeout(() => {
-      setShowVideo(true)
-    }, 3000)
-    return () => {
-      if (startTimerRef.current) clearTimeout(startTimerRef.current)
-    }
-  }, [item, heroImgLoaded, inView, ytKey])
-
   // Stop video when hero goes out of view
   useEffect(() => {
     if (!inView && showVideo) {
       setShowVideo(false)
     }
   }, [inView, showVideo])
-
-  // Auto-hide details after 4 seconds of mouse inactivity
-  useEffect(() => {
-    let hideTimer: NodeJS.Timeout | null = null
-
-    const startHideTimer = () => {
-      if (hideTimer) clearTimeout(hideTimer)
-      hideTimer = setTimeout(() => {
-        setShowDetails(false)
-      }, 4000)
-    }
-
-    const handleMouseEnter = () => {
-      setShowDetails(true)
-      if (hideTimer) {
-        clearTimeout(hideTimer)
-        hideTimer = null
-      }
-    }
-
-    const handleMouseMove = () => {
-      setShowDetails(true)
-      startHideTimer()
-    }
-
-    const handleMouseLeave = () => {
-      startHideTimer()
-    }
-
-    startHideTimer()
-
-    const setupListeners = () => {
-      const heroElement = heroRef.current
-      if (heroElement) {
-        heroElement.addEventListener("mouseenter", handleMouseEnter)
-        heroElement.addEventListener("mousemove", handleMouseMove)
-        heroElement.addEventListener("mouseleave", handleMouseLeave)
-        return true
-      }
-      return false
-    }
-
-    const timeoutId = setTimeout(() => {
-      setupListeners()
-    }, 100)
-
-    return () => {
-      clearTimeout(timeoutId)
-      if (hideTimer) clearTimeout(hideTimer)
-      const heroElement = heroRef.current
-      if (heroElement) {
-        heroElement.removeEventListener("mouseenter", handleMouseEnter)
-        heroElement.removeEventListener("mousemove", handleMouseMove)
-        heroElement.removeEventListener("mouseleave", handleMouseLeave)
-      }
-    }
-  }, [item])
 
   // Update iframe src when mute state changes (Desktop only)
   useEffect(() => {
@@ -417,12 +346,6 @@ export function SpotlightSection({
   const toggleMute = useCallback(() => {
     setIsMuted(!isMuted)
   }, [isMuted])
-
-  const handleWatchlistToggle = useCallback(() => {
-    if (!item?.id) return
-    // TODO: Implement watchlist toggle
-    setInWatchlist(!inWatchlist)
-  }, [item, inWatchlist])
 
   const handleLikeClick = useCallback(() => {
     if (!item?.id) return
@@ -551,7 +474,7 @@ export function SpotlightSection({
 
   if (isLoading || !item) {
     return (
-      <section className="relative w-full h-screen overflow-hidden flex items-end animate-slide-up">
+      <section className="relative w-full h-screen overflow-hidden flex items-end">
         <div className="absolute inset-0 bg-gradient-to-b from-[#121212] to-[#090a0a]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#090a0a]/70 via-black/20 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#090a0a]/80 via-black/40 md:via-black/20 to-transparent" />
@@ -564,7 +487,7 @@ export function SpotlightSection({
     <section
       ref={heroRef}
       id="spotlight"
-      className="relative w-full h-screen overflow-hidden flex items-end animate-slide-up"
+      className="relative w-full h-screen overflow-hidden flex items-end"
     >
       {/* Base image */}
       {backgroundImage && (
@@ -619,34 +542,34 @@ export function SpotlightSection({
 
       {/* Content container */}
       <div
-        className={`relative z-10 p-6 sm:p-8 md:p-12 w-full md:pr-0 text-center md:text-left transition-all duration-500 ${
-          showDetails ? "pb-24 md:pb-8" : "pb-32 sm:pb-20 md:pb-16"
-        }`}
+        className="relative z-10 p-6 sm:p-8 md:p-12 w-full md:pr-0 text-center md:text-left pb-24 md:pb-8"
         style={{ zIndex: 15 }}
       >
         {/* Title */}
         <h1
-          className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white w-full md:w-[28rem] animate-fade-in-delayed transition-all duration-500 ${
-            showDetails ? "mb-4 sm:mb-6" : "mb-8 sm:mb-12"
-          }`}
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white w-full md:w-[28rem] mb-4 sm:mb-6"
         >
           {title}
         </h1>
 
-        {/* Details section - Hidden after mouse inactivity */}
-        <div
-          className={`transition-all duration-500 overflow-hidden ${
-            showDetails ? "opacity-100 max-h-screen" : "opacity-0 max-h-0"
-          }`}
-        >
+        {/* Details section */}
+        <div className="opacity-100 max-h-screen">
           {/* Rating and info */}
-          <div className="flex items-center gap-2 mb-3 sm:mb-4 animate-fade-in-delayed-2 justify-center md:justify-start flex-wrap">
-            <div className="bg-gradient-to-r from-[#E50914] to-[#B20710] text-white px-2 py-1 rounded font-bold tracking-tight text-xs uppercase shadow-lg">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4 justify-center md:justify-start flex-wrap">
+            <div className="bg-[#0071eb] text-white px-2 py-1 rounded font-bold tracking-tight text-xs uppercase shadow-[0_0_15px_rgba(0,113,235,0.3)] border border-[#0071eb]/50">
               Agasobanuye
             </div>
             <span className="text-neutral-300 font-medium text-sm sm:text-base">
               {item.vote_average?.toFixed(1) || "8.0"}
             </span>
+            {item.narrator && (
+              <>
+                <span className="text-neutral-400">•</span>
+                <span className="bg-[#0071eb] text-white px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-[0_0_15px_rgba(0,113,235,0.4)] border border-white/10">
+                  {item.narrator}
+                </span>
+              </>
+            )}
             <span className="text-neutral-400">•</span>
             <span className="text-neutral-300 text-sm sm:text-base">{formatReleaseDate(releaseDate)}</span>
             <span className="text-neutral-400">•</span>
@@ -662,17 +585,16 @@ export function SpotlightSection({
           </div>
 
           {/* Description */}
-          <p className="text-white text-sm sm:text-base md:text-lg mb-6 sm:mb-8 md:mb-16 leading-5 sm:leading-6 max-w-xl line-clamp-3 overflow-ellipsis animate-fade-in-delayed-3 mx-auto md:mx-0">
+          <p className="text-white text-sm sm:text-base md:text-lg mb-6 sm:mb-8 md:mb-16 leading-5 sm:leading-6 max-w-xl line-clamp-3 overflow-ellipsis mx-auto md:mx-0">
             {item.overview}
           </p>
 
           {/* Genre tags */}
           {Array.isArray(item.genres) && item.genres.length > 0 && (
-            <div className="flex gap-2 text-neutral-400 text-xs sm:text-sm mb-3 animate-fade-in-delayed-5 justify-center md:justify-start flex-wrap">
+            <div className="flex gap-2 text-neutral-400 text-xs sm:text-sm mb-3 justify-center md:justify-start flex-wrap">
               {item.genres.slice(0, 3).map((genre: any, index) => (
                 <span key={genre.id || index} className="flex items-center gap-2">
                   <span className="text-neutral-300">{genre.name}</span>
-                  {index < Math.min(item.genres.length - 1, 2) && <span>•</span>}
                 </span>
               ))}
             </div>
@@ -681,38 +603,21 @@ export function SpotlightSection({
 
         {/* Action buttons - Always visible */}
         <div
-          className={`flex flex-col md:flex-row w-full md:justify-between items-center gap-4 md:gap-6 animate-fade-in-delayed-4 transition-all duration-500 ${
-            showDetails ? "mb-6" : "mb-8 sm:mb-12"
-          }`}
+          className="flex flex-col md:flex-row w-full md:justify-between items-center gap-4 md:gap-6 mb-6"
         >
           <div className="flex flex-wrap items-center gap-2 md:gap-3 justify-center md:justify-start w-full md:w-auto">
             {/* Play Button */}
-            {onWatchClick && (
+            {onWatchClick && (mediaType === 'tv' || (item as Movie).embed_url) && (
               <button
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   onWatchClick()
                 }}
-                className="bg-white text-black px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-gray-200 active:bg-gray-300 transition-all duration-200 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+                className="bg-white text-black px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-gray-200 active:bg-gray-300 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
               >
                 <Play className="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" />
                 <span className="hidden sm:inline">Play</span>
-              </button>
-            )}
-
-            {/* Trailer Button */}
-            {ytKey && onTrailerClick && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onTrailerClick()
-                }}
-                className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 transition-all duration-200 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
-              >
-                <Play className="w-4 h-4 sm:w-5 sm:w-5" fill="currentColor" />
-                <span className="hidden sm:inline">Trailer</span>
               </button>
             )}
 
@@ -723,11 +628,36 @@ export function SpotlightSection({
                 e.stopPropagation()
                 handleDownloadClick()
               }}
-              className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 transition-all duration-200 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+              className="bg-[#0071eb]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#0071eb] active:bg-[#0071eb]/60 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
             >
               <Download className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline">{showDownloads ? "Hide Downloads" : "Downloads"}</span>
             </button>
+
+            {/* Watchlist Button */}
+            <div
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              className="relative z-20"
+            >
+              <WatchlistButton
+                id={item.id}
+                type={mediaType}
+                title={mediaType === "movie" ? (item as Movie).title : (item as TVShow).name}
+                poster_path={item.poster_path || null}
+                vote_average={item.vote_average || 0}
+                release_date={mediaType === "movie" ? (item as Movie).release_date : undefined}
+                first_air_date={mediaType === "tv" ? (item as TVShow).first_air_date : undefined}
+                number_of_episodes={mediaType === "tv" ? (item as TVShow).number_of_episodes : undefined}
+                variant="ghost"
+                size="default"
+                iconOnly={false}
+                showText={true}
+                className="bg-white/10 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-white/20 shadow-lg border border-white/20 backdrop-blur-sm transition-all h-auto"
+              />
+            </div>
 
             {/* Share Button */}
             <button
@@ -737,67 +667,15 @@ export function SpotlightSection({
                 void handleShareClick()
               }}
               disabled={isSharing}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
+              className={`flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
                 isSharing
                   ? "bg-white/5 border-white/10 text-white/70 cursor-wait"
                   : "bg-white/10 hover:bg-white/20 border-white/20 text-white hover:border-white/30"
               }`}
               title="Share to Instagram, TikTok, or another app"
             >
-              <Share2 className="w-4 h-4 flex-shrink-0" />
+              <Share2 className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               <span className="whitespace-nowrap hidden sm:inline">{isSharing ? "Preparing..." : "Share"}</span>
-            </button>
-
-            {/* Watched Button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleWatchedClick()
-              }}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
-                watched
-                  ? "bg-emerald-600/90 hover:bg-emerald-500/90 border-emerald-400/50 text-white shadow-emerald-500/20"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white hover:border-white/30"
-              }`}
-              title={watched ? "Mark as unwatched" : "Mark as watched"}
-            >
-              <Eye className="w-4 h-4 flex-shrink-0" />
-              <span className="whitespace-nowrap hidden sm:inline">{watched ? "Watched" : "Mark Watched"}</span>
-            </button>
-
-            {/* Like Button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleLikeClick()
-              }}
-              className={`p-2 rounded-lg transition-all duration-200 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
-                liked
-                  ? "bg-[#E50914]/80 hover:bg-[#B20710]/80 border-[#E50914]/30 text-white"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              }`}
-              title={liked ? "Unlike" : "Like"}
-            >
-              <ThumbsUp className="w-4 h-4" />
-            </button>
-
-            {/* Watchlist Button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleWatchlistToggle()
-              }}
-              className={`p-2 rounded-lg transition-all duration-200 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
-                inWatchlist
-                  ? "bg-green-600/80 hover:bg-green-500/80 border-green-500/30 text-white"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              }`}
-              title={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
-            >
-              <Plus className="w-4 h-4" />
             </button>
           </div>
 

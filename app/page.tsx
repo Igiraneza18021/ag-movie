@@ -161,26 +161,24 @@ export default function LandingPage() {
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16">
               <div className="flex-1 space-y-8 text-center md:text-left">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0071eb]/20 border border-[#0071eb]/30 text-[#0071eb] text-xs font-black uppercase tracking-widest">
-                  Premium Experience
+                  Coming Soon
                 </div>
                 <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.85]">
                   Go <span className="text-[#0071eb]">Ad-Free</span> <br/>
-                  For Ultimate <br className="hidden lg:block" /> immersion
+                  The Ultimate <br className="hidden lg:block" /> experience
                 </h2>
                 <p className="text-zinc-400 text-xl md:text-2xl font-bold max-w-2xl leading-relaxed">
-                  Subscribe for an uninterrupted, no-ads experience. While we keep ads to a minimum for everyone, Premium members enjoy zero distractions.
+                  We're building an uninterrupted, no-ads experience just for you. Soon, Premium members will enjoy zero distractions and exclusive features.
                 </p>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-8 pt-4">
-                  <Link href="/subscribe">
+                  <Link href="/signup">
                     <Button className="h-16 px-12 bg-[#0071eb] hover:bg-[#005bb5] text-white font-black uppercase tracking-wide rounded-2xl shadow-[0_15px_40px_rgba(0,113,235,0.4)] transition-all active:scale-95 text-lg">
-                      Subscribe Now
+                      Join the Community
                     </Button>
                   </Link>
                   <div className="flex flex-col">
-                    <p className="text-white text-xl font-black uppercase tracking-tight">
-                      Starting at {process.env.NEXT_PUBLIC_DEV_MODE === "true" ? "100" : "2,000"} RWF/mo
-                    </p>
-                    <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Cancel anytime. No commitments.</p>
+                    <p className="text-white text-xl font-black uppercase tracking-tight">Launching at 2,000 RWF/mo</p>
+                    <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Zero commitments. Cancel anytime.</p>
                   </div>
                 </div>
               </div>

@@ -57,8 +57,8 @@ export function BackdropGallery({ title, images, item }: BackdropGalleryProps) {
   const itemTitle = (item as Movie).title || (item as TVShow).name || "Title"
 
   return (
-    <div className="mb-8 animate-slide-up" onKeyDown={onKey} tabIndex={0} aria-label={`${title} gallery`}>
-      <div className="flex justify-between items-center mb-1 items-end">
+    <div className="mb-8" onKeyDown={onKey} tabIndex={0} aria-label={`${title} gallery`}>
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl text-white">{title}</h2>
         <div className="hidden md:flex gap-2">
           <button

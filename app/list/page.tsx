@@ -4,11 +4,13 @@ import { MovieGrid } from "@/components/movie-grid"
 import { TVShowGrid } from "@/components/tv-show-grid"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { getMoviesServer, getTVShowsServer } from "@/lib/database"
+import { buildGenreOptions, contentHasGenre, findGenreByParams } from "@/lib/genres"
 import { generatePageMetadata } from "@/lib/seo"
 
 interface ListPageProps {
   searchParams: Promise<{
     genre?: string
+    genreId?: string
     type?: string
     sort?: string
     year?: string
@@ -34,15 +36,16 @@ export default async function ListPage({ searchParams }: ListPageProps) {
 
   let filteredMovies = allMovies
   let filteredTVShows = allTVShows
+  const allGenres = buildGenreOptions([...allMovies, ...allTVShows])
 
   // Apply search filter
   if (params.search) {
     const searchTerm = params.search.toLowerCase()
     filteredMovies = filteredMovies.filter((movie) => 
-      movie.title.toLowerCase().includes(searchTerm)
+      movie.title?.toLowerCase().includes(searchTerm)
     )
     filteredTVShows = filteredTVShows.filter((show) => 
-      show.name.toLowerCase().includes(searchTerm)
+      show.name?.toLowerCase().includes(searchTerm)
     )
   }
 
@@ -71,13 +74,16 @@ export default async function ListPage({ searchParams }: ListPageProps) {
   // Filter by genre if specified
   if (params.genre) {
     filteredMovies = filteredMovies.filter((movie) => {
-      const genres = Array.isArray(movie.genres) ? movie.genres : []
-      return genres.some((g: any) => g.name.toLowerCase() === params.genre?.toLowerCase())
+      return contentHasGenre(movie.genres, params.genreId, params.genre)
     })
     filteredTVShows = filteredTVShows.filter((show) => {
-      const genres = Array.isArray(show.genres) ? show.genres : []
-      return genres.some((g: any) => g.name.toLowerCase() === params.genre?.toLowerCase())
+      return contentHasGenre(show.genres, params.genreId, params.genre)
     })
+  }
+
+  if (params.genreId && !params.genre) {
+    filteredMovies = filteredMovies.filter((movie) => contentHasGenre(movie.genres, params.genreId, null))
+    filteredTVShows = filteredTVShows.filter((show) => contentHasGenre(show.genres, params.genreId, null))
   }
 
   // Apply sorting
@@ -85,8 +91,8 @@ export default async function ListPage({ searchParams }: ListPageProps) {
     switch (params.sort) {
       case "title":
         return items.sort((a, b) => {
-          const titleA = type === 'movie' ? a.title : a.name
-          const titleB = type === 'movie' ? b.title : b.name
+          const titleA = (type === 'movie' ? a.title : a.name) || ""
+          const titleB = (type === 'movie' ? b.title : b.name) || ""
           return titleA.localeCompare(titleB)
         })
       case "year":
@@ -108,12 +114,7 @@ export default async function ListPage({ searchParams }: ListPageProps) {
   filteredTVShows = sortItems(filteredTVShows, 'tv')
 
   // Get all unique genres for filter sidebar
-  const allGenres = Array.from(
-    new Set([
-      ...filteredMovies.flatMap((movie) => (Array.isArray(movie.genres) ? movie.genres : [])).map((g: any) => g.name),
-      ...filteredTVShows.flatMap((show) => (Array.isArray(show.genres) ? show.genres : [])).map((g: any) => g.name),
-    ])
-  ).map((name, index) => ({ id: index.toString(), name }))
+  const selectedGenre = findGenreByParams(allGenres, params.genreId, params.genre)
 
   // Determine what to show based on type parameter
   const showMovies = params.type !== 'tv'
@@ -127,7 +128,7 @@ export default async function ListPage({ searchParams }: ListPageProps) {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                {params.genre ? `${params.genre} Content` : 'Browse Content'}
+                {selectedGenre ? `${selectedGenre.name} Content` : "Browse Content"}
               </h1>
               <p className="text-sm md:text-base text-muted-foreground mt-1">
                 {showMovies && showTVShows 

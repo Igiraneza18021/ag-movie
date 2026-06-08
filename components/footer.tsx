@@ -19,7 +19,7 @@ const sections = [
   {
     title: "My List",
     links: [
-      { label: "Watchlist", href: "/watchlist" },
+      { label: "Watchlist", href: "/user-watchlist" },
       { label: "Request Content", href: "/request-movie" },
     ],
   },

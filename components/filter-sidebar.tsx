@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
+import { findGenreByParams } from "@/lib/genres"
 import type { Genre } from "@/lib/types"
 import { Filter, X } from "lucide-react"
 
@@ -21,14 +22,28 @@ export function FilterSidebar({ genres, type }: FilterSidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const currentGenre = searchParams.get("genre")
+  const currentGenreId = searchParams.get("genreId")
   const currentSort = searchParams.get("sort") || "newest"
   const currentYear = searchParams.get("year")
   const currentRating = searchParams.get("rating") || "0"
   const currentType = searchParams.get("type")
+  const selectedGenre = findGenreByParams(genres, currentGenreId, currentGenre)
+  const selectedGenreValue = selectedGenre ? selectedGenre.id : "all"
 
   const updateFilter = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (value) {
+    if (key === "genreId") {
+      if (value) {
+        const nextGenre = genres.find((genre) => genre.id === value || genre.tmdb_id.toString() === value)
+        params.set("genreId", value)
+        if (nextGenre) {
+          params.set("genre", nextGenre.name)
+        }
+      } else {
+        params.delete("genreId")
+        params.delete("genre")
+      }
+    } else if (value) {
       params.set(key, value)
     } else {
       params.delete(key)
@@ -42,7 +57,7 @@ export function FilterSidebar({ genres, type }: FilterSidebarProps) {
     router.push(basePath)
   }
 
-  const hasActiveFilters = currentGenre || currentYear || Number.parseFloat(currentRating) > 0 || currentType
+  const hasActiveFilters = currentGenreId || currentGenre || currentYear || Number.parseFloat(currentRating) > 0 || currentType
 
   const currentYearInt = currentYear ? Number.parseInt(currentYear) : new Date().getFullYear()
   const years = Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i)
@@ -58,7 +73,7 @@ export function FilterSidebar({ genres, type }: FilterSidebarProps) {
       </div>
 
       {/* Filter Sidebar */}
-      <div className={`lg:block ${isOpen ? "block" : "hidden"} w-full lg:w-64 space-y-4 lg:space-y-6`}>
+      <div className={`lg:block ${isOpen ? "block" : "hidden"} w-full lg:w-64 lg:self-start lg:sticky lg:top-24 space-y-4 lg:space-y-6`}>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -107,14 +122,14 @@ export function FilterSidebar({ genres, type }: FilterSidebarProps) {
             {/* Genre */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">Genre</label>
-              <Select value={currentGenre || "all"} onValueChange={(value) => updateFilter("genre", value || null)}>
+              <Select value={selectedGenreValue} onValueChange={(value) => updateFilter("genreId", value === "all" ? null : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All genres" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All genres</SelectItem>
                   {genres.map((genre) => (
-                    <SelectItem key={genre.id} value={genre.name}>
+                    <SelectItem key={genre.id} value={genre.id}>
                       {genre.name}
                     </SelectItem>
                   ))}

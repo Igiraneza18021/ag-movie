@@ -72,9 +72,14 @@ export function SearchResults({ movies, tvShows, query, type }: SearchResultsPro
               </div>
 
               <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover:opacity-0">
-                <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold border border-white/5">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-[10px] font-bold border border-white/5">
+                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
                   {item.vote_average?.toFixed(1)}
+                  {item.narrator && (
+                    <span className="ml-1.5 px-1.5 py-0.5 bg-[#0071eb] text-white font-black rounded-sm text-[8px] uppercase tracking-tighter shadow-sm">
+                      {item.narrator}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -85,9 +90,16 @@ export function SearchResults({ movies, tvShows, query, type }: SearchResultsPro
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
-                        {year}
-                      </span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                          {year}
+                        </span>
+                        {item.narrator && (
+                          <span className="px-1.5 py-0.5 bg-[#0071eb] text-white font-black rounded-sm text-[8px] uppercase tracking-tighter shadow-sm">
+                            {item.narrator}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1 text-white text-xs font-black">
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                         {item.vote_average?.toFixed(1)}

@@ -20,6 +20,9 @@ interface NativeHlsPlayerProps {
   playlistItems?: NativeHlsPlaylistItem[]
   autoPlay?: boolean
   muted?: boolean
+  initialTime?: number
+  onProgress?: (progress: { time: number; duration: number }) => void
+  onPlayerEvent?: (event: { type: string; time: number; duration: number }) => void
   onEnded?: () => void
 }
 
@@ -42,7 +45,28 @@ declare global {
       api?: (command: string, value?: unknown) => unknown
     }
     PlayerjsEvents?: (event: string, id: string, info?: unknown) => void
+    __PLAYERJS_PROGRESS_BRIDGE__?: {
+      attach: (
+        player: { api?: (command: string, value?: unknown) => unknown },
+        id: string,
+      ) => {
+        dispose: () => void
+        emit: (type: string) => void
+      }
+    }
   }
+}
+
+type PlayerBridgeEventDetail = {
+  id: string
+  type: string
+  time: number
+  duration: number
+}
+
+function toPlayerNumber(value: unknown) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 export function NativeHlsPlayer({
@@ -52,12 +76,19 @@ export function NativeHlsPlayer({
   playlistItems = EMPTY_PLAYLIST,
   autoPlay = true,
   muted = false,
+  initialTime = 0,
+  onProgress,
+  onPlayerEvent,
   onEnded,
 }: NativeHlsPlayerProps) {
   const reactId = useId()
   const playerId = `playerjs-${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}`
   const playerRef = useRef<InstanceType<NonNullable<typeof window.Playerjs>> | null>(null)
+  const bridgeRef = useRef<{ dispose: () => void; emit: (type: string) => void } | null>(null)
   const pendingPlaylistEntriesRef = useRef<PlayerPlaylistEntry[]>([])
+  const currentTimeRef = useRef(0)
+  const currentDurationRef = useRef(0)
+  const initialSeekAppliedRef = useRef(false)
   const [state, setState] = useState<ResolveState>("idle")
   const [scriptReady, setScriptReady] = useState(false)
   const [playerSource, setPlayerSource] = useState<PlayerSource>("")
@@ -93,6 +124,9 @@ export function NativeHlsPlayer({
     setScriptReady(false)
     playerRef.current?.api?.("stop")
     playerRef.current = null
+    currentTimeRef.current = 0
+    currentDurationRef.current = 0
+    initialSeekAppliedRef.current = false
   }, [playerScript])
 
   useEffect(() => {
@@ -204,13 +238,70 @@ export function NativeHlsPlayer({
     if (!scriptReady || !playerSource || !window.Playerjs) return
 
     const previousEvents = window.PlayerjsEvents
+    const readPlayerValue = (command: string) => toPlayerNumber(playerRef.current?.api?.(command))
+    const getSnapshot = () => {
+      if (currentDurationRef.current <= 0) {
+        currentDurationRef.current = readPlayerValue("duration")
+      }
+
+      return {
+        time: currentTimeRef.current,
+        duration: currentDurationRef.current,
+      }
+    }
+    const emitSnapshot = (event: string, time?: number, duration?: number) => {
+      if (typeof time === "number" && Number.isFinite(time)) {
+        currentTimeRef.current = Math.max(0, time)
+      }
+
+      if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
+        currentDurationRef.current = duration
+      }
+
+      const snapshot = getSnapshot()
+
+      if (event === "time" || event === "duration" || event === "seek" || event === "userseek" || event === "progress") {
+        if (snapshot.duration > 0) {
+          onProgress?.(snapshot)
+        }
+      }
+
+      onPlayerEvent?.({ type: event, ...snapshot })
+    }
+
     window.PlayerjsEvents = (event, id, info) => {
-      if (id === playerId && event === "end") {
-        onEnded?.()
+      if (id === playerId) {
+        if (event === "time") {
+          emitSnapshot(event, toPlayerNumber(info))
+        } else if (event === "duration") {
+          emitSnapshot(event, undefined, toPlayerNumber(info))
+        } else if (event === "seek" || event === "userseek") {
+          emitSnapshot(event, toPlayerNumber(info))
+        } else if (event === "metadata" && currentDurationRef.current <= 0) {
+          emitSnapshot(event, undefined, readPlayerValue("duration"))
+        } else {
+          emitSnapshot(event)
+        }
+
+        if (event === "end") {
+          emitSnapshot("progress", currentDurationRef.current || currentTimeRef.current, currentDurationRef.current)
+          onEnded?.()
+        }
       }
 
       previousEvents?.(event, id, info)
     }
+
+    const handleBridgeEvent = (rawEvent: Event) => {
+      const bridgeEvent = rawEvent as CustomEvent<PlayerBridgeEventDetail>
+      const detail = bridgeEvent.detail
+
+      if (!detail || detail.id !== playerId) return
+
+      emitSnapshot(detail.type, detail.time, detail.duration)
+    }
+
+    window.addEventListener("playerjs-bridge", handleBridgeEvent as EventListener)
 
     playerRef.current = new window.Playerjs({
       id: playerId,
@@ -219,7 +310,21 @@ export function NativeHlsPlayer({
       poster,
       autoplay: autoPlay ? 1 : 0,
       mute: muted ? 1 : 0,
+      start: initialTime > 0 ? initialTime : undefined,
     })
+
+    bridgeRef.current?.dispose()
+    bridgeRef.current = window.__PLAYERJS_PROGRESS_BRIDGE__?.attach(playerRef.current, playerId) ?? null
+
+    if (initialTime > 0) {
+      window.setTimeout(() => {
+        if (initialSeekAppliedRef.current) return
+
+        playerRef.current?.api?.("seek", initialTime)
+        currentTimeRef.current = initialTime
+        initialSeekAppliedRef.current = true
+      }, 400)
+    }
 
     if (pendingPlaylistEntriesRef.current.length > 0) {
       playerRef.current.api?.("push", pendingPlaylistEntriesRef.current)
@@ -227,11 +332,17 @@ export function NativeHlsPlayer({
     }
 
     return () => {
+      window.removeEventListener("playerjs-bridge", handleBridgeEvent as EventListener)
+      bridgeRef.current?.dispose()
+      bridgeRef.current = null
       playerRef.current?.api?.("stop")
       playerRef.current = null
+      currentTimeRef.current = 0
+      currentDurationRef.current = 0
+      initialSeekAppliedRef.current = false
       window.PlayerjsEvents = previousEvents
     }
-  }, [autoPlay, muted, onEnded, playerSource, playerId, poster, scriptReady, title])
+  }, [autoPlay, initialTime, muted, onEnded, onPlayerEvent, onProgress, playerSource, playerId, poster, scriptReady, title])
 
   if (shouldEmbedGoogleDrive) {
     return (

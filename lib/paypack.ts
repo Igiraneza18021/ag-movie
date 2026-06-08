@@ -43,8 +43,7 @@ interface PaypackTransactionEventsResponse {
 }
 
 export function getPaypackWebhookMode(): PaypackWebhookMode {
-  const isDevMode = process.env.DEV_MODE === "true" || process.env.NEXT_PUBLIC_DEV_MODE === "true"
-  return isDevMode ? "development" : "production"
+  return process.env.NODE_ENV === "development" ? "development" : "production"
 }
 
 export async function getPaypackAccessToken() {

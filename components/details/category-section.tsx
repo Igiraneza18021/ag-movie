@@ -80,21 +80,11 @@ export function CategorySection<T>({
     updateScrollButtons()
   }
 
-  const getAnimationDelay = (index: number) => {
-    if (title !== "Episodes") return index * 100
-    const baseDelay = 100
-    const speedMultiplier = Math.max(
-      0.2,
-      1 - (episodeCount > 25 ? Math.min((episodeCount - 25) / 75, 0.8) : 0)
-    )
-    return index * (baseDelay * speedMultiplier)
-  }
-
   const displayedItems = items.slice(0, visibleItems)
 
   if (isLoading) {
     return (
-      <div className="mb-8 animate-slide-up">
+      <div className="mb-8">
         <h2 className="text-2xl text-white mb-4">{title}</h2>
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-2 border-white border-solid border-t-transparent rounded-full animate-spin"></div>
@@ -107,7 +97,7 @@ export function CategorySection<T>({
 
   return (
     <div
-      className="mb-8 animate-slide-up relative group"
+      className="mb-8 relative group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -154,7 +144,7 @@ export function CategorySection<T>({
       {layout === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-4">
           {displayedItems.map((item, index) => (
-            <div key={index} className="animate-stagger" style={{ animationDelay: `${getAnimationDelay(index)}ms` }}>
+            <div key={index}>
               {renderItem(item, index)}
             </div>
           ))}
@@ -173,7 +163,7 @@ export function CategorySection<T>({
           }}
         >
           {displayedItems.map((item, index) => (
-            <div key={index} className="animate-stagger" style={{ animationDelay: `${getAnimationDelay(index)}ms` }}>
+            <div key={index}>
               {renderItem(item, index)}
             </div>
           ))}

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { SpotlightSection } from "@/components/details/spotlight-section"
 import { BackdropGallery } from "@/components/details/backdrop-gallery"
 import { CategorySection } from "@/components/details/category-section"
-import { getTMDBImageUrl } from "@/lib/tmdb"
+import { getTMDBImageUrl, getTMDBItemMedia } from "@/lib/tmdb"
 import type { Movie } from "@/lib/types"
 import Link from "next/link"
 import { Play, Download } from "lucide-react"
@@ -18,14 +18,32 @@ interface MovieDetailsProps {
   relatedMovies?: Movie[]
 }
 
+function getYouTubeId(url: string) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+  const match = url.match(regExp)
+  return (match && match[2].length === 11) ? match[2] : null
+}
+
 export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
   const [movieParts, setMovieParts] = useState<Movie[]>([])
-  const [showTrailerModal, setShowTrailerModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<"overview" | "parts" | "more">("overview")
+  const [activeTrailerUrl, setActiveTrailerUrl] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"trailers" | "parts" | "more">("trailers")
+  const [media, setMedia] = useState<{
+    videos?: { results: any[] },
+    images?: { backdrops: any[], posters: any[], logos: any[] }
+  } | null>(null)
   const hasAppliedDefaultTab = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const showDownloads = searchParams.get("dl") === "1"
+
+  useEffect(() => {
+    if (movie.tmdb_id) {
+      getTMDBItemMedia(movie.tmdb_id, "movie")
+        .then(setMedia)
+        .catch(console.error)
+    }
+  }, [movie.tmdb_id])
 
   // Load movie parts if this is a multi-part movie
   useEffect(() => {
@@ -60,29 +78,39 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
   }, [movie.id, movie.parent_movie_id, movie.part_number])
 
   const hasParts = movieParts.length > 1
+  
+  const allTrailers = [
+    ...(movie.trailer_url ? [{ name: "Official Trailer", key: getYouTubeId(movie.trailer_url) }] : []),
+    ...(media?.videos?.results?.filter(v => v.site === "YouTube" && v.type === "Trailer") || [])
+  ].filter((v, i, a) => v.key && a.findIndex(t => t.key === v.key) === i)
+
+  const allImages = [
+    ...(movie.backdrop_path ? [{ file_path: movie.backdrop_path }] : []),
+    ...(media?.images?.backdrops || []),
+    ...(media?.images?.posters || [])
+  ].filter((v, i, a) => v.file_path && a.findIndex(t => t.file_path === v.file_path) === i)
+
+  const hasTrailers = allTrailers.length > 0
+  const hasImages = allImages.length > 0
 
   useEffect(() => {
     hasAppliedDefaultTab.current = false
   }, [movie.id])
 
   useEffect(() => {
-    if (hasParts && !hasAppliedDefaultTab.current) {
+    if ((hasTrailers || hasImages) && !hasAppliedDefaultTab.current) {
+      setActiveTab("trailers")
+      hasAppliedDefaultTab.current = true
+    } else if (hasParts && !hasAppliedDefaultTab.current) {
       setActiveTab("parts")
       hasAppliedDefaultTab.current = true
+    } else if (!hasParts && !hasTrailers && !hasImages && relatedMovies.length > 0) {
+      setActiveTab("more")
     }
-  }, [hasParts])
-
-  // Create backdrop images array (mock for now - you'd fetch from TMDB)
-  const backdropImages = movie.backdrop_path
-    ? [{ file_path: movie.backdrop_path }]
-    : []
+  }, [hasParts, hasTrailers, hasImages, relatedMovies.length])
 
   const handleWatchClick = () => {
     router.push(`/watch/movie/${movie.id}`)
-  }
-
-  const handleTrailerClick = () => {
-    setShowTrailerModal(true)
   }
 
   return (
@@ -93,24 +121,25 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
         mediaType="movie"
         isLoading={false}
         onWatchClick={handleWatchClick}
-        onTrailerClick={handleTrailerClick}
         showDownloads={showDownloads}
       />
 
       {/* Tab Navigation */}
-      {!showDownloads && (
+      {!showDownloads && (hasTrailers || hasImages || hasParts || relatedMovies.length > 0) && (
         <div className="px-8 pt-6">
           <div className="flex gap-2 border-b border-gray-700 overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                activeTab === "overview"
-                  ? "text-white border-b-2 border-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Overview
-            </button>
+            {(hasTrailers || hasImages) && (
+              <button
+                onClick={() => setActiveTab("trailers")}
+                className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "trailers"
+                    ? "text-white border-b-2 border-white"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Trailers & Images
+              </button>
+            )}
 
             {hasParts && (
               <button
@@ -162,14 +191,46 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
           </div>
         ) : (
           <>
-            {/* Overview Tab */}
-            {activeTab === "overview" && (
-              <>
-                {/* Backdrop Gallery */}
-                {backdropImages.length > 0 && (
-                  <BackdropGallery title="Images" images={backdropImages} item={movie} />
+            {/* Trailers Tab */}
+            {activeTab === "trailers" && (
+              <div className="space-y-8">
+                {allTrailers.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl text-white mb-4">Trailers</h2>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {allTrailers.map((trailer, idx) => (
+                        <div 
+                          key={trailer.key}
+                          className="group relative cursor-pointer aspect-video bg-gray-900 rounded-lg overflow-hidden border border-white/10 hover:border-white/30 transition-all"
+                          onClick={() => setActiveTrailerUrl(`https://www.youtube.com/embed/${trailer.key}`)}
+                        >
+                          <img 
+                            src={idx === 0 && movie.backdrop_path ? getTMDBImageUrl(movie.backdrop_path, "w780") : `https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg`} 
+                            alt={trailer.name}
+                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder.jpg'
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-12 h-12 bg-[#0071eb] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,113,235,0.4)] group-hover:scale-110 transition-transform">
+                              <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
+                            </div>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                            <p className="text-white text-sm font-medium line-clamp-1">{trailer.name}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </>
+
+                {/* Backdrop Gallery */}
+                {allImages.length > 0 && (
+                  <BackdropGallery title="Images" images={allImages} item={movie} />
+                )}
+              </div>
             )}
 
             {/* Parts Tab */}
@@ -255,13 +316,13 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
       </div>
 
       {/* Trailer Modal */}
-      {showTrailerModal && movie.trailer_url && (
+      {activeTrailerUrl && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 min-h-screen">
           <div className="relative bg-black/95 rounded-xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-white/10 mx-auto my-auto">
             <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10 bg-black/50 backdrop-blur-sm">
               <h3 className="text-white text-lg md:text-xl font-semibold">Trailer</h3>
               <button
-                onClick={() => setShowTrailerModal(false)}
+                onClick={() => setActiveTrailerUrl(null)}
                 className="text-white hover:text-red-400 hover:bg-white/10 transition-all duration-200 p-2 rounded-full group cursor-pointer relative z-30"
               >
                 <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,7 +333,7 @@ export function MovieDetails({ movie, relatedMovies = [] }: MovieDetailsProps) {
             <div className="p-4 md:p-6">
               <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
                 <iframe
-                  src={movie.trailer_url}
+                  src={activeTrailerUrl}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen

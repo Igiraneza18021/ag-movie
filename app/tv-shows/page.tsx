@@ -1,13 +1,16 @@
 import { Metadata } from "next"
+import { BrowseResultsPanel } from "@/components/browse-results-panel"
 import { Footer } from "@/components/footer"
-import { TVShowGrid } from "@/components/tv-show-grid"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { getTVShowsServer } from "@/lib/database"
+import { buildGenreOptions, contentHasGenre } from "@/lib/genres"
 import { generatePageMetadata } from "@/lib/seo"
 
 interface TVShowsPageProps {
   searchParams: Promise<{
     genre?: string
+    genreId?: string
+    page?: string
     sort?: string
     year?: string
     rating?: string
@@ -24,11 +27,13 @@ export const metadata: Metadata = generatePageMetadata(
 export default async function TVShowsPage({ searchParams }: TVShowsPageProps) {
   const params = await searchParams
 
-  let filteredTVShows = await getTVShowsServer(200) // Get more TV shows for filtering
+  const allTVShows = await getTVShowsServer(2000)
+  let filteredTVShows = allTVShows
+  const genres = buildGenreOptions(allTVShows)
 
   // Apply search filter
   if (params.search) {
-    filteredTVShows = filteredTVShows.filter((show) => show.name.toLowerCase().includes(params.search!.toLowerCase()))
+    filteredTVShows = filteredTVShows.filter((show) => show.name?.toLowerCase().includes(params.search!.toLowerCase()))
   }
 
   // Apply year filter
@@ -48,17 +53,14 @@ export default async function TVShowsPage({ searchParams }: TVShowsPageProps) {
   }
 
   // Filter by genre if specified
-  if (params.genre) {
-    filteredTVShows = filteredTVShows.filter((show) => {
-      const genres = Array.isArray(show.genres) ? show.genres : []
-      return genres.some((g: any) => g.name.toLowerCase() === params.genre?.toLowerCase())
-    })
+  if (params.genre || params.genreId) {
+    filteredTVShows = filteredTVShows.filter((show) => contentHasGenre(show.genres, params.genreId, params.genre))
   }
 
   // Apply sorting
   switch (params.sort) {
     case "title":
-      filteredTVShows.sort((a, b) => a.name.localeCompare(b.name))
+      filteredTVShows.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
       break
     case "year":
       filteredTVShows.sort((a, b) => {
@@ -75,10 +77,6 @@ export default async function TVShowsPage({ searchParams }: TVShowsPageProps) {
       filteredTVShows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 
-  const genres = Array.from(
-    new Set(filteredTVShows.flatMap((show) => (Array.isArray(show.genres) ? show.genres : [])).map((g: any) => g.name)),
-  ).map((name, index) => ({ id: index.toString(), name }))
-
   return (
     <div className="min-h-screen bg-background">
 
@@ -86,14 +84,11 @@ export default async function TVShowsPage({ searchParams }: TVShowsPageProps) {
         <div className="container mx-auto px-4 py-4 md:py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">TV Shows</h1>
-            <p className="text-sm md:text-base text-muted-foreground">{filteredTVShows.length} TV shows found</p>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
             <FilterSidebar genres={genres} type="tv-shows" />
-            <div className="flex-1">
-              <TVShowGrid tvShows={filteredTVShows} />
-            </div>
+            <BrowseResultsPanel mode="tv-shows" items={filteredTVShows} />
           </div>
         </div>
       </main>
