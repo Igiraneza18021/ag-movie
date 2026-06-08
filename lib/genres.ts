@@ -11,8 +11,22 @@ function toGenreTmdbId(genre: ContentGenreLike) {
     return genre.tmdb_id
   }
 
+  if (typeof genre.tmdb_id === "string") {
+    const parsedTmdbId = Number.parseInt(genre.tmdb_id, 10)
+    if (Number.isFinite(parsedTmdbId)) {
+      return parsedTmdbId
+    }
+  }
+
   if (typeof genre.id === "number" && Number.isFinite(genre.id)) {
     return genre.id
+  }
+
+  if (typeof genre.id === "string") {
+    const parsedId = Number.parseInt(genre.id, 10)
+    if (Number.isFinite(parsedId)) {
+      return parsedId
+    }
   }
 
   return null
