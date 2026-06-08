@@ -109,10 +109,15 @@ export function Top10Section({ items }: Top10SectionProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     {/* AG Icon in top right */}
-                    <div className="absolute top-2 right-2 z-20">
+                    <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1">
                       <div className="bg-[#0071eb] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg border border-white/20">
                         AG
                       </div>
+                      {it.narrator && (
+                        <div className="bg-[#0071eb] text-white text-[8px] font-black px-1 py-0.5 rounded shadow-lg border border-white/20 uppercase tracking-tighter max-w-[60px] truncate">
+                          {it.narrator}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
