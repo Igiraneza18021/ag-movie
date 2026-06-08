@@ -325,19 +325,6 @@ export function SpotlightSection({
     return () => window.removeEventListener("scroll", handleScroll)
   }, [ytKey, showVideo])
 
-  // Start video after 3 seconds when image loaded and in view
-  useEffect(() => {
-    if (!item || !heroImgLoaded || !inView) return
-    if (!ytKey) return
-
-    startTimerRef.current = setTimeout(() => {
-      setShowVideo(true)
-    }, 3000)
-    return () => {
-      if (startTimerRef.current) clearTimeout(startTimerRef.current)
-    }
-  }, [item, heroImgLoaded, inView, ytKey])
-
   // Stop video when hero goes out of view
   useEffect(() => {
     if (!inView && showVideo) {
@@ -613,14 +600,14 @@ export function SpotlightSection({
 
       {/* Content container */}
       <div
-        className={`relative z-10 p-6 sm:p-8 md:p-12 w-full md:pr-0 text-center md:text-left transition-all duration-500 ${
+        className={`relative z-10 p-6 sm:p-8 md:p-12 w-full md:pr-0 text-center md:text-left ${
           showDetails ? "pb-24 md:pb-8" : "pb-32 sm:pb-20 md:pb-16"
         }`}
         style={{ zIndex: 15 }}
       >
         {/* Title */}
         <h1
-          className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white w-full md:w-[28rem] animate-fade-in-delayed transition-all duration-500 ${
+          className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white w-full md:w-[28rem] ${
             showDetails ? "mb-4 sm:mb-6" : "mb-8 sm:mb-12"
           }`}
         >
@@ -629,12 +616,12 @@ export function SpotlightSection({
 
         {/* Details section - Hidden after mouse inactivity */}
         <div
-          className={`transition-all duration-500 overflow-hidden ${
+          className={`${
             showDetails ? "opacity-100 max-h-screen" : "opacity-0 max-h-0"
           }`}
         >
           {/* Rating and info */}
-          <div className="flex items-center gap-2 mb-3 sm:mb-4 animate-fade-in-delayed-2 justify-center md:justify-start flex-wrap">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4 justify-center md:justify-start flex-wrap">
             <div className="bg-gradient-to-r from-[#E50914] to-[#B20710] text-white px-2 py-1 rounded font-bold tracking-tight text-xs uppercase shadow-lg">
               Agasobanuye
             </div>
@@ -664,13 +651,13 @@ export function SpotlightSection({
           </div>
 
           {/* Description */}
-          <p className="text-white text-sm sm:text-base md:text-lg mb-6 sm:mb-8 md:mb-16 leading-5 sm:leading-6 max-w-xl line-clamp-3 overflow-ellipsis animate-fade-in-delayed-3 mx-auto md:mx-0">
+          <p className="text-white text-sm sm:text-base md:text-lg mb-6 sm:mb-8 md:mb-16 leading-5 sm:leading-6 max-w-xl line-clamp-3 overflow-ellipsis mx-auto md:mx-0">
             {item.overview}
           </p>
 
           {/* Genre tags */}
           {Array.isArray(item.genres) && item.genres.length > 0 && (
-            <div className="flex gap-2 text-neutral-400 text-xs sm:text-sm mb-3 animate-fade-in-delayed-5 justify-center md:justify-start flex-wrap">
+            <div className="flex gap-2 text-neutral-400 text-xs sm:text-sm mb-3 justify-center md:justify-start flex-wrap">
               {item.genres.slice(0, 3).map((genre: any, index) => (
                 <span key={genre.id || index} className="flex items-center gap-2">
                   <span className="text-neutral-300">{genre.name}</span>
@@ -683,20 +670,20 @@ export function SpotlightSection({
 
         {/* Action buttons - Always visible */}
         <div
-          className={`flex flex-col md:flex-row w-full md:justify-between items-center gap-4 md:gap-6 animate-fade-in-delayed-4 transition-all duration-500 ${
+          className={`flex flex-col md:flex-row w-full md:justify-between items-center gap-4 md:gap-6 ${
             showDetails ? "mb-6" : "mb-8 sm:mb-12"
           }`}
         >
           <div className="flex flex-wrap items-center gap-2 md:gap-3 justify-center md:justify-start w-full md:w-auto">
             {/* Play Button */}
-            {onWatchClick && (
+            {onWatchClick && (mediaType === 'tv' || (item as Movie).embed_url) && (
               <button
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   onWatchClick()
                 }}
-                className="bg-white text-black px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-gray-200 active:bg-gray-300 transition-all duration-200 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+                className="bg-white text-black px-3 sm:px-8 md:px-10 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-gray-200 active:bg-gray-300 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
               >
                 <Play className="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" />
                 <span className="hidden sm:inline">Play</span>
@@ -711,7 +698,7 @@ export function SpotlightSection({
                   e.stopPropagation()
                   onTrailerClick()
                 }}
-                className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 transition-all duration-200 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+                className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
               >
                 <Play className="w-4 h-4 sm:w-5 sm:w-5" fill="currentColor" />
                 <span className="hidden sm:inline">Trailer</span>
@@ -725,7 +712,7 @@ export function SpotlightSection({
                 e.stopPropagation()
                 handleDownloadClick()
               }}
-              className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 transition-all duration-200 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
+              className="bg-[#E50914]/80 text-white px-3 sm:px-6 py-2 sm:py-4 rounded-lg font-bold text-sm sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-[#E50914] active:bg-[#E50914]/60 shadow-lg w-auto justify-center touch-manipulation cursor-pointer relative z-20"
             >
               <Download className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline">{showDownloads ? "Hide Downloads" : "Downloads"}</span>
@@ -739,7 +726,7 @@ export function SpotlightSection({
                 void handleShareClick()
               }}
               disabled={isSharing}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
                 isSharing
                   ? "bg-white/5 border-white/10 text-white/70 cursor-wait"
                   : "bg-white/10 hover:bg-white/20 border-white/20 text-white hover:border-white/30"
@@ -748,41 +735,6 @@ export function SpotlightSection({
             >
               <Share2 className="w-4 h-4 flex-shrink-0" />
               <span className="whitespace-nowrap hidden sm:inline">{isSharing ? "Preparing..." : "Share"}</span>
-            </button>
-
-            {/* Watched Button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleWatchedClick()
-              }}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
-                watched
-                  ? "bg-emerald-600/90 hover:bg-emerald-500/90 border-emerald-400/50 text-white shadow-emerald-500/20"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white hover:border-white/30"
-              }`}
-              title={watched ? "Mark as unwatched" : "Mark as watched"}
-            >
-              <Eye className="w-4 h-4 flex-shrink-0" />
-              <span className="whitespace-nowrap hidden sm:inline">{watched ? "Watched" : "Mark Watched"}</span>
-            </button>
-
-            {/* Like Button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleLikeClick()
-              }}
-              className={`p-2 rounded-lg transition-all duration-200 shadow-lg border backdrop-blur-sm cursor-pointer relative z-20 ${
-                liked
-                  ? "bg-[#E50914]/80 hover:bg-[#B20710]/80 border-[#E50914]/30 text-white"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              }`}
-              title={liked ? "Unlike" : "Like"}
-            >
-              <ThumbsUp className="w-4 h-4" />
             </button>
 
             {/* Watchlist Button */}

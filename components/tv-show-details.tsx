@@ -174,7 +174,7 @@ export function TVShowDetails({ tvShow, seasons = [], episodes = [], relatedShow
         item={tvShow}
         mediaType="tv"
         isLoading={false}
-        onWatchClick={handleWatchClick}
+        onWatchClick={allEpisodes.length > 0 ? handleWatchClick : undefined}
         onTrailerClick={handleTrailerClick}
         showDownloads={showDownloads}
         />
