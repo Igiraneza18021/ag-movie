@@ -10,6 +10,7 @@ import { ArrowRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Footer } from "@/components/footer"
+import Script from "next/script"
 
 export default function LandingPage() {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([])
@@ -153,6 +154,16 @@ export default function LandingPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Ad Section */}
+        <div className="container mx-auto px-4 my-16 flex justify-center">
+          <div id="container-fe2f7c0bf802573cd9dc38fff5dcf974"></div>
+          <Script 
+            src="https://pl29683284.effectivecpmnetwork.com/fe2f7c0bf802573cd9dc38fff5dcf974/invoke.js" 
+            strategy="afterInteractive"
+            data-cfasync="false"
+          />
         </div>
 
         {/* Subscription Section relocated to bottom */}
