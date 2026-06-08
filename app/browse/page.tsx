@@ -231,20 +231,29 @@ export default function HomePage() {
       />
       
       {/* Subscription Notification Banner */}
-      <div className="w-full bg-gradient-to-r from-[#004488] via-[#0071eb] to-[#004488] py-4 md:py-6 px-4 sm:px-6 md:px-12 relative overflow-hidden flex items-center justify-center border-y border-white/10 shadow-[0_0_30px_rgba(0,113,235,0.2)] z-20">
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
-        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between w-full max-w-7xl gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-3 flex-col sm:flex-row">
-            <div className="bg-white text-[#0071eb] px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-md">
-              Coming Soon
+      <div className="px-4 sm:px-6 md:px-12 mt-8 z-20 relative">
+        <div className="w-full bg-gradient-to-r from-[#004488] via-[#0071eb] to-[#004488] py-4 md:py-6 px-4 sm:px-8 relative overflow-hidden flex items-center justify-center rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,113,235,0.2)]">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between w-full gap-4 text-center lg:text-left">
+            <div className="flex items-center gap-4 flex-col lg:flex-row">
+              <div className="bg-white text-[#0071eb] px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-md flex-shrink-0">
+                Coming Soon
+              </div>
+              <div className="flex flex-col">
+                <p className="text-white text-base md:text-lg font-bold tracking-wide">
+                  The ultimate <span className="text-yellow-300 font-black">ad-free</span> experience is almost here!
+                </p>
+                <p className="text-white/80 text-sm mt-1">
+                  We're building an uninterrupted viewing experience with exclusive premium features.
+                </p>
+              </div>
             </div>
-            <p className="text-white text-sm md:text-lg font-bold tracking-wide">
-              The ultimate <span className="text-yellow-300 font-black">ad-free</span> experience is almost here.
-            </p>
+            <Link href="/subscribe">
+              <button className="bg-white/10 hover:bg-white/20 text-white border border-white/30 transition-colors px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider backdrop-blur-sm whitespace-nowrap shadow-lg">
+                View Pricing
+              </button>
+            </Link>
           </div>
-          <button className="bg-white/10 hover:bg-white/20 text-white border border-white/30 transition-colors px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider backdrop-blur-sm whitespace-nowrap">
-            Learn More
-          </button>
         </div>
       </div>
 

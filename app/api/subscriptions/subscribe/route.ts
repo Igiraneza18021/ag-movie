@@ -12,8 +12,7 @@ export async function POST(request: Request) {
     }
 
     const { phoneNumber } = await request.json()
-    const isDevMode = process.env.DEV_MODE === "true" || process.env.NEXT_PUBLIC_DEV_MODE === "true"
-    const amount = isDevMode ? 100 : 2000
+    const amount = parseInt(process.env.NEXT_PUBLIC_PLAN_PRICE || "2000", 10)
 
     if (!phoneNumber) {
       return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
