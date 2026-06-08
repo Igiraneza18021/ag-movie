@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ContentRefreshProvider } from "@/components/content-refresh-provider"
 import { Navigation } from "@/components/navigation"
 import { Suspense } from "react"
+import Script from "next/script"
 import "@/lib/disable-debug"
 import "./globals.css"
 
@@ -114,6 +115,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        <Script id="aclib" strategy="beforeInteractive" src="//acscdn.com/script/aclib.js" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

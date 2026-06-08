@@ -11,6 +11,7 @@ import { PortraitCategoryRow } from "@/components/home/portrait-category-row"
 import { Top10Section } from "@/components/home/top10-section"
 import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
 import { TvShowHighlightCard } from "@/components/home/tv-show-highlight-card"
+import { AdBanner } from "@/components/ad-banner"
 
 // Detect if user is on Mac
 const isMac = () => {
@@ -296,10 +297,12 @@ export default function HomePage() {
           {Object.keys(categoryData).map((title, index) => {
             const items = categoryData[title] || []
             if (items.length === 0) return null
-            const delay = (continueWatchingItems.length > 0) ? (index + 1) * 160 : index * 160
             return (
-              <div key={title} className="animate-stagger" style={{ animationDelay: `${delay}ms` }}>
+              <div key={title}>
                 <PortraitCategoryRow title={title} items={items} />
+                {title === "Popular Agasobanuye TV Shows" && (
+                  <AdBanner zoneId="11407010" />
+                )}
               </div>
             )
           })}
