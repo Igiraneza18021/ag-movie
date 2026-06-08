@@ -6,7 +6,19 @@ type ContentGenreLike = {
   name?: string | null
 }
 
-function toGenreTmdbId(genre: ContentGenreLike) {
+function getGenreName(genre: ContentGenreLike | string) {
+  if (typeof genre === "string") {
+    return genre.trim()
+  }
+
+  return genre.name?.trim() || ""
+}
+
+function toGenreTmdbId(genre: ContentGenreLike | string) {
+  if (typeof genre === "string") {
+    return null
+  }
+
   if (typeof genre.tmdb_id === "number" && Number.isFinite(genre.tmdb_id)) {
     return genre.tmdb_id
   }
@@ -37,7 +49,7 @@ export function normalizeGenreName(name: string | null | undefined) {
 }
 
 export function contentHasGenre(
-  genres: ContentGenreLike[] | null | undefined,
+  genres: Array<ContentGenreLike | string> | null | undefined,
   selectedGenreId?: string | null,
   selectedGenreName?: string | null,
 ) {
@@ -51,33 +63,51 @@ export function contentHasGenre(
   return genres.some((genre) => {
     const tmdbId = toGenreTmdbId(genre)
     const matchesId = parsedGenreId !== null && Number.isFinite(parsedGenreId) && tmdbId === parsedGenreId
-    const matchesName = normalizedName.length > 0 && normalizeGenreName(genre.name) === normalizedName
+    const matchesName = normalizedName.length > 0 && normalizeGenreName(getGenreName(genre)) === normalizedName
     return matchesId || matchesName
   })
 }
 
-export function buildGenreOptions(items: Array<{ genres?: ContentGenreLike[] | null }>) {
+export function buildGenreOptions(items: Array<{ genres?: Array<ContentGenreLike | string> | null }>) {
   const genreMap = new Map<number, Genre>()
+  const stringOnlyGenreMap = new Map<string, Genre>()
+  const canonicalNames = new Set<string>()
 
   for (const item of items) {
     const genres = Array.isArray(item.genres) ? item.genres : []
 
     for (const genre of genres) {
       const tmdbId = toGenreTmdbId(genre)
-      const name = genre.name?.trim()
+      const name = getGenreName(genre)
 
-      if (!tmdbId || !name || genreMap.has(tmdbId)) continue
+      if (!name) continue
 
-      genreMap.set(tmdbId, {
-        id: tmdbId.toString(),
-        tmdb_id: tmdbId,
+      if (tmdbId) {
+        if (genreMap.has(tmdbId)) continue
+
+        genreMap.set(tmdbId, {
+          id: tmdbId.toString(),
+          tmdb_id: tmdbId,
+          name,
+          created_at: "",
+        })
+        canonicalNames.add(normalizeGenreName(name))
+        continue
+      }
+
+      const normalizedName = normalizeGenreName(name)
+      if (canonicalNames.has(normalizedName) || stringOnlyGenreMap.has(normalizedName)) continue
+
+      stringOnlyGenreMap.set(normalizedName, {
+        id: normalizedName,
+        tmdb_id: -1,
         name,
         created_at: "",
       })
     }
   }
 
-  return Array.from(genreMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  return [...genreMap.values(), ...stringOnlyGenreMap.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export function findGenreByParams(
