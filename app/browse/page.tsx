@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
+import Link from "next/link"
 import { Footer } from "@/components/footer"
 import { getMovies, getTVShows } from "@/lib/database-client"
 import { createClient } from "@/lib/supabase/client"
