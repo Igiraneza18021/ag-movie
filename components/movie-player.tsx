@@ -213,8 +213,8 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
     return (
       <div className="relative h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" className="text-white" />
-          <div className="text-white text-lg animate-fade-in">Loading Movie...</div>
+          <LoadingSpinner size="lg" className="text-[#0071eb]" />
+          <div className="text-white text-lg font-medium">Resolving stream...</div>
         </div>
       </div>
     )
@@ -227,7 +227,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
         <div className="relative h-screen flex items-center justify-center">
           {/* Background Image */}
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-fade-in"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${backdropUrl})`,
             }}
@@ -238,27 +238,27 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
 
           {/* Content */}
           <div className="relative z-10 text-center px-4">
-            <h1 className="text-3xl md:text-6xl font-bold text-white mb-4 animate-hero-text">
+            <h1 className="text-3xl md:text-6xl font-bold text-white mb-4">
               {movie.title}
             </h1>
-            <div className="flex items-center justify-center gap-4 mb-8 flex-wrap animate-stagger-2">
+            <div className="flex items-center justify-center gap-4 mb-8 flex-wrap">
               {movie.vote_average && (
-                <Badge variant="secondary" className="text-sm hover-scale">
+                <Badge variant="secondary" className="text-sm">
                   ★ {movie.vote_average.toFixed(1)}
                 </Badge>
               )}
               {releaseYear && (
-                <Badge variant="outline" className="text-sm hover-scale">
+                <Badge variant="outline" className="text-sm">
                   {releaseYear}
                 </Badge>
               )}
               {movie.runtime && (
-                <Badge variant="outline" className="text-sm hover-scale">
+                <Badge variant="outline" className="text-sm">
                   {movie.runtime}min
                 </Badge>
               )}
             </div>
-            <div className="animate-stagger-3">
+            <div>
               <MovieActionButtons 
                 movie={movie} 
                 onPlay={handlePlay}
@@ -270,7 +270,7 @@ export function MoviePlayer({ movie, nextMovie, onNextMovie, autoPlay = false }:
         </div>
       ) : (
         // Video Player
-        <div ref={containerRef} className="fixed inset-0 w-full h-full bg-black movie-player-enter">
+        <div ref={containerRef} className="fixed inset-0 w-full h-full bg-black">
           {/* Go Back Button - Always visible */}
           <div className="absolute top-4 left-4 z-10">
             <Button variant="secondary" size="sm" onClick={handleClose}>

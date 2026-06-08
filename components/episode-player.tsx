@@ -321,8 +321,8 @@ export function EpisodePlayer({ episode, tvShow, nextEpisode, episodes = [], onN
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" className="text-white" />
-          <div className="text-white text-lg animate-fade-in">Loading Episode...</div>
+          <LoadingSpinner size="lg" className="text-[#0071eb]" />
+          <div className="text-white text-lg font-medium">Resolving stream...</div>
         </div>
       </div>
     )
