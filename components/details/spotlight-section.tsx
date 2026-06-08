@@ -474,7 +474,7 @@ export function SpotlightSection({
 
   if (isLoading || !item) {
     return (
-      <section className="relative w-full h-screen overflow-hidden flex items-end animate-slide-up">
+      <section className="relative w-full h-screen overflow-hidden flex items-end">
         <div className="absolute inset-0 bg-gradient-to-b from-[#121212] to-[#090a0a]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#090a0a]/70 via-black/20 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#090a0a]/80 via-black/40 md:via-black/20 to-transparent" />
@@ -487,7 +487,7 @@ export function SpotlightSection({
     <section
       ref={heroRef}
       id="spotlight"
-      className="relative w-full h-screen overflow-hidden flex items-end animate-slide-up"
+      className="relative w-full h-screen overflow-hidden flex items-end"
     >
       {/* Base image */}
       {backgroundImage && (
