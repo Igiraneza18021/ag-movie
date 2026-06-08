@@ -42,7 +42,9 @@ export function PosterCard({ item }: PosterCardProps) {
           {item.narrator && (
             <>
               <span className="text-white/40 ml-1">•</span>
-              <span className="text-white/90 truncate max-w-[60px]">{item.narrator}</span>
+              <span className="text-[#0071eb] font-black truncate max-w-[60px] uppercase tracking-tighter">
+                {item.narrator}
+              </span>
             </>
           )}
         </div>
@@ -61,7 +63,7 @@ export function PosterCard({ item }: PosterCardProps) {
                 {item.narrator && (
                   <>
                     <span className="text-white/40">•</span>
-                    <span className="text-white truncate max-w-[80px]">{item.narrator}</span>
+                    <span className="text-[#0071eb] font-black truncate max-w-[80px]">{item.narrator}</span>
                   </>
                 )}
               </span>
