@@ -109,10 +109,10 @@ export default function HomePage() {
 
         // Set category data
         const nextCategoryData: Record<string, (Movie | TVShow)[]> = {
-          "Newly Added Movies": newlyAddedMovies,
-          "Newly Added TV Shows": newlyAddedTVShows,
-          "Trending Movies": trendingMovies,
-          "Popular TV Shows": trendingTVShows,
+          "Newly Added Agasobanuye Movies": newlyAddedMovies,
+          "Newly Added Agasobanuye TV Shows": newlyAddedTVShows,
+          "Trending Agasobanuye Movies": trendingMovies,
+          "Popular Agasobanuye TV Shows": trendingTVShows,
           ...genreCategories
         }
 
@@ -184,10 +184,10 @@ export default function HomePage() {
 
   // Get top 10 items from trending categories
   const top10Items = useMemo(() => {
-    const trendingMovies = categoryData["Trending Movies"] || []
-    const trendingTV = categoryData["Popular TV Shows"] || []
-    const newlyAddedMovies = categoryData["Newly Added Movies"] || []
-    const newlyAddedTV = categoryData["Newly Added TV Shows"] || []
+    const trendingMovies = categoryData["Trending Agasobanuye Movies"] || []
+    const trendingTV = categoryData["Popular Agasobanuye TV Shows"] || []
+    const newlyAddedMovies = categoryData["Newly Added Agasobanuye Movies"] || []
+    const newlyAddedTV = categoryData["Newly Added Agasobanuye TV Shows"] || []
 
     // Combine all relevant items and take top 10
     const allItems = [...trendingMovies, ...trendingTV, ...newlyAddedMovies, ...newlyAddedTV]
