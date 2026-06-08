@@ -6,6 +6,7 @@ import type { Movie, TVShow } from "@/lib/types"
 import { PosterCard } from "@/components/home/poster-card"
 import { WelcomeHero } from "@/components/welcome-hero"
 import { Top10Section } from "@/components/home/top10-section"
+import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
 import { ArrowRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -15,6 +16,7 @@ export default function LandingPage() {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([])
   const [featuredTVShows, setFeaturedTVShows] = useState<TVShow[]>([])
   const [trendingContent, setTrendingContent] = useState<(Movie | TVShow)[]>([])
+  const [continueWatching, setContinueWatching] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
@@ -30,7 +32,10 @@ export default function LandingPage() {
     const supabase = createClient()
     
     try {
-      const [moviesResult, tvShowsResult] = await Promise.all([
+      // Get auth user first
+      const { data: { user } } = await supabase.auth.getUser()
+
+      const promises: Promise<any>[] = [
         supabase
           .from("movies")
           .select("*")
@@ -44,7 +49,27 @@ export default function LandingPage() {
           .eq("status", "active")
           .order("vote_average", { ascending: false })
           .limit(20)
-      ])
+      ]
+
+      // Only fetch continue watching if user is logged in
+      if (user) {
+        promises.push(
+          supabase
+            .from("watch_progress_entries")
+            .select(`
+              *,
+              movies (id, title, poster_path, backdrop_path),
+              tv_shows (id, name, poster_path, backdrop_path),
+              episodes (id, name, still_path, episode_number, season_id, seasons (season_number))
+            `)
+            .eq("user_id", user.id)
+            .eq("is_completed", false)
+            .order("last_watched_at", { ascending: false })
+            .limit(10)
+        )
+      }
+
+      const [moviesResult, tvShowsResult, cwResult] = await Promise.all(promises)
 
       const movies = moviesResult.data || []
       const tvShows = tvShowsResult.data || []
@@ -57,6 +82,30 @@ export default function LandingPage() {
         (b.vote_average || 0) - (a.vote_average || 0)
       )
       setTrendingContent(mixed)
+
+      if (cwResult?.data) {
+        // Transform for ContinueWatchingRow
+        const transformed = cwResult.data.map((entry: any) => {
+          const isMovie = entry.content_type === 'movie'
+          const metadata = isMovie ? entry.movies : entry.tv_shows
+          if (!metadata) return null
+
+          return {
+            ...metadata,
+            id: isMovie ? entry.movie_id : entry.tv_show_id,
+            media_type: isMovie ? 'movie' : 'tv',
+            cw_progress_percent: entry.progress_percent,
+            __progress: {
+              season: entry.episodes?.seasons?.season_number,
+              episode: entry.episodes?.episode_number,
+              watchedDuration: entry.progress_seconds,
+              fullDuration: entry.duration_seconds
+            }
+          }
+        }).filter(Boolean)
+        
+        setContinueWatching(transformed)
+      }
 
     } catch (error) {
       console.error("Error fetching content:", error)
@@ -100,6 +149,13 @@ export default function LandingPage() {
           </div>
           <Top10Section items={trendingContent} />
         </div>
+
+        {/* Continue Watching Section */}
+        {continueWatching.length > 0 && (
+          <div className="mb-20">
+            <ContinueWatchingRow items={continueWatching} />
+          </div>
+        )}
 
         <div className="container mx-auto px-4">
           {/* Featured Movies Section */}
