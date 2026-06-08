@@ -34,6 +34,13 @@ export function TvShowHighlightCard({ show }: TvShowHighlightCardProps) {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0071eb]/20 border border-[#0071eb]/30 text-[#0071eb] text-[10px] font-black uppercase tracking-widest mb-4 w-fit">
           Newly Added Series
         </div>
+
+        {show.narrator && (
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Narrated by:</span>
+            <span className="text-white text-xs font-black uppercase tracking-widest drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">{show.narrator}</span>
+          </div>
+        )}
         
         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4 drop-shadow-lg">
           {show.name}

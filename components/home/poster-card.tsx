@@ -36,9 +36,15 @@ export function PosterCard({ item }: PosterCardProps) {
 
       {/* Default visible: Rating bottom left */}
       <div className="absolute bottom-2 left-2 z-10 transition-opacity duration-300 group-hover/poster:opacity-0">
-        <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-xs font-bold border border-white/5">
-          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+        <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-[10px] font-bold border border-white/5">
+          <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
           {item.vote_average?.toFixed(1) || "0.0"}
+          {item.narrator && (
+            <>
+              <span className="text-white/40 ml-1">•</span>
+              <span className="text-white/90 truncate max-w-[60px]">{item.narrator}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -50,8 +56,14 @@ export function PosterCard({ item }: PosterCardProps) {
           </p>
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                 {year}
+                {item.narrator && (
+                  <>
+                    <span className="text-white/40">•</span>
+                    <span className="text-white truncate max-w-[80px]">{item.narrator}</span>
+                  </>
+                )}
               </span>
               <div className="flex items-center gap-1 text-white text-xs font-black">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
