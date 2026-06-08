@@ -3,11 +3,13 @@ import { Footer } from "@/components/footer"
 import { MovieGrid } from "@/components/movie-grid"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { getMoviesServer } from "@/lib/database"
+import { buildGenreOptions, contentHasGenre } from "@/lib/genres"
 import { generatePageMetadata } from "@/lib/seo"
 
 interface MoviesPageProps {
   searchParams: Promise<{
     genre?: string
+    genreId?: string
     sort?: string
     year?: string
     rating?: string
@@ -24,11 +26,13 @@ export const metadata: Metadata = generatePageMetadata(
 export default async function MoviesPage({ searchParams }: MoviesPageProps) {
   const params = await searchParams
 
-  let filteredMovies = await getMoviesServer(200) // Get more movies for filtering
+  const allMovies = await getMoviesServer(200)
+  let filteredMovies = allMovies
+  const genres = buildGenreOptions(allMovies)
 
   // Apply search filter
   if (params.search) {
-    filteredMovies = filteredMovies.filter((movie) => movie.title.toLowerCase().includes(params.search!.toLowerCase()))
+    filteredMovies = filteredMovies.filter((movie) => movie.title?.toLowerCase().includes(params.search!.toLowerCase()))
   }
 
   // Apply year filter
@@ -48,17 +52,14 @@ export default async function MoviesPage({ searchParams }: MoviesPageProps) {
   }
 
   // Filter by genre if specified
-  if (params.genre) {
-    filteredMovies = filteredMovies.filter((movie) => {
-      const genres = Array.isArray(movie.genres) ? movie.genres : []
-      return genres.some((g: any) => g.name.toLowerCase() === params.genre?.toLowerCase())
-    })
+  if (params.genre || params.genreId) {
+    filteredMovies = filteredMovies.filter((movie) => contentHasGenre(movie.genres, params.genreId, params.genre))
   }
 
   // Apply sorting
   switch (params.sort) {
     case "title":
-      filteredMovies.sort((a, b) => a.title.localeCompare(b.title))
+      filteredMovies.sort((a, b) => (a.title || "").localeCompare(b.title || ""))
       break
     case "year":
       filteredMovies.sort((a, b) => {
@@ -74,12 +75,6 @@ export default async function MoviesPage({ searchParams }: MoviesPageProps) {
       // Default sort by created_at (newest first)
       filteredMovies.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
-
-  const genres = Array.from(
-    new Set(
-      filteredMovies.flatMap((movie) => (Array.isArray(movie.genres) ? movie.genres : [])).map((g: any) => g.name),
-    ),
-  ).map((name, index) => ({ id: index.toString(), name }))
 
   return (
     <div className="min-h-screen bg-background">

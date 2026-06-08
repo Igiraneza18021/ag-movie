@@ -3,11 +3,13 @@ import { Footer } from "@/components/footer"
 import { TVShowGrid } from "@/components/tv-show-grid"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { getTVShowsServer } from "@/lib/database"
+import { buildGenreOptions, contentHasGenre } from "@/lib/genres"
 import { generatePageMetadata } from "@/lib/seo"
 
 interface TVShowsPageProps {
   searchParams: Promise<{
     genre?: string
+    genreId?: string
     sort?: string
     year?: string
     rating?: string
@@ -24,11 +26,13 @@ export const metadata: Metadata = generatePageMetadata(
 export default async function TVShowsPage({ searchParams }: TVShowsPageProps) {
   const params = await searchParams
 
-  let filteredTVShows = await getTVShowsServer(200) // Get more TV shows for filtering
+  const allTVShows = await getTVShowsServer(200)
+  let filteredTVShows = allTVShows
+  const genres = buildGenreOptions(allTVShows)
 
   // Apply search filter
   if (params.search) {
-    filteredTVShows = filteredTVShows.filter((show) => show.name.toLowerCase().includes(params.search!.toLowerCase()))
+    filteredTVShows = filteredTVShows.filter((show) => show.name?.toLowerCase().includes(params.search!.toLowerCase()))
   }
 
   // Apply year filter
@@ -48,17 +52,14 @@ export default async function TVShowsPage({ searchParams }: TVShowsPageProps) {
   }
 
   // Filter by genre if specified
-  if (params.genre) {
-    filteredTVShows = filteredTVShows.filter((show) => {
-      const genres = Array.isArray(show.genres) ? show.genres : []
-      return genres.some((g: any) => g.name.toLowerCase() === params.genre?.toLowerCase())
-    })
+  if (params.genre || params.genreId) {
+    filteredTVShows = filteredTVShows.filter((show) => contentHasGenre(show.genres, params.genreId, params.genre))
   }
 
   // Apply sorting
   switch (params.sort) {
     case "title":
-      filteredTVShows.sort((a, b) => a.name.localeCompare(b.name))
+      filteredTVShows.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
       break
     case "year":
       filteredTVShows.sort((a, b) => {
@@ -74,10 +75,6 @@ export default async function TVShowsPage({ searchParams }: TVShowsPageProps) {
       // Default sort by created_at (newest first)
       filteredTVShows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
-
-  const genres = Array.from(
-    new Set(filteredTVShows.flatMap((show) => (Array.isArray(show.genres) ? show.genres : [])).map((g: any) => g.name)),
-  ).map((name, index) => ({ id: index.toString(), name }))
 
   return (
     <div className="min-h-screen bg-background">
