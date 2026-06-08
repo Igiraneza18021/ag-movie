@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { Footer } from "@/components/footer"
 import { getMovies, getTVShows } from "@/lib/database-client"
+import { createClient } from "@/lib/supabase/client"
 import type { Movie, TVShow } from "@/lib/types"
 import { SpotlightSection } from "@/components/home/spotlight-section"
 import { PortraitCategoryRow } from "@/components/home/portrait-category-row"
@@ -38,30 +39,35 @@ export default function HomePage() {
         setSpotlightLoading(true)
         setError(null)
 
+        const supabase = createClient()
+        
+        // Get auth user first
+        const { data: { user } } = await supabase.auth.getUser()
+
         // Fetch movies and TV shows
-        const [allMovies, allTVShows] = await Promise.all([
+        const [movies, tvShows] = await Promise.all([
           getMovies(50),
           getTVShows(50),
         ])
 
-        setAllMovies(allMovies)
-        setAllTVShows(allTVShows)
+        setAllMovies(movies)
+        setAllTVShows(tvShows)
 
         // Process movies for different sections
-        const featuredMovies = allMovies.slice(0, 10)
-        const trendingMovies = allMovies
+        const featuredMovies = movies.slice(0, 10)
+        const trendingMovies = [...movies]
           .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 20)
-        const topRatedMovies = allMovies
+        const topRatedMovies = movies
           .filter((movie) => (movie.vote_average || 0) >= 8.0)
           .slice(0, 20)
 
         // Process TV shows
-        const featuredTVShows = allTVShows.slice(0, 10)
-        const trendingTVShows = allTVShows
+        const featuredTVShows = tvShows.slice(0, 10)
+        const trendingTVShows = [...tvShows]
           .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 20)
-        const topRatedTVShows = allTVShows
+        const topRatedTVShows = tvShows
           .filter((show) => (show.vote_average || 0) >= 8.0)
           .slice(0, 20)
 
@@ -83,7 +89,46 @@ export default function HomePage() {
           setSpotlightItem(null)
         }
 
-        if (allMovies.length === 0 && allTVShows.length === 0) {
+        // Fetch Continue Watching if user is logged in
+        if (user) {
+          const { data: cwData } = await supabase
+            .from("watch_progress_entries")
+            .select(`
+              *,
+              movies (id, title, poster_path, backdrop_path),
+              tv_shows (id, name, poster_path, backdrop_path),
+              episodes (id, name, still_path, episode_number, season_id, seasons (season_number))
+            `)
+            .eq("user_id", user.id)
+            .eq("is_completed", false)
+            .order("last_watched_at", { ascending: false })
+            .limit(10)
+
+          if (cwData) {
+            const transformed = cwData.map((entry: any) => {
+              const isMovie = entry.content_type === 'movie'
+              const metadata = isMovie ? entry.movies : entry.tv_shows
+              if (!metadata) return null
+
+              return {
+                ...metadata,
+                id: isMovie ? entry.movie_id : entry.tv_show_id,
+                media_type: isMovie ? 'movie' : 'tv',
+                cw_progress_percent: entry.progress_percent,
+                __progress: {
+                  season: entry.episodes?.seasons?.season_number,
+                  episode: entry.episodes?.episode_number,
+                  watchedDuration: entry.progress_seconds,
+                  fullDuration: entry.duration_seconds
+                }
+              }
+            }).filter(Boolean)
+            
+            setContinueWatchingItems(transformed)
+          }
+        }
+
+        if (movies.length === 0 && tvShows.length === 0) {
           setError("We couldn't reach the content service. Please check your internet connection or Supabase configuration and reload.")
         }
 
