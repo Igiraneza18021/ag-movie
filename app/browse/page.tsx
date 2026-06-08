@@ -9,7 +9,6 @@ import { SpotlightSection } from "@/components/home/spotlight-section"
 import { PortraitCategoryRow } from "@/components/home/portrait-category-row"
 import { Top10Section } from "@/components/home/top10-section"
 import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
-import { ProviderSeriesSection } from "@/components/home/provider-series-section"
 
 // Detect if user is on Mac
 const isMac = () => {
@@ -219,9 +218,6 @@ export default function HomePage() {
         )}
 
         <div className="px-2 sm:px-4 md:px-8 space-y-12">
-          {/* Provider Series Section */}
-          <ProviderSeriesSection movies={allMovies} tvShows={allTVShows} />
-
           {/* Portrait categories */}
           {Object.keys(categoryData).map((title, index) => {
             const items = categoryData[title] || []
