@@ -12,6 +12,7 @@ import { Top10Section } from "@/components/home/top10-section"
 import { ContinueWatchingRow } from "@/components/home/continue-watching-row"
 import { TvShowHighlightCard } from "@/components/home/tv-show-highlight-card"
 import { AdBanner } from "@/components/ad-banner"
+// import { AdBanner } from "@/components/ad-banner" // commented out ad banner
 import Script from "next/script"
 
 // Detect if user is on Mac
@@ -297,7 +298,7 @@ export default function HomePage() {
       </div>
 
       {/* Ad Section */}
-      {!isSubscribed && (
+      {/* !isSubscribed && (
         <div className="container mx-auto px-4 my-8 flex justify-center">
           <div id="container-fe2f7c0bf802573cd9dc38fff5dcf974"></div>
           <Script 
@@ -306,7 +307,7 @@ export default function HomePage() {
             data-cfasync="false"
           />
         </div>
-      )}
+      )*/}
 
       <div className="py-4 sm:py-6 md:py-8 space-y-12">
         {/* Continue Watching */}
@@ -330,7 +331,7 @@ export default function HomePage() {
               <div key={title}>
                 <PortraitCategoryRow title={title} items={items} />
                 {title === "Popular Agasobanuye TV Shows" && !isSubscribed && (
-                  <AdBanner zoneId="11407010" />
+                  null
                 )}
               </div>
             )
